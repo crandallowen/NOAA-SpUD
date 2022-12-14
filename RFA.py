@@ -1,0 +1,509 @@
+# RFA.py
+# This file is a module that allows a user to more easily manipulate output data from SXXI. This module contains a class declaration
+#     for an RFA object, useful methods for manipulating RFA objects, a function to import records in either GMF or SFAF format,
+#     functions for exporting the data in particular formats, and functions for converting SXXI values into more readable formats.
+# The current version of this module should be considered an 'alpha' version as it contains minimal documentation and error handling.
+
+
+# An RFA object that represents a Radio Frequency Assignment from SXXI using fields derived from both GMF and SFAF format
+# Some SXXI columns can be repeated to represent multiple values for a particular column which are represented as lists
+#     in this object declaration. Columns that can only ever have one value are represented as strings.
+class RFA:
+    def __init__(self):
+        self.serial = ''
+        self.classification = ''
+        self.agency_action_number = ''
+        self.bureau = ''
+        self.agency = ''
+        self.type = ''
+        self.main_function_ID = ''
+        self.intermediate_function_ID = ''
+        self.detailed_function_ID = ''
+        self.IRAC_docket_number = []
+        self.docket_number_old = ''
+        self.frequency = ''
+        self.frequency_upper_limit = ''
+        self.excluded_frequency_bands = []
+        self.station_class = []
+        self.emission_designator = []
+        self.power = []
+        self.effective_radiated_power = []
+        self.power_augmentation = []
+        self.time = ''
+        self.tx_state_country_code = ''
+        self.tx_antenna_location = ''
+        self.tx_station_control = ''
+        self.tx_station_call_sign = ''
+        self.tx_antenna_latitude = ''
+        self.tx_antenna_longitude = ''
+        self.tx_authorized_radius = ''
+        self.tx_inclination_angle = ''
+        self.tx_apogee = ''
+        self.tx_perigee = ''
+        self.tx_period_of_orbit = ''
+        self.tx_number_of_satellites = ''
+        self.tx_power_density = ''
+        self.tx_equipment_nomenclature = []
+        self.tx_system_name = []
+        self.tx_number_of_stations = []
+        self.tx_OTS_equipment = []
+        self.tx_radar_tunability = ''
+        self.tx_pulse_duration = []
+        self.tx_pulse_repetition_rate = []
+        self.tx_antenna_name = []
+        self.tx_antenna_nomenclature = []
+        self.tx_antenna_gain = []
+        self.tx_antenna_elevation = []
+        self.tx_antenna_feed_point_height = []
+        self.tx_antenna_horizontal_beamwidth = []
+        self.tx_antenna_azimuth = []
+        self.tx_antenna_orientation = []
+        self.tx_antenna_polarization = []
+        self.tx_JSC_area_code = ''
+        self.rx_state_country_code = []
+        self.rx_antenna_location = []
+        self.rx_control_ID_and_server_system_ID = []
+        self.rx_antenna_latitude = []
+        self.rx_antenna_longitude = []
+        self.rx_station_call_sign = []
+        self.rx_authorized_radius = []
+        self.rx_repeater_indicator = []
+        self.rx_inclination_angle = []
+        self.rx_apogee = []
+        self.rx_perigee = []
+        self.rx_period_of_orbit = []
+        self.rx_number_of_satellites = []
+        self.rx_equipment_nomenclature = []
+        self.rx_antenna_name = []
+        self.rx_antenna_nomenclature = []
+        self.rx_antenna_gain = []
+        self.rx_antenna_elevation = []
+        self.rx_antenna_feed_point_height = []
+        self.rx_antenna_horizontal_beamwidth = []
+        self.rx_antenna_azimuth = []
+        self.rx_antenna_orientation = []
+        self.rx_antenna_polarization = []
+        self.rx_JSC_area_code = []
+        self.IRAC_notes = []
+        self.free_text = []
+        self.misc_agency_data = []
+        self.FAS_agenda = []
+        self.paired_frequency = []
+        self.supplementary_details = []
+        self.authorized_area_both = []
+        self.tx_authorized_area = []
+        self.excepted_states_both = []
+        self.rx_excepted_states = []
+        self.tx_excepted_states = []
+        self.authorized_states_both = []
+        self.rx_authorized_states = []
+        self.tx_authorized_states = []
+        self.point_of_contact = ''
+        self.last_transaction_date = ''
+        self.revision_date = ''
+        self.authorization_date = ''
+        self.expiration_date = ''
+        self.review_date = ''
+        self.entry_date = ''
+        self.receipt_date = ''
+        self.FOI_exempt = ''
+        self.approval_authority = ''
+        self.joint_agency_names = []
+        self.international_coordination_ID = ''
+        self.Canadian_coordination_comments = []
+        self.Mexican_coordination_comments = []
+        self.user_net_code = []
+        self.data_source = ''
+        self.routine_agenda_item = ''
+
+    # This method overrides the default str() function to print the RFA's serial number.
+    def __str__(self):
+        return f'<RFA: {self.serial}>'
+
+    # This method is used to convert an RFA object into a string in .csv format.
+    # Any fields that contain commas will have all commas converted into semicolons to be compatible with .csv format.
+    # Any list-type fields will be joined into a single field seperated by '|' characters.
+    def toCSVRow(self):
+        row = []
+        for value in self.__dict__.values():
+            if isinstance(value, list):
+                value = '|'.join(value)
+            row.append(value.replace(',',';'))
+        return ','.join(row)
+
+    # This method is the same as toCSVRow(), but it only outputs specified fields.
+    def toCSVRow_NWSFormat(self):
+        main_function_ID = self.main_function_ID.replace(',', ';')
+        intermediate_function_ID = self.intermediate_function_ID.replace(',', ';')
+        detailed_function_ID = self.detailed_function_ID.replace(',', ';')
+        point_of_contact = self.point_of_contact.replace(',', ';')
+        station_classes = '|'.join(self.station_class)
+        emission_designators = '|'.join(self.emission_designator)
+        powers = '|'.join(self.power)
+        tx_antenna_name = '|'.join(self.tx_antenna_name)
+        tx_antenna_polarization = '|'.join(self.tx_antenna_polarization)
+        tx_antenna_orientation = '|'.join(self.tx_antenna_orientation)
+        return f'{self.serial},{self.agency_action_number},{main_function_ID},{intermediate_function_ID},{detailed_function_ID},{self.frequency},{point_of_contact},{self.revision_date},{self.tx_state_country_code},{self.tx_antenna_location},{self.tx_antenna_latitude},{self.tx_antenna_longitude},{station_classes},{emission_designators},{powers},{self.last_transaction_date},{self.type},{tx_antenna_name},{tx_antenna_polarization},{tx_antenna_orientation},{self.tx_station_call_sign}'
+
+
+# This function expects a .txt file which was generated by SXXI using any of the SFAF 1 Column or GMF 1 Column output options
+#     and returns a list of RFA objects that correspond one-to-one with records found in the file. This function converts
+#     records from either format into a joined format. It should be noted that there are some columns in SFAF format that are
+#     not present in GMF format, so the resulting list of RFAs may have slightly different values depending on if an SFAF
+#     1 Column or GMF 1 Column file was used.
+# All column tags from GMF and SFAF format should be included, but this module was developed from an unclassifed release of SXXI
+#     with unclassified data, so classified fields will not be handled. Any unrecognized tags will be printed to the console
+#     along with the serial number of the record in which they were found.
+# NOTE: If using an SFAF 1 Column output that only contains a subset of columns and not the full record, the '005' column which
+#     contains the record classification is required to detect the beginning of an new record. This will be fixed in later versions.
+def importRFAsFrom1ColFile(filename):
+    with open(filename, 'r') as iFile:
+        lines = iFile.readlines()
+
+    RFAs = []
+    rfa = None
+    for line in lines:
+        # This is some error handling in the rare case that a record has a row with a tag but no value.
+        try:
+            tag, value = line.strip().split(maxsplit=1)
+        except ValueError as err:
+            print(f'{type(err)}: {err}')
+            tag = line.strip()
+            value = ''
+            print(f'Record {rfa.serial} has no value for tag {tag}') #May need to handle printing the serial for unknown SFAF tags less than 102
+        except Exception as err:
+            print(f'Unexpected {err} on record {rfa.serial}, {type(err)}')
+            raise
+
+        # In these formats, there is no delimination between different records, so the end of a record is determined by the start
+        #     of a new one. In GMF format, the first tag of a record is 'SER' which is the serial number, but in SFAF format, the
+        #     first tag is '005' which is the security classification.
+        if tag == 'SER01' or tag == '005.': #SFAF uses 005 for FOI and CDD in addition to CLA. May need to be handled differently
+            if rfa != None:
+                RFAs.append(rfa)
+            rfa = RFA()
+            if tag == 'SER01':
+                rfa.serial = value
+            else:
+                rfa.classification = value
+        elif tag == '102.':
+            rfa.serial = value
+        elif tag == 'TYP01' or tag == '010.':
+            rfa.type = value
+        elif tag == 'DAT01' or tag == '911.':
+            rfa.last_transaction_date = formatGMFDate(value) if tag == 'DAT01' else formatSFAFDate(value)
+        elif tag == 'CLA01': 
+            rfa.classification = value
+        elif tag == 'FOI01':
+            rfa.FOI_exempt = value
+        elif tag == 'ACN01' or tag == '956.':
+            rfa.agency_action_number = value
+        elif tag == 'EXD01' or tag == '141.':
+            rfa.expiration_date = formatGMFDate(value) if tag == 'EXD01' else formatSFAFDate(value)
+        elif tag == '142.':
+            rfa.review_date = formatSFAFDate(value)
+        elif tag == '144.':
+            rfa.approval_authority = value
+        elif tag == 'BUR01' or tag == '203.':
+            rfa.bureau = value
+        elif tag == '200.':
+            rfa.agency = value
+        elif tag[:3] == 'NET' or tag[:3] == '208':
+            rfa.user_net_code.append(value)
+        elif tag == 'FRQ01' or tag == '110.':
+            rfa.frequency = value
+        elif tag[:3] == 'PRD' or tag[:3] == '506':
+            rfa.paired_frequency.append(value)
+        elif tag == 'FRU01':
+            rfa.frequency_upper_limit = value
+        elif tag[:3] == 'FBE' or tag[:3] == '111':
+            rfa.excluded_frequency_bands.append(value)
+        elif tag[:3] == 'STC' or tag[:3] == '113':
+            rfa.station_class.append(value)
+        elif tag[:3] == 'EMS' or tag[:3] == '114':
+            rfa.emission_designator.append(value)
+        elif tag[:3] == 'PWR' or tag[:3] == '115':
+            rfa.power.append(value)
+        elif tag[:3] == '117':
+            rfa.effective_radiated_power.append(value)
+        elif tag[:3] == '118':
+            rfa.power_augmentation.append(value)
+        elif tag == 'TME01' or tag == '130.':
+            rfa.time = value
+        elif tag == 'XSC01' or tag == '300.':
+            rfa.tx_state_country_code = value
+        elif tag == 'XAL01' or tag == '301.':
+            rfa.tx_antenna_location = value
+        elif tag == 'XLA01':
+            rfa.tx_antenna_latitude = value
+        elif tag == 'XLG01':
+            rfa.tx_antenna_longitude = value
+        elif tag == 'XRD01' or tag == '306.':
+            rfa.tx_authorized_radius = value
+        elif tag[:3] == 'ARB':
+            rfa.authorized_area_both.append(value)
+        elif tag == 'XAR01':
+            rfa.tx_authorized_area = value
+        elif tag[:3] == '530':
+            if value[:3] == 'ART':
+                rfa.tx_authorized_area = value[4:]
+            elif value[:3] == 'ARB':
+                rfa.authorized_area_both.append(value[4:])
+            else:
+                print(f'Unknown tag in SFAF 530 of record{rfa.serial}')
+        elif tag[:3] == 'EQS' or tag[:3] == '344':
+            rfa.tx_OTS_equipment.append(value)
+        elif tag == '303.':
+            rfa.tx_antenna_latitude = value[:7] #double check if char count is sufficient condition
+            rfa.tx_antenna_longitude = value[7:]
+        elif tag[:3] == 'XSE' or tag[:3] == '358': #likely only ever one
+            rfa.tx_antenna_elevation.append(value)
+        elif tag[:3] == 'XAH' or tag[:3] == '359': #likely only ever one
+            rfa.tx_antenna_feed_point_height.append(value)
+        elif tag == 'XRC01' or tag == '302.':
+            rfa.tx_station_control = value
+        elif tag == 'XCL01' or tag == '304.':
+            rfa.tx_station_call_sign = value
+        elif tag[:3] == 'XAG' or tag[:3] == '357':
+            rfa.tx_antenna_gain.append(value)
+        elif tag[:3] == 'XAT' or tag[:3] == '354':
+            rfa.tx_antenna_name.append(value)
+        elif tag[:3] == 'XAK' or tag[:3] == '355':
+            rfa.tx_antenna_nomenclature.append(value)
+        elif tag[:3] == 'XAZ' or tag[:3] == '362':
+            rfa.tx_antenna_orientation.append(value)
+        elif tag[:3] == 'XAA':
+            rfa.tx_antenna_azimuth.append(value)
+        elif tag[:3] == 'XAP' or tag[:3] == '363':
+            rfa.tx_antenna_polarization.append(value)
+        elif tag == 'TUN01' or tag == '345.':
+            rfa.tx_radar_tunability = value
+        elif tag[:3] == 'PDD' or tag[:3] == '346':
+            rfa.tx_pulse_duration.append(value)
+        elif tag[:3] == 'PRR' or tag[:3] == '347':
+            rfa.tx_pulse_repetition_rate.append(value)
+        elif tag[:3] == 'XEQ' or tag[:3] == '340':
+            rfa.tx_equipment_nomenclature.append(value)
+        elif tag[:3] == 'NTT': #likely only ever one
+            rfa.tx_number_of_stations.append(value)
+        elif tag[:3] == 'NAM': #likely only ever one
+            rfa.tx_system_name.append(value)
+        elif tag[:3] == '341': #likely only ever one
+            rfa.tx_number_of_stations, rfa.tx_system_name = value.split(',')
+        elif tag[:3] == '373':
+            rfa.tx_JSC_area_code == value
+        elif tag[:3] == 'RSC' or tag[:3] == '400':
+            rfa.rx_state_country_code.append(value)
+        elif tag[:3] == 'RAL' or tag[:3] == '401':
+            rfa.rx_antenna_location.append(value)
+        elif tag[:3] == 'RLA':
+            rfa.rx_antenna_latitude.append(value)
+        elif tag[:3] == 'RLG':
+            rfa.rx_antenna_longitude.append(value)
+        elif tag[:3] == '403':
+            rfa.rx_antenna_latitude = value[:7]
+            rfa.rx_antenna_longitude = value[7:]
+        elif tag[:3] == 'RSE' or tag[:3] == '458':
+            rfa.rx_antenna_elevation.append(value)
+        elif tag[:3] == 'RRD' or tag[:3] == '406':
+            rfa.rx_authorized_radius.append(value)
+        elif tag[:3] == 'RRC' or tag[:3] == '402':
+            rfa.rx_control_ID_and_server_system_ID.append(value)
+        elif tag[:3] == 'RCL' or tag[:3] == '404':
+            rfa.rx_station_call_sign.append(value)
+        elif tag[:3] == 'RAG' or tag[:3] == '457':
+            rfa.rx_antenna_gain.append(value)
+        elif tag[:3] == 'RAT' or tag[:3] == '454':
+            rfa.rx_antenna_name.append(value)
+        elif tag[:3] == 'RAK' or tag[:3] == '455':
+            rfa.rx_antenna_nomenclature.append(value)
+        elif tag[:3] == 'RAH' or tag[:3] == '459':
+            rfa.rx_antenna_feed_point_height.append(value)
+        elif tag[:3] == 'RAZ' or tag[:3] == '462':
+            rfa.rx_antenna_orientation.append(value)
+        elif tag[:3] == 'RAA':
+            rfa.rx_antenna_azimuth.append(value)
+        elif tag[:3] == 'RAZ':
+            rfa.rx_antenna_orientation.append(value)
+        elif tag[:3] == '462':
+            if value.find(',') == -1:
+                rfa.rx_antenna_orientation.append(value)
+            else:
+                rfa.rx_antenna_orientation.append(value[:value.find(',')])
+        elif tag[:3] == 'RAP' or tag[:3] == '463':
+            rfa.rx_antenna_polarization.append(value)
+        elif tag[:3] == 'RPT' or tag[:3] == '408':
+            rfa.rx_repeater_indicator.append(value)
+        elif tag[:3] == 'REQ' or tag[:3] == '440':
+            rfa.rx_equipment_nomenclature.append(value)
+        elif tag[:3] == '473':
+            rfa.rx_JSC_area_code.append(value[0])
+        elif tag == 'SPD01' or tag == '321.':
+            rfa.tx_power_density = value
+        elif tag[:3] == 'XBW' or tag[:3] == '360':
+            rfa.tx_antenna_horizontal_beamwidth.append(value)
+        elif tag == 'XIN01' or tag == '315.':
+            rfa.tx_inclination_angle = value
+        elif tag == 'XAE01' or tag == '316.':
+            rfa.tx_apogee = value
+        elif tag == 'XPE01' or tag == '317.':
+            rfa.tx_perigee = value
+        elif tag == 'XPD01' or tag == '318.':
+            rfa.tx_period_of_orbit = value
+        elif tag == 'XNR01' or tag == '319.':
+            rfa.tx_number_of_satellites = value
+        elif tag[:3] == 'RBW' or tag[:3] == '460':
+            rfa.rx_antenna_horizontal_beamwidth.append(value)
+        elif tag[:3] == 'RIN' or tag[:3] == '415':
+            rfa.rx_inclination_angle.append(value)
+        elif tag[:3] == 'RAE' or tag[:3] == '416':
+            rfa.rx_apogee.append(value)
+        elif tag[:3] == 'RPE' or tag[:3] == '417':
+            rfa.rx_perigee.append(value)
+        elif tag[:3] == 'RPD' or tag[:3] == '418':
+            rfa.rx_period_of_orbit.append(value)
+        elif tag[:3] == 'RNR' or tag[:3] == '419':
+            rfa.rx_number_of_satellites.append(value)
+        elif tag[:3] == 'JNT' or tag[:3] == '147':
+            rfa.joint_agency_names.append(value)
+        elif tag == 'MFI01' or tag == '511.':
+            rfa.main_function_ID = value
+        elif tag == 'IFI01' or tag == '512.':
+            rfa.intermediate_function_ID = value
+        elif tag[:3] == 'DFI' or tag[:3] == '513':
+            rfa.detailed_function_ID = value
+        elif tag[:3] == 'NTS' or tag[:3] == '500':
+            rfa.IRAC_notes.append(value)
+        elif tag[:3] == '117':
+            rfa.effective_radiated_power.append(value)
+        elif tag == 'ICI01' or tag == '151.':
+            rfa.international_coordination_ID = value
+        elif tag[:3] == 'CAN':
+            rfa.Canadian_coordination_comments.append(value)
+        elif tag[:3] == 'MEX':
+            rfa.Mexican_coordination_comments.append(value)
+        elif tag[:3] == '152':
+            if value[0] == 'C':
+                rfa.Canadian_coordination_comments.append(value[2:])
+            elif value[0] == 'M':
+                rfa.Mexican_coordination_comments.append(value[2:])
+            else:
+                print(f'Unrecognized format for SFAF 152 in record {rfa.serial}')
+        elif tag[:3] == 'NOT' or tag[:3] == '501':
+            rfa.free_text.append(value)
+        elif tag == 'DOC01' or tag == '108.':
+            rfa.docket_number_old = value
+        elif tag == 'POC01' or tag == '803.':
+            rfa.point_of_contact = value
+        elif tag[:3] == 'AGN' or tag[:3] == '503':
+            rfa.misc_agency_data.append(value)
+        elif tag[:3] == 'FAS' or tag[:3] == '504':
+            rfa.FAS_agenda.append(value)
+        elif tag == 'RTN01' or tag == '958.':
+            rfa.routine_agenda_item = value
+        elif tag[:3] == 'SUP' or tag[:3] == '520':
+            rfa.supplementary_details.append(value)
+        elif tag[:3] == 'AUS' or tag[:3] == '103':
+            rfa.IRAC_docket_number.append(value)
+        elif tag == 'AUD01' or tag == '107.':
+            rfa.authorization_date = formatGMFDate(value) if tag == 'AUD01' else formatSFAFDate(value)
+        elif tag == 'RVD01' or tag == '143.':
+            rfa.revision_date = formatGMFDate(value) if tag == 'RVD01' else formatSFAFDate(value)
+        elif tag[:3] == 'AST' or tag[:3] == '531':
+            if value[:3] == 'ESB':
+                rfa.excepted_states_both.append(value[4:])
+            elif value[:3] == 'ESR':
+                rfa.rx_excepted_states.append(value[4:])
+            elif value[:3] == 'EST':
+                rfa.tx_excepted_states.append(value[4:])
+            elif value[:3] == 'LSB':
+                rfa.authorized_states_both.append(value[4:])
+            elif value[:3] == 'LSR':
+                rfa.rx_authorized_states.append(value[4:])
+            elif value[:3] == 'LST':
+                rfa.tx_authorized_states.append(value[4:])
+            else:
+                print(f'Unrecognized format for SFAF 531 or GMF AST in record {rfa.serial}')
+        elif tag == '924.':
+            rfa.data_source = value
+        elif tag == '927.':
+            rfa.entry_date = formatSFAFDate(value)
+        elif tag == '928.':
+            rfa.receipt_date = formatSFAFDate(value)
+        else:
+            print(f'Unknown Tag {tag} in record {rfa.serial}')
+    RFAs.append(rfa)
+    return RFAs
+
+# This function takes a list of RFAs and a string that represents the name of a .csv file, and converts each RFA
+#     into .csv format, and exports them into a new file where each record is on its own line. The first line of
+#     the file is a header.
+# This function includes file creation and writing which will require additional error handling to ensure proper
+#     resource handling and protection. This will be included in future versions.
+def exportRFAsToCSV(RFAs, filename='./outputs/output.csv'):
+    with open(filename, 'w') as oFile:
+        headers = ','.join(RFAs[0].__dict__.keys())
+        oFile.write(f'{headers}\n')
+        for rfa in RFAs:
+            oFile.write(f'{rfa.toCSVRow()}\n')
+
+# This function is the same as exportRFAsToCSV(), but uses the NWS format.
+def exportRFAsToCSV_NWSFormat(RFAs, filename='./outputs/output.csv'):
+    with open(filename, 'w') as oFile:
+        oFile.write('Serial Number,Action Number,Main Function Identifier,Intermediate Function Identifier,Detailed Function Identifier,Frequency,Point of Contact,Revision Date,Transmitter State/Country Code,Transmitter Antenna Location,Transmitter Latitude,Transmitter Longitude,Station Class(es),Emission Designator(s),Power(s),Last Transaction Date,Type of Action,Transmitter Antenna Name,Transmitter Antenna Polarization,Transmitter Antenna Orientation,Station Call Sign\n')
+        for rfa in RFAs:
+            oFile.write(f'{rfa.toCSVRow_NWSFormat()}\n')
+
+# This function converts a frequency in SXXI format into kHz. The purpose of this function is to create a sortable
+#     format for frequencies.
+# Future versions will include formatting options.
+def formatFrequency(SXXI_frequency):
+    unit = SXXI_frequency[0]
+    quantity = SXXI_frequency[1:]
+
+    if unit == 'K':
+        conversion = 0
+    elif unit == 'M':
+        conversion = 3
+    elif unit == 'G':
+        conversion = 6
+    elif unit == 'T':
+        conversion = 9
+    else:
+        print(f'Unknown unit \'{unit}\'in frequency format')
+
+    return str(float(quantity) * (10 ^ conversion))
+
+# This function converts a date in GMF format into standard dd/mm/yyyy format.
+def formatGMFDate(GMF_date):
+    year = GMF_date[:2]
+    month = GMF_date[2:4]
+    day = GMF_date[4:]
+
+    if year > 60:
+        year = '19' + year
+    else:
+        year = '20' + year
+
+    return f'{day}/{month}/{year}'
+
+# This function converts a date in SFAF format into standard dd/mm/yyyy format.
+def formatSFAFDate(SFAF_date):
+    year = SFAF_date[:4]
+    month = SFAF_date[4:6]
+    day = SFAF_date[6:]
+    return f'{day}/{month}/{year}'
+
+# This function converts a power in SXXI format into Watts.
+def formatPower(SXXI_power):
+    unit = SXXI_power[0]
+    quantity = SXXI_power[1:]
+
+    if unit == 'W':
+        conversion = 0
+    elif unit == 'K':
+        conversion = 3
+    elif unit == 'M':
+        conversion = 6
+
+    return str(float(quantity) * (10 ^ conversion))
