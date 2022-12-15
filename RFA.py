@@ -480,19 +480,19 @@ def formatGMFDate(GMF_date):
     month = GMF_date[2:4]
     day = GMF_date[4:]
 
-    if year > 60:
+    if int(year) > 60:
         year = '19' + year
     else:
         year = '20' + year
 
-    return f'{day}/{month}/{year}'
+    return f'{month}/{day}/{year}'
 
 # This function converts a date in SFAF format into standard dd/mm/yyyy format.
 def formatSFAFDate(SFAF_date):
     year = SFAF_date[:4]
     month = SFAF_date[4:6]
     day = SFAF_date[6:]
-    return f'{day}/{month}/{year}'
+    return f'{month}/{day}/{year}'
 
 # This function converts a power in SXXI format into Watts.
 def formatPower(SXXI_power):
