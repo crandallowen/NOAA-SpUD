@@ -90,7 +90,7 @@ class RFA:
         self.misc_agency_data = []
         self.FAS_agenda = []
         self.paired_frequency = []
-        self.supplementary_details = []
+        self.supplementary_details = ''
         self.authorized_area_both = []
         self.tx_authorized_area = []
         self.excepted_states_both = []
@@ -406,7 +406,10 @@ def importRFAsFrom1ColFile(filename):
         elif tag == 'RTN01' or tag == '958.':
             rfa.routine_agenda_item = value
         elif tag[:3] == 'SUP' or tag[:3] == '520':
-            rfa.supplementary_details.append(value)
+            if rfa.supplementary_details != '':
+                rfa.supplementary_details += f' {value}'
+            else:
+                rfa.supplementary_details = value
         elif tag[:3] == 'AUS' or tag[:3] == '103':
             rfa.IRAC_docket_number.append(value)
         elif tag == 'AUD01' or tag == '107.':
