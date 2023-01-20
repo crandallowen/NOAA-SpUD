@@ -1,4 +1,9 @@
-**/inputs
-**/outputs
+.gitignore
+.gitattributes
+**/RFA Module/inputs
+**/RFA Module/outputs
+**/RFA Module/driver.py
 **/__pycache__/*
-driver.py
+**/database.ini
+diver.py
+RFA.py
