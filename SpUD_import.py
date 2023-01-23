@@ -86,11 +86,11 @@ def queryFormatString(string):
     else:
         return quoteString(string)
 
-def queryFormatList(list):
-    if list == []:
+def queryFormatList(valList):
+    if valList == []:
         return 'NULL'
     else:
-        tempList = list(map(quoteString, list))
+        tempList = list(map(quoteString, valList))
         return 'ARRAY[' + ', '.join(tempList) + ']'
 
 def queryFormatDate(date):
