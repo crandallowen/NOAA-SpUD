@@ -5,6 +5,8 @@
 # The current version of this module should be considered an 'alpha' version as it contains minimal documentation and error handling.
 
 import os
+import datetime
+from datetime import date
 
 # An RFA object that represents a Radio Frequency Assignment from SXXI using fields derived from both GMF and SFAF format
 # Some SXXI columns can be repeated to represent multiple values for a particular column which are represented as lists
@@ -124,11 +126,14 @@ class RFA:
     # This method is used to convert an RFA object into a string in .csv format.
     # Any fields that contain commas will have all commas converted into semicolons to be compatible with .csv format.
     # Any list-type fields will be joined into a single field seperated by '|' characters.
+    # Any date-type fields will be output in mm/dd/yyyy format
     def toCSVRow(self):
         row = []
         for value in self.__dict__.values():
             if isinstance(value, list):
                 value = '|'.join(value)
+            elif isinstance(value, date):
+                value = value.strftime('%m/%d/%Y')
             row.append(value.replace(',',';'))
         return ','.join(row)
 
@@ -138,13 +143,14 @@ class RFA:
         intermediate_function_ID = self.intermediate_function_ID.replace(',', ';')
         detailed_function_ID = self.detailed_function_ID.replace(',', ';')
         point_of_contact = self.point_of_contact.replace(',', ';')
+        revision_date = self.revision_date.strftime('%m/%d/%Y')
         station_classes = '|'.join(self.station_class)
         emission_designators = '|'.join(self.emission_designator)
         powers = '|'.join(self.power)
         tx_antenna_name = '|'.join(self.tx_antenna_name)
         tx_antenna_polarization = '|'.join(self.tx_antenna_polarization)
         tx_antenna_orientation = '|'.join(self.tx_antenna_orientation)
-        return f'{self.serial},{self.agency_action_number},{main_function_ID},{intermediate_function_ID},{detailed_function_ID},{self.frequency},{point_of_contact},{self.revision_date},{self.tx_state_country_code},{self.tx_antenna_location},{self.tx_antenna_latitude},{self.tx_antenna_longitude},{station_classes},{emission_designators},{powers},{self.last_transaction_date},{self.type},{tx_antenna_name},{tx_antenna_polarization},{tx_antenna_orientation},{self.tx_station_call_sign}'
+        return f'{self.serial},{self.agency_action_number},{main_function_ID},{intermediate_function_ID},{detailed_function_ID},{self.frequency},{point_of_contact},{revision_date},{self.tx_state_country_code},{self.tx_antenna_location},{self.tx_antenna_latitude},{self.tx_antenna_longitude},{station_classes},{emission_designators},{powers},{self.last_transaction_date},{self.type},{tx_antenna_name},{tx_antenna_polarization},{tx_antenna_orientation},{self.tx_station_call_sign}'
     
     def toCSVRow_TrackerFormat(self):
         point_of_contact = self.point_of_contact.replace(',', ';')
@@ -504,14 +510,14 @@ def formatGMFDate(GMF_date):
     else:
         year = '20' + year
 
-    return f'{month}/{day}/{year}'
+    return datetime.date(int(year), int(month), int(day))
 
 # This function converts a date in SFAF format into standard dd/mm/yyyy format.
 def formatSFAFDate(SFAF_date):
     year = SFAF_date[:4]
     month = SFAF_date[4:6]
     day = SFAF_date[6:]
-    return f'{month}/{day}/{year}'
+    return datetime.date(int(year), int(month), int(day))
 
 # This function converts a power in SXXI format into Watts.
 def formatPower(SXXI_power):
