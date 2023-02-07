@@ -2,6 +2,8 @@ import psycopg2
 from configparser import ConfigParser
 import RFA
 
+RFA_source_file = './RFA Module/inputs/gmf 1 col all doc 2023.01.19.txt'
+
 class RFAToSpUDMap():
     def __init__(self):
         self.tupleList = []
@@ -28,48 +30,27 @@ class RFAToSpUDMap():
         for tuple in self.tupleList:
             if key == tuple[0]:
                 return tuple[1]
-        raise KeyError('Column or attribute name not recognized')
+        raise KeyError('RFAToSpUDMap.toSQL(): Column or attribute name, {}, not recognized'.format(key))
 
     def toRFA(self, key):
         for tuple in self.tupleList:
             if key == tuple[1]:
                 return tuple[0]
-        raise KeyError('Column or attribute name not recognized')
+        raise KeyError('RFAToSpUDMap.toRFA(): Column or attribute name, {}, not recognized'.format(key))
 
     def eval(self, col, value):
         for tuple in self.tupleList:
             if col in [tuple[0], tuple[1]]:
                 return eval('{}(value)'.format(tuple[2]))
-        raise KeyError('Column or attribute name not recognized')
+        raise KeyError('RFAToSpUDMap.eval(): Column or attribute name, {}, not recognized'.format(col))
 
-def quoteString(string):
-    return "'"+string+"'"
+def quoteString(string): return "'"+string+"'"
 
-def queryFormatString(string):
-    if string == '':
-        # return 'NULL'
-        return None
-    else:
-        # return quoteString(string)
-        return string
+def queryFormatString(string): return None if string == '' else string
 
-def queryFormatList(valList):
-    if valList == []:
-        # return 'NULL'
-        return None
-    else:
-        # tempList = list(map(quoteString, valList))
-        # return 'ARRAY[' + ', '.join(tempList) + ']'
-        return valList
+def queryFormatList(List): return None if List == [] else List
 
-def queryFormatDate(date):
-    if date == '':
-        # return 'NULL'
-        return None
-    else:
-        # month, day, year = date.split('/')
-        # return quoteString(year + '-' + month + '-' + day)
-        return date
+def queryFormatDate(date): return None if date == '' else date
 
 def config(filename='database.ini', section='postgresql'):
     parser = ConfigParser()
@@ -87,12 +68,16 @@ def connect():
     params = config()
     connection = None
     print('Connecting to the PostgreSQL database {0} as user {1}...'.format(params['database'], params['user']))
-    with psycopg2.connect(**params) as connection:
-        with connection.cursor() as cursor:
-            cursor.execute('SELECT version()')
-            db_version = cursor.fetchone()
-            print(db_version)
-        return connection
+    try:
+        with psycopg2.connect(**params) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT version()')
+                db_version = cursor.fetchone()
+                print(db_version)
+            return connection
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        raise error
 
 def disconnect(connection):
     connection.close()
@@ -102,41 +87,48 @@ def execute(connection, SQLcode, **params):
     with connection:
         with connection.cursor() as cursor:
             if 'values' in params.keys():
-                # for value in params['values']:
-                #     print(value, end=', ')
-                # print()
                 cursor.execute(SQLcode, params['values'])
             else:
                 cursor.execute(SQLcode)
 
-def insertRFAs(filename):
+def importRFAs():
+    importRFAsFromFile(RFA_source_file)
+
+def importRFAsFromFile(filename):
     RFAs = RFA.importRFAsFrom1ColFile(filename)
+    columns = []
+    placeholders = []
+    for key in RFAs[0].__dict__.keys():
+        if idMap.testInclusion(key):
+            col = idMap.toSQL(key)
+            columns.append(col)
+            placeholders.append('%s')
+
+    columns.append('frequency_KHz')
+    placeholders.append('%s')
+
+    columns = ', '.join(columns)
+    placeholders = ', '.join(placeholders)
+    insertSQL = 'INSERT INTO RFAs ({}) VALUES ({});'.format(columns, placeholders)
     connection = connect()
-    for rfa in RFAs:
-        columns = []
-        placeholders = []
-        values = []
-        for key, value in rfa.__dict__.items():
-            if idMap.testInclusion(key):
-                col = idMap.toSQL(key)
-                columns.append(col)
-                placeholders.append('%s')
-                values.append(idMap.eval(col, value))
-        columns = ', '.join(columns)
-        placeholders = ', '.join(placeholders)
-        # values = ', '.join(values)
-        values = tuple(values)
-        # insertSQL = 'INSERT INTO RFAs ({}) VALUES ({});'.format(columns, values)
-        insertSQL = 'INSERT INTO RFAs ({}) VALUES ({});'.format(columns, placeholders)
-        # print(insertSQL)
-        # with connection:
-        #     with connection.cursor() as cursor:
-        #         cursor.execute(insertSQL, values)
-        execute(connection, insertSQL, values=values)
-    if connection is not None:
-        disconnect(connection)
+    try:
+        for rfa in RFAs:
+            values = []
+            for key, value in rfa.__dict__.items():
+                if idMap.testInclusion(key):
+                    col = idMap.toSQL(key)
+                    values.append(idMap.eval(col, value))
+            values.append(float(RFA.formatFrequency(rfa.frequency)))
+            values = tuple(values)
+            execute(connection, insertSQL, values=values)
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        raise error
+    finally:
+        if connection is not None:
+            disconnect(connection)
 
 
 if __name__ == '__main__':
     idMap = RFAToSpUDMap()
-    insertRFAs('./RFA Module/inputs/gmf 1 col all doc 2023.01.19.txt')
+    importRFAs()

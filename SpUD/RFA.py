@@ -483,21 +483,21 @@ def exportRFAsToCSV_TrackerFormat(RFAs, filename='output.csv'):
 #     format for frequencies.
 # Future versions will include formatting options.
 def formatFrequency(SXXI_frequency):
-    unit = SXXI_frequency[0]
+    unit = SXXI_frequency[0].lower()
     quantity = SXXI_frequency[1:]
 
-    if unit == 'K':
+    if unit == 'k':
         conversion = 0
-    elif unit == 'M':
+    elif unit == 'm':
         conversion = 3
-    elif unit == 'G':
+    elif unit == 'g':
         conversion = 6
-    elif unit == 'T':
+    elif unit == 't':
         conversion = 9
     else:
         print(f'Unknown unit \'{unit}\'in frequency format')
 
-    return str(float(quantity) * (10 ^ conversion))
+    return str(float(quantity) * (pow(10,conversion)))
 
 # This function converts a date in GMF format into standard dd/mm/yyyy format.
 def formatGMFDate(GMF_date):

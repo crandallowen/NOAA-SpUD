@@ -16,7 +16,7 @@ excluded_frequency_bands,excluded_frequency_bands,queryFormatList
 #
 #
 #
-#
+point_of_contact,point_of_contact,queryFormatString
 #
 #
 #
