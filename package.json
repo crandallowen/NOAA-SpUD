@@ -1,0 +1,34 @@
+{
+  "name": "NOAA-SpUD",
+  "version": "0.0.1",
+  "private": true,
+  "description": "An application for interfacing with the NOAA Spectrum Usage database",
+  "main": "server.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "nodemon --exec \"npm run build && node server.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crandallowen/NOAA-SpUD.git"
+  },
+  "author": "Owen Crandall",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "nodemon": "^2.0.20",
+    "pg": "^8.9.0",
+    "vue": "^3.2.47"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.0.0",
+    "vite": "^4.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/crandallowen/NOAA-SpUD/issues"
+  },
+  "homepage": "https://github.com/crandallowen/NOAA-SpUD#readme"
+}

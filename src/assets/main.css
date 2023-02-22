@@ -1,0 +1,22 @@
+@import './base.css';
+
+
+#app {
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+a,
+.ice-blue {
+  text-decoration: none;
+  color: hsla(183, 100%, 42%, 1);
+  transition: 0.4s;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(183, 100%, 42%, 0.2);
+  }
+}

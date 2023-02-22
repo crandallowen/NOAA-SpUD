@@ -7,3 +7,8 @@
 **/database.ini
 driver.py
 RFA.py
+**/node_modules
+**/Project Documents
+db.config.js
+.vscode/*
+!.vscode/extensions.json
