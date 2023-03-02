@@ -1,11 +1,13 @@
 <script setup>
-import displayHomeTable from './displayHomeTable.vue'
+import displayTable from './displayTable.vue';
 
 const props = defineProps({
-    rows: Array
+    rows: Array,
+    columns: Array
 });
 </script>
+
 <template>
     <h1>Home</h1>
-    <displayHomeTable :rows="props.rows"/>
+    <displayTable title="RFA Table" :columns="props.columns" :rows="props.rows" />
 </template>

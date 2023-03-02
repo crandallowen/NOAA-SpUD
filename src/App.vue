@@ -25,24 +25,31 @@ const currentView = computed(() => {
 
 const currentProperties = computed (() => {
     if (currentView.value.__name == 'home') {
-        return {rows: rows.value};
+        return {rows: rows.value, columns: columns.value};
     } else if (currentView.value.__name == 'search') {
-        return {bureaus: bureaus.value};
+        return {bureaus: bureaus.value, columns: columns.value};
     } else 
         return {};
 });
 
 const rows = ref([]);
+const columns = ref([]);
 const bureaus = ref([]);
+
+function onSearch(query) {
+    console.log(query);
+}
+
 request({method: 'GET', url: 'getRFAs'})
     .then((responseJSON) => {
         let response = JSON.parse(responseJSON);
-        response.rows.forEach(row => {
+        response.rows.forEach((row) => {
             rows.value.push(reactive(row));
         });
-        // response.fields.forEach(field => {
-        //     headers.value.push(headerMap(field.name));
-        // });
+        response.columns.forEach((column) => {
+            columns.value.push(column.name);
+            // console.log(column.name);
+        });
     })
     .catch((error) => {
         console.error(error);
@@ -78,8 +85,7 @@ request({method: 'GET', url: 'getBureaus'})
   </header>
 
   <main>
-    <component :is="currentView" v-bind="currentProperties"/>
-    <!-- <home :rows="rows" /> -->
+    <component :is="currentView" v-bind="currentProperties" @search="onSearch" />
   </main>
 </template>
 

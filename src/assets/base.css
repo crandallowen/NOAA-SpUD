@@ -9,6 +9,8 @@
   --vt-c-black-mute: #282828;
 
   --vt-c-indigo: #2c3e50;
+  --vt-c-ice-blue: hsla(183, 100%, 42%, 1);
+  --vt-c-dark-blue: hsla(183, 100%, 42%, 0.2);
 
   --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
   --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
@@ -34,6 +36,8 @@
   --color-text: var(--vt-c-text-light-1);
   --color-navigation: var(--vt-c-text-light-1);
 
+  --color-toggle-active: var(--vt-c-ice-blue);
+
   --section-gap: 160px;
   --small-section-gap: 80px;
 }
@@ -50,6 +54,8 @@
     --color-heading: var(--vt-c-text-dark-1);
     --color-text: var(--vt-c-text-dark-2);
     --color-navigation: var(--vt-c-text-dark-1);
+
+    --color-toggle-active: var(--vt-c-dark-blue);
   }
 }
 

@@ -20,7 +20,8 @@ const getRFAsQuery = `SELECT serial_num, agency_action_num, bureau, main_functio
     rx_inclination_angle, rx_apogee,rx_perigee, rx_period_of_orbit, rx_number_of_satellites,
     rx_equipment_nomenclature, rx_antenna_name, rx_antenna_nomenclature, rx_antenna_gain, rx_antenna_elevation, rx_antenna_feed_point_height, rx_antenna_horizontal_beamwidth, rx_antenna_azimuth, rx_antenna_orientation, rx_antenna_polarization,
     last_transaction_date, revision_date, authorization_date, expiration_date, review_date, entry_date, receipt_date
-    FROM RFAs`;
+    FROM RFAs
+    ORDER BY frequency_khz`;
 
 const getBureausQuery = `SELECT DISTINCT bureau FROM RFAs`;
 
@@ -57,9 +58,10 @@ app.get('/getRFAs', async (request, response, next) => {
     await client.query(getRFAsQuery)
         .then((result) => {
             console.log('Returned', result.rowCount, 'rows.');
+            // console.log(result.fields);
             response.json({
                 rows: result.rows,
-                fields: result.fields
+                columns: result.fields
             });
         })    
         .catch((error) => {

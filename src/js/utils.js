@@ -34,12 +34,22 @@ export function headerMap(field) {
 export function formatFrequency(frequency_khz) {
     if (frequency_khz > 10 ** 9)
         return '' + (parseFloat(frequency_khz) / (10 ** 9)).toPrecision(12)/1 + ' THz';
-    else if (frequency_khz > 10 ** 6)
+    else if (frequency_khz >= 10 ** 6)
         return '' + (parseFloat(frequency_khz) / (10 ** 6)).toPrecision(12)/1 + ' GHz';
-    else if (frequency_khz > 10 ** 4)
+    else if (frequency_khz >= 10 ** 4)
         return '' + (parseFloat(frequency_khz) / (10 ** 3)).toPrecision(12)/1 + ' MHz';
     else return '' + (parseFloat(frequency_khz).toPrecision(12))/1 + ' KHz';
 };
+
+export function format(value, key) {
+    if (Array.isArray(value))
+        return value.join('\n');
+    else if (key === 'frequency_khz')
+        return formatFrequency(value);
+    else if (key.slice(-4) === 'date' && value != null)
+        return value.substring(5, 7) + '/' + value.substring(8, 10) + '/' + value.substring(0, 4);
+    else return value;
+}
 
 export function frequencyToKHz(frequencyString) {
     let frequencyFloat;
