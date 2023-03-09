@@ -1,27 +1,14 @@
 const path = require('path');
-const url = require('url');
 const express = require('express');
 // const cors = require('cors'); //Will likely be needed for deployment
 // const serveStatic = require('serve-static'); //May be able to uninstall
 const { Client } = require('pg');
-const {clientConfig} = require('./db.config');
+const { clientConfig } = require('./db.config');
+const format = require('pg-format');
 
 const app = express();
 const port = process.env.PORT || 7007;
 const file_ext = ['.css', '.html', '.js'];
-
-const getRFAsQuery = `SELECT serial_num, agency_action_num, bureau, main_function_id, intermediate_function_id, detailed_function_id, frequency_khz, station_class, emission_designator, power,
-    tx_state_country_code, tx_antenna_location, tx_antenna_latitude, tx_antenna_longitude,
-    tx_inclination_angle, tx_apogee, tx_perigee, tx_period_of_orbit, tx_number_of_satellites,
-    tx_equipment_nomenclature, tx_system_name, tx_number_of_stations,
-    tx_OTS_equipment, tx_radar_tunability, tx_pulse_duration, tx_pulse_repetition_rate,
-    tx_antenna_name, tx_antenna_nomenclature, tx_antenna_gain, tx_antenna_elevation, tx_antenna_feed_point_height, tx_antenna_horizontal_beamwidth, tx_antenna_azimuth, tx_antenna_orientation, tx_antenna_polarization,
-    rx_state_country_code, rx_antenna_location, rx_antenna_latitude, rx_antenna_longitude,
-    rx_inclination_angle, rx_apogee,rx_perigee, rx_period_of_orbit, rx_number_of_satellites,
-    rx_equipment_nomenclature, rx_antenna_name, rx_antenna_nomenclature, rx_antenna_gain, rx_antenna_elevation, rx_antenna_feed_point_height, rx_antenna_horizontal_beamwidth, rx_antenna_azimuth, rx_antenna_orientation, rx_antenna_polarization,
-    last_transaction_date, revision_date, authorization_date, expiration_date, review_date, entry_date, receipt_date
-    FROM RFAs
-    ORDER BY frequency_khz`;
 
 const getBureausQuery = `SELECT DISTINCT bureau FROM RFAs`;
 
@@ -43,11 +30,7 @@ app.get('/', (request, response) => {
     // response.sendFile(path.join(__dirname, 'src', 'html', 'index.html'));
 });
 
-app.get('/getRFAs', async (request, response, next) => {
-    // let q = url.parse(request.url, true);
-    // let columns = q.query['columns'].split(',');
-    // Will need to change query formulation to be safe from injection
-    // let getRFAsQuery = 'SELECT ' + columns.join(', ') + ' FROM RFAS';
+app.get('/getBureaus', async (request, response, next) => {
     const client = new Client(clientConfig);
     await client.connect()
         .then(() => console.log('Connected to', clientConfig.database, 'at', clientConfig.host+':'+clientConfig.port))
@@ -55,13 +38,14 @@ app.get('/getRFAs', async (request, response, next) => {
             console.error('Connection error:', error.stack)
             next(error);
         });
-    await client.query(getRFAsQuery)
+    await client.query(getBureausQuery)
         .then((result) => {
             console.log('Returned', result.rowCount, 'rows.');
-            // console.log(result.fields);
+            let bureaus = [];
+            result.rows.forEach((row) => {bureaus.push(row.bureau)})
+            // console.log(bureaus);
             response.json({
-                rows: result.rows,
-                columns: result.fields
+                bureaus: bureaus,
             });
         })    
         .catch((error) => {
@@ -78,7 +62,12 @@ app.get('/getRFAs', async (request, response, next) => {
         });
 });
 
-app.get('/getBureaus', async (request, response, next) => {
+app.get('/query', async (request, response, next) => {
+    let columns = request.query.column;
+    let sort = {
+        column: request.query.sortColumn,
+        direction: request.query.sortDirection === 'ascending' ? 'ASC' : 'DESC'
+    };
     const client = new Client(clientConfig);
     await client.connect()
         .then(() => console.log('Connected to', clientConfig.database, 'at', clientConfig.host+':'+clientConfig.port))
@@ -86,10 +75,14 @@ app.get('/getBureaus', async (request, response, next) => {
             console.error('Connection error:', error.stack)
             next(error);
         });
-    await client.query(getBureausQuery)
+    let columnSQL = columns.join(', ')
+    let sql = format('SELECT %s FROM RFAs ORDER BY %I %s', columnSQL, sort.column, sort.direction);
+    // console.log(sql);
+    await client.query(sql)
         .then((result) => {
             console.log('Returned', result.rowCount, 'rows.');
             response.json({
+                columns: columns,
                 rows: result.rows,
             });
         })    

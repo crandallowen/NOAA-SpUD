@@ -1,6 +1,6 @@
 <script setup>
-import { ref, reactive, computed } from 'vue';
-import { request } from '@/js/utils';
+import { ref, reactive, computed, watchEffect } from 'vue';
+import { allColumns } from '@/js/utils';
 import home from './components/home.vue';
 import search from './components/search.vue';
 import notFound from './components/notFound.vue';
@@ -14,6 +14,17 @@ const routes = {
 };
 
 const currentPath = ref(window.location.hash);
+const bureaus = ref([]);
+
+watchEffect(async () => {
+    let url = new URL('http://localhost:7007/getBureaus');
+    const response = await fetch(url);
+    await response.json()
+        .then((response) => {
+            // console.log(response);
+            bureaus.value = response.bureaus;
+        })
+});
 
 window.addEventListener('hashchange', () => {
     currentPath.value = window.location.hash
@@ -25,50 +36,16 @@ const currentView = computed(() => {
 
 const currentProperties = computed (() => {
     if (currentView.value.__name == 'home') {
-        return {rows: rows.value, columns: columns.value};
+        return {};
     } else if (currentView.value.__name == 'search') {
-        return {bureaus: bureaus.value, columns: columns.value};
+        return {bureaus: bureaus.value, columns: allColumns};
     } else 
         return {};
 });
 
-const rows = ref([]);
-const columns = ref([]);
-const bureaus = ref([]);
-
 function onSearch(query) {
     console.log(query);
 }
-
-request({method: 'GET', url: 'getRFAs'})
-    .then((responseJSON) => {
-        let response = JSON.parse(responseJSON);
-        response.rows.forEach((row) => {
-            rows.value.push(reactive(row));
-        });
-        response.columns.forEach((column) => {
-            columns.value.push(column.name);
-            // console.log(column.name);
-        });
-    })
-    .catch((error) => {
-        console.error(error);
-    })
-    // .finally(() => {
-    //     console.log(rows);
-    //     console.log(headers);
-    // })
-
-request({method: 'GET', url: 'getBureaus'})
-    .then((responseJSON) => {
-        let response = JSON.parse(responseJSON);
-        response.rows.forEach((row) => {
-            bureaus.value.push(row.bureau);
-        });
-    })
-    .catch((error) => {
-        console.error(error);
-    })
 </script>
 
 <template>

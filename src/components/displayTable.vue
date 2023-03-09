@@ -1,78 +1,105 @@
 <script setup>
-import { ref, reactive, computed, watch } from 'vue';
-import { format, headerMap, defaultColumns } from '@/js/utils';
+import { ref, reactive, computed, watchEffect } from 'vue';
+import { format, headerMap, emissionGroup, txGroup, rxGroup, allColumns } from '@/js/utils';
+import collapsibleGroup from './collapsibleGroup.vue';
 
 const props = defineProps({
-    title: String, 
-    columns: Array,
-    rows: Array,
-    filters: Array
+    title: String,
+    state: Object,
+    params: Object
 });
 
-const activeColumns = ref([...defaultColumns]);
-const sortField = ref('frequency_khz');
-const sortDirection = ref('ascending');
+const columns = ref(null);
+const rows = ref(null);
 
-const sortedRows = computed(() => {
-    let rows = [...props.rows];
-    if (sortField.value === 'frequency_khz') {
-        if (sortDirection.value === 'ascending')
-            return rows.sort((a,b) => a[sortField.value] - b[sortField.value]);
-        else
-            return rows.sort((a,b) => b[sortField.value] - a[sortField.value]);
-    } else {
-        if (sortDirection.value === 'ascending')
-            return rows.sort((a,b) => (a[sortField.value] > b[sortField.value]) ? 1 : ((b[sortField.value] > a[sortField.value]) ? -1 : 0));
-        else
-            return rows.sort((a,b) => (a[sortField.value] < b[sortField.value]) ? 1 : ((b[sortField.value] < a[sortField.value]) ? -1 : 0));
-    }
+const url = computed(() => {
+    let url = new URL('http://localhost:7007/query');
+    let orderedColumns = [];
+    allColumns.forEach((column) => {if (props.state.displayColumns.includes(column)) {orderedColumns.push(column)}})
+    orderedColumns.forEach((column) => url.searchParams.append('column', column));
+    url.searchParams.append('sortColumn', props.state.sort.column);
+    url.searchParams.append('sortDirection', props.state.sort.direction);
+    return url;
 });
 
-function sortByColumn(event) {
+watchEffect(async () => {
+    const response = await fetch(url.value);
+    await response.json()
+        .then((response) => {
+            columns.value = response.columns;
+            rows.value = response.rows;
+        })
+});
+
+const recordColumns = computed(() => {
+    let recordColumns = [];
+    allColumns.forEach((column) => {
+        if (!(emissionGroup.includes(column) || txGroup.includes(column) || rxGroup.includes(column)))
+            {
+                recordColumns.push(column);
+            }
+    });
+    return recordColumns;
+});
+
+const visibleColumnGroups = reactive({
+    'Record Columns': recordColumns,
+    'Emission Group Columns': emissionGroup,
+    'Transmitter Columns': txGroup,
+    'Receiver Columns': rxGroup
+});
+
+function handleSort(event) {
     let column = event.srcElement.id;
-    if (column === sortField.value) {
-        if (sortDirection.value === 'ascending')
-            sortDirection.value = 'descending';
+    if (column === props.state.sort.column) {
+        if (props.state.sort.direction === 'ascending')
+            props.state.sort.direction = 'descending';
         else
-            sortDirection.value = 'ascending';
+            props.state.sort.direction = 'ascending';
     } else {
-        sortField.value = column;
-        sortDirection.value = 'ascending';
+        props.state.sort.column = column;
+        props.state.sort.direction = 'ascending';
     }
-    console.log('Sort rows by', sortField.value, 'in', sortDirection.value, 'order');
+    console.log('Sort rows by', props.state.sort.column, 'in', props.state.sort.direction, 'order');
 }
 </script>
 
 <template>
     <div class="tableWithSelects">
+        <!-- Side Bar -->
         <div class="columnSelect">
-            <h3>Column Select</h3>
-            <template v-for="column in props.columns">
-                <div class="inputLine">
-                    <input type="checkbox" :id="column" :value="column" v-model="activeColumns">
-                    <label :for="column">{{ headerMap(column) }}</label>
-                </div>
+            <h2>Column Select</h2>
+            <template v-for="key in Object.keys(visibleColumnGroups)">
+                <collapsibleGroup :group-name="key">
+                    <template v-for="column in visibleColumnGroups[key]">
+                        <div class="inputLine">
+                            <input type="checkbox" :id="column" :value="column" v-model="props.state.displayColumns">
+                            <label :for="column">{{ headerMap(column) }}</label>
+                        </div>
+                    </template>
+                </collapsibleGroup>
             </template>
         </div>
+        <!-- Table -->
         <div class="tableContainer">
             <h2>{{ props.title }}</h2>
             <table class="displayTable">
                 <thead>
                 <tr>
-                    <template v-for="value in props.columns">
-                        <th v-show="activeColumns.includes(value)">
+                    <template v-for="value in columns">
+                        <th>
                             {{ headerMap(value) }}
-                            <button @click="sortByColumn" :id="value" class="sortButton">
-                                {{ sortField != value ? '^/v' : (sortDirection === 'ascending' ? '^' : 'v') }}
+                            <button @click="handleSort" :id="value" class="sortButton">
+                                {{ props.state.sort.column != value ? '^/v' : (props.state.sort.direction === 'ascending' ? '^' : 'v') }}
                             </button>
                         </th>
                     </template>
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="row in sortedRows">
+                <tr v-for="row in rows">
                     <template v-for="(value, key) in row">
-                        <td v-show="activeColumns.includes(key)">
+                        <td>
                             <pre>{{ format(value, key) }}</pre>
                         </td>
                     </template>
@@ -93,6 +120,10 @@ function sortByColumn(event) {
     display: flex;
     flex-direction: column;
     width: max-content;
+}
+
+.tableContainer {
+    height: 100%;
 }
 
 .columnSelect {
