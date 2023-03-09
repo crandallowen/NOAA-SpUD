@@ -20,7 +20,7 @@ function handleCollapse(event) {
     <div>
         <div class="topLine">
             <h3>{{ props.groupName }}</h3>
-            <button class="collapseButton" @click="handleCollapse">{{ visible ? 'v' : '^' }}</button>
+            <button class="collapseButton" @click="handleCollapse">{{ visible ? '\u25BC' : '\u25B6' }}</button>
         </div>
         <div v-show="visible">
             <slot></slot>

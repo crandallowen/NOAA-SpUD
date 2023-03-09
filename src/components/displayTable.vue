@@ -11,6 +11,8 @@ const props = defineProps({
 
 const columns = ref(null);
 const rows = ref(null);
+const sortDirection = ref(null);
+const sortColumn = ref(null);
 
 const url = computed(() => {
     let url = new URL('http://localhost:7007/query');
@@ -28,6 +30,8 @@ watchEffect(async () => {
         .then((response) => {
             columns.value = response.columns;
             rows.value = response.rows;
+            sortDirection.value = props.state.sort.direction;
+            sortColumn.value = props.state.sort.column;
         })
 });
 
@@ -49,8 +53,7 @@ const visibleColumnGroups = reactive({
     'Receiver Columns': rxGroup
 });
 
-function handleSort(event) {
-    let column = event.srcElement.id;
+function handleSort(column) {
     if (column === props.state.sort.column) {
         if (props.state.sort.direction === 'ascending')
             props.state.sort.direction = 'descending';
@@ -87,11 +90,13 @@ function handleSort(event) {
                 <thead>
                 <tr>
                     <template v-for="value in columns">
-                        <th>
-                            {{ headerMap(value) }}
-                            <button @click="handleSort" :id="value" class="sortButton">
-                                {{ props.state.sort.column != value ? '^/v' : (props.state.sort.direction === 'ascending' ? '^' : 'v') }}
-                            </button>
+                        <th @click="handleSort(value)">
+                            <div class="headerBox">
+                                {{ headerMap(value) }}
+                                <button @click.stop="handleSort(value)" class="sortButton">
+                                    {{ sortColumn != value ? '\u25B2/\u25BC' : (sortDirection === 'ascending' ? '\u25B2' : '\u25BC') }}
+                                </button>
+                            </div>
                         </th>
                     </template>
                 </tr>
@@ -111,7 +116,7 @@ function handleSort(event) {
 </template>
 
 <style scoped>
-.tableWithSelects, .inputLine {
+.tableWithSelects, .inputLine, .headerBox {
     display: flex;
     flex-direction: row;
 }
@@ -133,7 +138,6 @@ function handleSort(event) {
 .displayTable, .displayTable :deep(td), .displayTable :deep(th) {
     border: 1px solid var(--color-border);
     border-collapse: collapse;
-    
 }
 
 .displayTable :deep(td), .displayTable :deep(th) {
@@ -159,12 +163,15 @@ function handleSort(event) {
     padding: 0 5px;
 }
 
+.sortButton, .headerBox {
+    cursor: pointer;
+}
+
 .sortButton {
-    float: right;
+    align-self: center;
     background-color: var(--color-background-soft);
-    border: 1px solid var(--color-border);
+    border: none;
     color: var(--color-text);
-    border-radius: 4px;
 }
 
 pre {
