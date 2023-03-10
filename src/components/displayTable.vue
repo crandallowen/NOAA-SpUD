@@ -132,7 +132,7 @@ function handleSort(column) {
 }
 
 .columnSelect {
-    min-width: 26ch;
+    min-width: 27ch;
 }
 
 .displayTable, .displayTable :deep(td), .displayTable :deep(th) {

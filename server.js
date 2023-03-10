@@ -10,7 +10,19 @@ const app = express();
 const port = process.env.PORT || 7007;
 const file_ext = ['.css', '.html', '.js'];
 
+const optionQueries = {
+    bureaus: `SELECT DISTINCT bureau FROM RFAs`,
+    txStateCountryCodes: `SELECT DISTINCT tx_state_country_code FROM RFAs`,
+    rxStateCountryCodes: `SELECT DISTINCT unnest(rx_state_country_code) AS rx_state_country_code FROM RFAs`,
+    txAntennaLocations: `SELECT DISTINCT tx_antenna_location FROM RFAs`,
+    rxAntennaLocations: `SELECT DISTINCT unnest(rx_antenna_location) AS rx_antenna_location FROM RFAs`,
+    stationClasses: `SELECT DISTINCT unnest(station_class) FROM RFAs`,
+    functinoIdentifiers: `SELECT DISTINCT concat(main_function_id, intermediate_function_id, detailed_function_id) AS function_identifier FROM RFAs`, 
+};
+
 const getBureausQuery = `SELECT DISTINCT bureau FROM RFAs`;
+
+const pointOfContactOptions = `SELECT DISTINCT point_of_contact FROM RFAs`;
 
 app.use((request, response, next) => {
     let filename = path.basename(request.url);
@@ -23,11 +35,45 @@ app.use((request, response, next) => {
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/', express.static(path.join(__dirname, 'dist')));
-// app.use('/', express.static(path.join(__dirname, 'src')));
 
 app.get('/', (request, response) => {
     response.sendFile(path.join(__dirname, 'dist', 'src', 'html', 'index.html'));
-    // response.sendFile(path.join(__dirname, 'src', 'html', 'index.html'));
+});
+
+app.get('/getOptions', async (request, response, next) => {
+    let optionsJSON = {};
+    const client = new Client(clientConfig);
+    await client.connect()
+        .then(() => console.log('Connected to', clientConfig.database, 'at', clientConfig.host+':'+clientConfig.port))
+        .catch((error) => {
+            console.error('Connection error:', error.stack)
+            next(error);
+        });
+    for (const field in optionQueries) {
+        await client.query({
+            rowMode: 'array',
+            text: optionQueries[field]
+        })
+            .then((result) => {
+                // console.log(result);
+                optionsJSON[field] = [];
+                result.rows.forEach((row) => {
+                    if (row != '') {optionsJSON[field].push(row[0]);}
+                });
+            })    
+            .catch((error) => {
+                console.error('Query error:', error.stack);
+                next(error);
+            })
+    }
+    await client.end()
+        .then(() => console.log(clientConfig.user, 'has successfully disconnected.'))
+        .catch((error) => {
+            console.error('End error:', error.stack);
+            next(error);
+        });
+    // console.log(optionsJSON);
+    response.json(optionsJSON);
 });
 
 app.get('/getBureaus', async (request, response, next) => {

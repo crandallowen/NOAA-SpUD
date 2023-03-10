@@ -1,11 +1,18 @@
 <script setup>
-import { ref, reactive, computed } from 'vue';
-import { formatFrequency, frequencyToKHz, headerMap, defaultColumns } from '@/js/utils';
+import { ref, reactive, computed, watchEffect } from 'vue';
+import { headerMap, allColumns } from '@/js/utils';
 import { searchResultsTable } from '@/js/state';
 
-const props = defineProps({
-    bureaus: Array,
-    columns: Array
+const options = ref('');
+
+watchEffect(async () => {
+    let url = new URL('http://localhost:7007/getOptions');
+    const response = await fetch(url);
+    await response.json()
+        .then((response) => {
+            // console.log(response);
+            options.value = response;
+        })
 });
 
 const input = reactive({});
@@ -16,8 +23,21 @@ const frequencyRelation = ref('');
 const frequencyInputLower = ref('');
 const frequencyInput = ref('');
 const bureauSelection = ref('');
-const query = ref([]);
+const bureaus = ref([]);
+const txStateCountryCodeSelection = ref('');
+const txStateCountryCodes = ref([]);
+const rxStateCountryCodeSelection = ref('');
+const rxStateCountryCodes = ref([]);
+const txAntennaLocationSelection = ref('');
+const txAntennaLocations = ref([]);
+const rxAntennaLocationSelection = ref('');
+const rxAntennaLocations = ref([]);
+const stationClassSelection = ref([]);
+const stationClasses = ref([]);
+const functinoIdentifierSelection = ref([]);
+const functinoIdentifiers = ref([]);
 const numericRelations = ref(['==', '>=', '>', '<=', '<', '!=', 'between']);
+const query = ref([]);
 
 function search(query, conditionExpected) {
     console.log('Search');
@@ -31,7 +51,7 @@ function search(query, conditionExpected) {
     <div id="searchInputs">
         <div id="conditionInputs">
             <div class="inputLine">
-                <h3>Serial Number</h3>
+                <h3 class="inputLabel">Serial Number</h3>
                 <select v-model="serialNumRelation">
                     <option disabled value=""></option>
                     <option v-for="relation in numericRelations" :value="relation">
@@ -40,13 +60,13 @@ function search(query, conditionExpected) {
                 </select>
                 <div v-show="serialNumRelation === 'between'" class="inputLine">
                     <input v-model="serialNumInputLower" />
-                    <p>and</p>
+                    <p class="inputSeperator">and</p>
                 </div>
                 <input v-model="serialNumInput" />
             </div>
             <div class="divider" />
             <div class="inputLine">
-                <h3>Frequency</h3>
+                <h3 class="inputLabel">Frequency</h3>
                 <select v-model="frequencyRelation">
                     <option disabled value=""></option>
                     <option v-for="relation in numericRelations" :value="relation">
@@ -55,16 +75,16 @@ function search(query, conditionExpected) {
                 </select>
                 <div v-show="frequencyRelation === 'between'" class="inputLine">
                     <input v-model="frequencyInputLower" />
-                    <p>and</p>
+                    <p class="inputSeperator">and</p>
                 </div>
                 <input v-model="frequencyInput" />
             </div>
             <div class="divider" />
             <div class="inputLine">
-                <h3>Bureau</h3>
+                <h3 class="inputLabel">Bureau</h3>
                 <select v-model="bureauSelection">
                     <option disabled value="">Please select one</option>
-                    <option v-for="bureau in props.bureaus" :value="bureau">
+                    <option v-for="bureau in options.bureaus" :value="bureau">
                         {{ bureau }}
                     </option>
                 </select>
@@ -72,7 +92,7 @@ function search(query, conditionExpected) {
             <div class="divider" />
             <h3>Result Columns</h3>
             <div class="columns">
-                <template v-for="column in props.columns">
+                <template v-for="column in allColumns">
                     <div class="inputLine">
                         <input type="checkbox" :id="column" :value="column" v-model="searchResultsTable.displayColumns">
                         <label :for="column">{{ headerMap(column) }}</label>
@@ -106,13 +126,15 @@ function search(query, conditionExpected) {
     height: 20px;
 }
 
-#queryString {
-    min-width: 5em;
-    min-height: 1.25em;
-    background-color: var(--color-background-mute);
+.inputLabel {
+    padding-right: 5px;
 }
 
-input, select, button, #queryString {
+.inputSeperator {
+    padding: 0 5px;
+}
+
+input, select, button {
     border-radius: 4px;
 }
 
@@ -122,7 +144,7 @@ input, select, button {
     color: var(--color-text);
 }
 
-label, input, select, button, #queryString {
+label, input, select, button {
     padding: 2px 5px;
 }
 </style>

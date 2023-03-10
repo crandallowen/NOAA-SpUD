@@ -14,17 +14,6 @@ const routes = {
 };
 
 const currentPath = ref(window.location.hash);
-const bureaus = ref([]);
-
-watchEffect(async () => {
-    let url = new URL('http://localhost:7007/getBureaus');
-    const response = await fetch(url);
-    await response.json()
-        .then((response) => {
-            // console.log(response);
-            bureaus.value = response.bureaus;
-        })
-});
 
 window.addEventListener('hashchange', () => {
     currentPath.value = window.location.hash
@@ -38,7 +27,7 @@ const currentProperties = computed (() => {
     if (currentView.value.__name == 'home') {
         return {};
     } else if (currentView.value.__name == 'search') {
-        return {bureaus: bureaus.value, columns: allColumns};
+        return {};
     } else 
         return {};
 });
@@ -62,7 +51,9 @@ function onSearch(query) {
   </header>
 
   <main>
-    <component :is="currentView" v-bind="currentProperties" @search="onSearch" />
+    <KeepAlive>
+        <component :is="currentView" v-bind="currentProperties" @search="onSearch" />
+    </KeepAlive>
   </main>
 </template>
 

@@ -19,7 +19,7 @@ function handleCollapse(event) {
 <template>
     <div>
         <div class="topLine">
-            <h3>{{ props.groupName }}</h3>
+            <h3 @click="handleCollapse">{{ props.groupName }}</h3>
             <button class="collapseButton" @click="handleCollapse">{{ visible ? '\u25BC' : '\u25B6' }}</button>
         </div>
         <div v-show="visible">
@@ -33,9 +33,15 @@ function handleCollapse(event) {
     display: flex;
     flex-direction: row;
 }
+
 .collapseButton {
     background-color: var(--color-background);
     border: none;
     color: var(--color-text);
+    cursor: pointer;
+}
+
+h3 {
+    cursor: pointer;
 }
 </style>
