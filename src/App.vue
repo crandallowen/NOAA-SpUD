@@ -1,12 +1,12 @@
 <script setup>
 import { ref, reactive, computed, watchEffect } from 'vue';
-import { allColumns } from '@/js/utils';
 import home from './components/home.vue';
 import search from './components/search.vue';
 import notFound from './components/notFound.vue';
 import navigation from './components/navigation.vue';
 import searchResults from './components/searchResults.vue';
 
+const searchParams = ref(null);
 const routes = {
     '/': home,
     '/search': search,
@@ -24,16 +24,15 @@ const currentView = computed(() => {
 });
 
 const currentProperties = computed (() => {
-    if (currentView.value.__name == 'home') {
-        return {};
-    } else if (currentView.value.__name == 'search') {
-        return {};
+    if (currentView.value.__name == 'searchResults') {
+        return {params: searchParams.value};
     } else 
         return {};
 });
 
 function onSearch(query) {
-    console.log('component: App', query);
+    searchParams.value = JSON.parse(JSON.stringify(query));
+    window.location.href = '#/searchResults'
 }
 </script>
 

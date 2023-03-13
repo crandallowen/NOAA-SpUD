@@ -80,10 +80,8 @@ app.get('/query', async (request, response, next) => {
         column: request.query.sortColumn,
         direction: request.query.sortDirection === 'ascending' ? 'ASC' : 'DESC'
     };
-    // let params = request.query.params;
-    // for (const field in params) {
-
-    // }
+    let params = JSON.parse(request.query.params);
+    console.log(params);
     const client = new Client(clientConfig);
     await client.connect()
         .then(() => console.log('Connected to', clientConfig.database, 'at', clientConfig.host+':'+clientConfig.port))

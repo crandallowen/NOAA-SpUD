@@ -32,45 +32,45 @@ const stationClassSelection = ref('');
 const functionIdentifierSelection = ref('');
 const numericRelations = ['==', '>=', '>', '<=', '<', '!=', 'between'];
 
-const query = reactive({
-        'serial_num': [],
-        'frequency_khz': [],
-        'bureau': [],
-        'tx_state_country_code': [],
-        'rx_state_country_code': [],
-        'tx_antenna_location': [],
-        'rx_antenna_location': [],
-        'station_class': [],
-        'function_identifier': []
-});
+const query = ref([]);
 
 const queryString = computed(() => {
     let queryString = '';
-    let fieldList = []
-    for (const field in query) {
-        let conditionList = []
-        for (const i in query[field]) {
-            if (query[field][i].relation != 'between')
-                conditionList.push(`${query[field][i].relation} ${format(query[field][i].value, field)}`);
-            else
-                conditionList.push(`${query[field][i].relation} ${format(query[field][i].lowerValue, field)} and ${format(query[field][i].higherValue, field)}`);
+    if (query.value.length != 0) {
+        let queryObject = {}
+        for (const i in query.value) {
+            if (!Object.keys(queryObject).includes(query.value[i].field)) {
+                queryObject[query.value[i].field] = [];
+            }
+            if (query.value[i].field === 'serial_num' || query.value[i].field === 'frequency_khz') {
+                if (query.value[i].relation != 'between')
+                    queryObject[query.value[i].field].push(`${query.value[i].relation} ${format(query.value[i].value, query.value[i].field)}`);
+                else
+                    queryObject[query.value[i].field].push(`${query.value[i].relation} ${format(query.value[i].lowerValue, query.value[i].field)} and ${format(query.value[i].higherValue, query.value[i].field)}`);
+            } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(query.value[i].field)) {
+                queryObject[query.value[i].field].push(query.value[i].value)            
+            }
         }
-        if (conditionList.length != 0)
-            fieldList.push(`${headerMap(field)} ${conditionList.join(' OR ')}`);
+        let queryList = []
+        for (const field in queryObject) {
+            if (field === 'serial_num' || field === 'frequency_khz')
+                queryList.push(`${headerMap(field)} ${queryObject[field].join(' OR ')}`);
+            else
+                queryList.push(`${headerMap(field)} in [${queryObject[field].join(', ')}]`)
+        }
+        queryString = queryList.join('\n');
     }
-    if (fieldList.length != 0)
-        queryString = fieldList.join('\n');
     return queryString;
 });
 
 function add(field) {
     if (field === 'serial_num') {
         if (serialNumRelation.value != 'between') {
-            query['serial_num'].push({relation: serialNumRelation.value, value: serialNumInput.value});
+            query.value.push({field: field, relation: serialNumRelation.value, value: serialNumInput.value});
             serialNumInput.value = '';
             serialNumRelation.value = '';
         } else {
-            query['serial_num'].push({relation: serialNumRelation.value, lowerValue: serialNumInputLower.value, higherValue: serialNumInput.value});
+            query.value.push({field: field, relation: serialNumRelation.value, lowerValue: serialNumInputLower.value, higherValue: serialNumInput.value});
             serialNumInput.value = '';
             serialNumInputLower.value = '';
             serialNumRelation.value = '';
@@ -79,7 +79,7 @@ function add(field) {
         let frequency_khz = frequencyToKHz(frequencyInput.value);
         if (frequencyRelation.value != 'between') {
             if (frequency_khz) {
-                query['frequency_khz'].push({relation: frequencyRelation.value, value: frequency_khz});
+                query.value.push({field: field, relation: frequencyRelation.value, value: frequency_khz});
                 frequencyInput.value = '';
                 frequencyRelation.value = '';
             } else {
@@ -88,7 +88,7 @@ function add(field) {
         } else {
             let frequencyLower_khz = frequencyToKHz(frequencyInputLower.value);
             if (frequency_khz && frequencyLower_khz) {
-                query['frequency_khz'].push({relation: frequencyRelation.value, lowerValue: frequencyLower_khz, higherValue: frequency_khz});
+                query.value.push({field: field, relation: frequencyRelation.value, lowerValue: frequencyLower_khz, higherValue: frequency_khz});
                 frequencyInput.value = '';
                 frequencyInputLower.value = '';
                 frequencyRelation.value = '';
@@ -101,51 +101,36 @@ function add(field) {
             }
         }
     } else if (field == 'bureau') {
-        query['bureau'].push(bureauSelection.value);
+        query.value.push({field: field, value: bureauSelection.value});
         bureauSelection.value = '';
     } else if (field === 'tx_state_country_code') {
-        query['tx_state_country_code'].push(txStateCountryCodeSelection.value);
+        query.value.push({field: field, value: txStateCountryCodeSelection.value});
         txStateCountryCodeSelection.value = '';
     } else if (field === 'rx_state_country_code') {
-        query['rx_state_country_code'].push(rxStateCountryCodeSelection.value);
+        query.value.push({field: field, value: rxStateCountryCodeSelection.value});
         rxStateCountryCodeSelection.value = '';
     } else if (field === 'tx_antenna_location') {
-        query['tx_antenna_location'].push(txAntennaLocationSelection.value);
+        query.value.push({field: field, value: txAntennaLocationSelection.value});
         txAntennaLocationSelection.value = '';
     } else if (field === 'rx_antenna_location') {
-        query['rx_antenna_location'].push(rxAntennaLocationSelection.value);
+        query.value.push({field: field, value: rxAntennaLocationSelection.value});
         rxAntennaLocationSelection.value = '';
     } else if (field === 'station_class') {
-        query['station_class'].push(stationClassSelection.value);
+        query.value.push({field: field, value: stationClassSelection.value});
         stationClassSelection.value = '';
     } else if (field === 'function_identifier') {
-        query['function_identifier'].push(functionIdentifierSelection.value);
+        query.value.push({field: field, value: functionIdentifierSelection.value});
         functionIdentifierSelection.value = '';
     }
     // console.log(query.value);
 }
 
 function search(query) {
-    let params = {};
-    for (const field in query) {
-        if (query[field].length != 0) {
-            params[field] = query[field];
-        }
-    }
-    params = JSON.parse(JSON.stringify(params));
-    emit('search', params);
+    emit('search', query);
 }
 
 function clear() {
-    query['serial_num'] = [];
-    query['frequency_khz'] = [];
-    query['bureau'] = [];
-    query['tx_state_country_code'] = [];
-    query['rx_state_country_code'] = [];
-    query['tx_antenna_location'] = [];
-    query['rx_antenna_location'] = [];
-    query['station_class'] = [];
-    query['function_identifier'] = [];
+    query.value = [];
 }
 
 </script>
@@ -168,7 +153,7 @@ function clear() {
                     <p class="inputSeperator">and</p>
                 </div>
                 <input v-model="serialNumInput" />
-                <button @click="add('serial_num')" :disabled="serialNumRelation === '' && serialNumInput === '' || (serialNumRelation === 'between' && serialNumInputLower === '')">Add</button>
+                <button @click="add('serial_num')" :disabled="serialNumRelation === '' || serialNumInput === '' || (serialNumRelation === 'between' && serialNumInputLower === '')">Add</button>
             </div>
             <div class="divider" />
             <div class="inputLine">
@@ -184,7 +169,7 @@ function clear() {
                     <p class="inputSeperator">and</p>
                 </div>
                 <input v-model="frequencyInput" />
-                <button @click="add('frequency_khz')" :disabled="frequencyRelation === '' && frequencyInput === '' || (frequencyRelation === 'between' && frequencyInputLower === '')">Add</button>
+                <button @click="add('frequency_khz')" :disabled="frequencyRelation === '' || frequencyInput === '' || (frequencyRelation === 'between' && frequencyInputLower === '')">Add</button>
             </div>
             <div class="divider" />
             <div class="inputLine">

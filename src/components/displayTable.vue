@@ -14,18 +14,21 @@ const rows = ref(null);
 const sortDirection = ref(null);
 const sortColumn = ref(null);
 
-const url = computed(() => {
+watchEffect(async () => {
     let url = new URL('http://localhost:7007/query');
     let orderedColumns = [];
     allColumns.forEach((column) => {if (props.state.displayColumns.includes(column)) {orderedColumns.push(column)}})
     orderedColumns.forEach((column) => url.searchParams.append('column', column));
     url.searchParams.append('sortColumn', props.state.sort.column);
     url.searchParams.append('sortDirection', props.state.sort.direction);
-    return url;
-});
-
-watchEffect(async () => {
-    const response = await fetch(url.value);
+    if (props.params) {
+        let paramsList = [];
+        for (const i in props.params) {
+            paramsList.push(JSON.stringify(props.params[i]));
+        }
+        url.searchParams.append('params', `[${paramsList.join(',')}]`)
+    }
+    const response = await fetch(url);
     await response.json()
         .then((response) => {
             columns.value = response.columns;
