@@ -80,6 +80,10 @@ app.get('/query', async (request, response, next) => {
         column: request.query.sortColumn,
         direction: request.query.sortDirection === 'ascending' ? 'ASC' : 'DESC'
     };
+    // let params = request.query.params;
+    // for (const field in params) {
+
+    // }
     const client = new Client(clientConfig);
     await client.connect()
         .then(() => console.log('Connected to', clientConfig.database, 'at', clientConfig.host+':'+clientConfig.port))
@@ -87,6 +91,7 @@ app.get('/query', async (request, response, next) => {
             console.error('Connection error:', error.stack)
             next(error);
         });
+    //Should change to create a string that is an appropriate number of '%I's and provide an array of the columns
     let columnSQL = columns.join(', ')
     let sql = format('SELECT %s FROM RFAs ORDER BY %I %s', columnSQL, sort.column, sort.direction);
     // console.log(sql);

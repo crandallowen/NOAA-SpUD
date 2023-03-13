@@ -33,7 +33,7 @@ const currentProperties = computed (() => {
 });
 
 function onSearch(query) {
-    console.log(query);
+    console.log('component: App', query);
 }
 </script>
 

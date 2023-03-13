@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, computed, watchEffect } from 'vue';
-import { frequencyToKHz, headerMap, allColumns } from '@/js/utils';
+import { frequencyToKHz, headerMap, allColumns, format } from '@/js/utils';
 import { searchResultsTable } from '@/js/state';
 
 const emit = defineEmits(['search']);
@@ -12,7 +12,7 @@ watchEffect(async () => {
     const response = await fetch(url);
     await response.json()
         .then((response) => {
-            console.log(response);
+            // console.log(response);
             options.value = response;
         })
 });
@@ -20,49 +20,66 @@ watchEffect(async () => {
 const serialNumRelation = ref('');
 const serialNumInputLower = ref('');
 const serialNumInput = ref('');
-const serialNums = ref([]);
 const frequencyRelation = ref('');
 const frequencyInputLower = ref('');
 const frequencyInput = ref('');
-const frequencies = ref([]);
 const bureauSelection = ref('');
-const bureaus = ref([]);
 const txStateCountryCodeSelection = ref('');
-const txStateCountryCodes = ref([]);
 const rxStateCountryCodeSelection = ref('');
-const rxStateCountryCodes = ref([]);
 const txAntennaLocationSelection = ref('');
-const txAntennaLocations = ref([]);
 const rxAntennaLocationSelection = ref('');
-const rxAntennaLocations = ref([]);
-const stationClassSelection = ref([]);
-const stationClasses = ref([]);
-const functionIdentifierSelection = ref([]);
-const functionIdentifiers = ref([]);
+const stationClassSelection = ref('');
+const functionIdentifierSelection = ref('');
 const numericRelations = ['==', '>=', '>', '<=', '<', '!=', 'between'];
 
-const query = computed(() => {
-    return {
-        'serial_num': serialNums.value,
-        'frequency': frequencies.value,
-        'bureau': bureaus.value
-    };
+const query = reactive({
+        'serial_num': [],
+        'frequency_khz': [],
+        'bureau': [],
+        'tx_state_country_code': [],
+        'rx_state_country_code': [],
+        'tx_antenna_location': [],
+        'rx_antenna_location': [],
+        'station_class': [],
+        'function_identifier': []
 });
-//need to handle 'between' operator
+
+const queryString = computed(() => {
+    let queryString = '';
+    let fieldList = []
+    for (const field in query) {
+        let conditionList = []
+        for (const i in query[field]) {
+            if (query[field][i].relation != 'between')
+                conditionList.push(`${query[field][i].relation} ${format(query[field][i].value, field)}`);
+            else
+                conditionList.push(`${query[field][i].relation} ${format(query[field][i].lowerValue, field)} and ${format(query[field][i].higherValue, field)}`);
+        }
+        if (conditionList.length != 0)
+            fieldList.push(`${headerMap(field)} ${conditionList.join(' OR ')}`);
+    }
+    if (fieldList.length != 0)
+        queryString = fieldList.join('\n');
+    return queryString;
+});
+
 function add(field) {
     if (field === 'serial_num') {
         if (serialNumRelation.value != 'between') {
-            serialNums.value.push({relation: serialNumRelation.value, value: serialNumInput.value});
+            query['serial_num'].push({relation: serialNumRelation.value, value: serialNumInput.value});
             serialNumInput.value = '';
             serialNumRelation.value = '';
         } else {
-            
+            query['serial_num'].push({relation: serialNumRelation.value, lowerValue: serialNumInputLower.value, higherValue: serialNumInput.value});
+            serialNumInput.value = '';
+            serialNumInputLower.value = '';
+            serialNumRelation.value = '';
         }
-    } else if (field === 'frequency') {
+    } else if (field === 'frequency_khz') {
         let frequency_khz = frequencyToKHz(frequencyInput.value);
         if (frequencyRelation.value != 'between') {
             if (frequency_khz) {
-                frequencies.value.push({relation: frequencyRelation.value, value: frequency_khz});
+                query['frequency_khz'].push({relation: frequencyRelation.value, value: frequency_khz});
                 frequencyInput.value = '';
                 frequencyRelation.value = '';
             } else {
@@ -71,8 +88,10 @@ function add(field) {
         } else {
             let frequencyLower_khz = frequencyToKHz(frequencyInputLower.value);
             if (frequency_khz && frequencyLower_khz) {
-                frequencies.value.push({relation: '>=', value: frequencyLower_khz});
-                frequencies.value.push({relation: '<=', value: frequency_khz});
+                query['frequency_khz'].push({relation: frequencyRelation.value, lowerValue: frequencyLower_khz, higherValue: frequency_khz});
+                frequencyInput.value = '';
+                frequencyInputLower.value = '';
+                frequencyRelation.value = '';
             } else {
                 if (!frequency_khz) {
                     console.log('Invalid frequency:', frequencyInput.value);
@@ -82,33 +101,51 @@ function add(field) {
             }
         }
     } else if (field == 'bureau') {
-        bureaus.value.push(bureauSelection.value);
+        query['bureau'].push(bureauSelection.value);
         bureauSelection.value = '';
     } else if (field === 'tx_state_country_code') {
-        txStateCountryCodes.value.push(txStateCountryCodeSelection.value);
+        query['tx_state_country_code'].push(txStateCountryCodeSelection.value);
         txStateCountryCodeSelection.value = '';
     } else if (field === 'rx_state_country_code') {
-        rxStateCountryCodes.value.push(rxStateCountryCodeSelection.value);
+        query['rx_state_country_code'].push(rxStateCountryCodeSelection.value);
         rxStateCountryCodeSelection.value = '';
     } else if (field === 'tx_antenna_location') {
-        txAntennaLocations.value.push(txAntennaLocationSelection.value);
+        query['tx_antenna_location'].push(txAntennaLocationSelection.value);
         txAntennaLocationSelection.value = '';
     } else if (field === 'rx_antenna_location') {
-        rxAntennaLocations.value.push(rxAntennaLocationSelection.value);
+        query['rx_antenna_location'].push(rxAntennaLocationSelection.value);
         rxAntennaLocationSelection.value = '';
     } else if (field === 'station_class') {
-        stationClasses.value.push(stationClassSelection.value);
+        query['station_class'].push(stationClassSelection.value);
         stationClassSelection.value = '';
     } else if (field === 'function_identifier') {
-        functionIdentifiers.value.push(functionIdentifierSelection.value);
+        query['function_identifier'].push(functionIdentifierSelection.value);
         functionIdentifierSelection.value = '';
     }
-    console.log(query.value);
+    // console.log(query.value);
 }
 
-function search(query, conditionExpected) {
-    console.log('Search');
-    emit('search');
+function search(query) {
+    let params = {};
+    for (const field in query) {
+        if (query[field].length != 0) {
+            params[field] = query[field];
+        }
+    }
+    params = JSON.parse(JSON.stringify(params));
+    emit('search', params);
+}
+
+function clear() {
+    query['serial_num'] = [];
+    query['frequency_khz'] = [];
+    query['bureau'] = [];
+    query['tx_state_country_code'] = [];
+    query['rx_state_country_code'] = [];
+    query['tx_antenna_location'] = [];
+    query['rx_antenna_location'] = [];
+    query['station_class'] = [];
+    query['function_identifier'] = [];
 }
 
 </script>
@@ -147,7 +184,7 @@ function search(query, conditionExpected) {
                     <p class="inputSeperator">and</p>
                 </div>
                 <input v-model="frequencyInput" />
-                <button @click="add('frequency')" :disabled="frequencyRelation === '' && frequencyInput === '' || (frequencyRelation === 'between' && frequencyInputLower === '')">Add</button>
+                <button @click="add('frequency_khz')" :disabled="frequencyRelation === '' && frequencyInput === '' || (frequencyRelation === 'between' && frequencyInputLower === '')">Add</button>
             </div>
             <div class="divider" />
             <div class="inputLine">
@@ -241,8 +278,12 @@ function search(query, conditionExpected) {
         <div class="divider" />
         <div class="divider" />
         <div id="queryDisplay">
+            <div v-show="queryString != ''">
+                <pre>{{ queryString }}</pre>
+            </div>
             <div class="inputLine">
-                <button @click="($event) => $emit('search', query)">Search</button>
+                <button @click="($event) => search(query)" :disabled="Object.keys(query).length == 0">Search</button>
+                <button @click="clear">Clear</button>
             </div>
         </div>
     </div>
@@ -284,5 +325,9 @@ input, select, button {
 
 label, input, select, button {
     padding: 2px 5px;
+}
+
+pre {
+    font-family: inherit;
 }
 </style>
