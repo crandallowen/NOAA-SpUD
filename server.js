@@ -17,7 +17,7 @@ const optionQueries = {
     txAntennaLocations: `SELECT DISTINCT tx_antenna_location FROM RFAs ORDER BY tx_antenna_location ASC`,
     rxAntennaLocations: `SELECT DISTINCT unnest(rx_antenna_location) AS rx_antenna_location FROM RFAs ORDER BY rx_antenna_location ASC`,
     stationClasses: `SELECT DISTINCT unnest(station_class) AS station_class FROM RFAs ORDER BY station_class ASC`,
-    functionIdentifiers: `SELECT DISTINCT concat(main_function_id, intermediate_function_id, detailed_function_id) AS function_identifier FROM RFAs ORDER BY function_identifier ASC`, 
+    functionIdentifiers: `SELECT DISTINCT function_identifier FROM (SELECT main_function_id AS function_identifier FROM RFAs UNION SELECT intermediate_function_id AS function_identifier FROM RFAs UNION SELECT detailed_function_id AS function_identifier FROM RFAs) AS function_identifiers ORDER BY function_identifier ASC`, 
 };
 
 const pointOfContactOptions = `SELECT DISTINCT point_of_contact FROM RFAs`;
@@ -80,7 +80,44 @@ app.get('/query', async (request, response, next) => {
         column: request.query.sortColumn,
         direction: request.query.sortDirection === 'ascending' ? 'ASC' : 'DESC'
     };
-    let params = JSON.parse(request.query.params);
+    let params = null;
+    let conditions = [];
+    if (request.query.params) {
+        params = JSON.parse(request.query.params);
+        let queryObject = {}
+        for (const i in params) {
+            if (!Object.keys(queryObject).includes(params[i].field)) {
+                queryObject[params[i].field] = [];
+            }
+            //Will want to make a list/object that groups fields into numerical or categorical
+            //Handle numerical
+            if (params[i].field === 'serial_num' || params[i].field === 'frequency_khz') {
+                if (params[i].relation === 'between') {
+                    let lowerValue = (params[i].field == 'serial_num') ? `C   ${params[i].lowerValue.padStart(6, '0')}` : parseFloat(params[i].lowerValue);
+                    let higherValue = (params[i].field == 'serial_num') ? `C   ${params[i].higherValue.padStart(6, '0')}` : parseFloat(params[i].higherValue);
+                    queryObject[params[i].field].push(format(`(%I >= %L AND %I <= %L)`, params[i].field, lowerValue, params[i].field, higherValue));
+                } else {
+                    let value = (params[i].field == 'serial_num') ? `C   ${params[i].value.padStart(6, '0')}` : parseFloat(params[i].value);
+                    queryObject[params[i].field].push(format(`%I ${params[i].relation} %L`, params[i].field, value));
+                }
+            //Handle categorical
+            } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(params[i].field)) {
+                queryObject[params[i].field].push(params[i].value);
+            }
+        }
+        for (const key in queryObject) {
+            if (key === 'serial_num' || key === 'frequency_khz') {
+                conditions.push(queryObject[key].join(' OR '));
+            } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(key)) {
+                if (key == 'function_identifier') {
+                    //I may move this above to better match the pattern of handling different numerical fields
+                    conditions.push(format(`(main_function_id IN (%L) OR intermediate_function_id IN (%L) OR detailed_function_id IN (%L))`, queryObject[key], queryObject[key], queryObject[key]));
+                } else {
+                    conditions.push(format(`${key} IN (%L)`, queryObject[key]));
+                }
+            }
+        }
+    }
     console.log(params);
     const client = new Client(clientConfig);
     await client.connect()
@@ -89,10 +126,13 @@ app.get('/query', async (request, response, next) => {
             console.error('Connection error:', error.stack)
             next(error);
         });
-    //Should change to create a string that is an appropriate number of '%I's and provide an array of the columns
-    let columnSQL = columns.join(', ')
-    let sql = format('SELECT %s FROM RFAs ORDER BY %I %s', columnSQL, sort.column, sort.direction);
-    // console.log(sql);
+    let selectSQL = format.withArray(`SELECT ${'%I, '.repeat(columns.length).slice(0, -2)}`, columns);
+    //Modify this when more tables/views are in use
+    let fromSQL = format(`FROM RFAs`);
+    let whereSQL = format.withArray(`WHERE ${'%s AND '.repeat(conditions.length).slice(0, -5)}`, conditions);
+    let orderBySQL = format(`ORDER BY %I %s`, sort.column, sort.direction);
+    let sql = (params) ? `${selectSQL} ${fromSQL} ${whereSQL} ${orderBySQL}` : `${selectSQL} ${fromSQL} ${orderBySQL}`;
+    console.log(sql);
     await client.query(sql)
         .then((result) => {
             console.log('Returned', result.rowCount, 'rows.');

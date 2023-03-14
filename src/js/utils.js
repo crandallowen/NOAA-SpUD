@@ -216,6 +216,7 @@ export const RFAHeaderMap = {
     main_function_id: 'Main Function Identifier',
     intermediate_function_id: 'Intermediate Function Indentifier',
     detailed_function_id: 'Detailed Function Identifier',
+    function_identifier: 'Function Identifier',
     frequency_khz: 'Frequency',
     frequency: 'SXXI Frequency',
     station_class: 'Station Class',

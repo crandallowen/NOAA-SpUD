@@ -64,6 +64,7 @@ const queryString = computed(() => {
 });
 
 function add(field) {
+    //Need to catch invalid serial numbers (greater than 6 digits)
     if (field === 'serial_num') {
         if (serialNumRelation.value != 'between') {
             query.value.push({field: field, relation: serialNumRelation.value, value: serialNumInput.value});
