@@ -2,10 +2,11 @@
 import { ref } from 'vue';
 
 const props = defineProps({
-    groupName: String
+    groupName: String,
+    collapsed: Boolean
 });
 
-const visible = ref(true);
+const visible = ref(!props.collapsed);
 
 </script>
 

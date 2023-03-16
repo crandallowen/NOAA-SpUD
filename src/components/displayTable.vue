@@ -1,30 +1,76 @@
 <script setup>
 import { ref, reactive, computed, watchEffect } from 'vue';
-import { format, headerMap, emissionGroup, txGroup, rxGroup, allColumns } from '@/js/utils';
+import { format, headerMap, visibleColumnGroups, allColumns, defaultColumns, frequencyFilters } from '@/js/utils';
 import collapsibleGroup from './collapsibleGroup.vue';
 
 const props = defineProps({
     title: String,
-    state: Object,
-    params: Object
+    sortColumn: {
+        type: String,
+        default: 'frequency_khz'
+    },
+    sortDirection: {
+        type: String,
+        default: 'ascending'
+    },
+    displayColumns: {
+        type: String,
+        default(rawProps) {
+            return [...defaultColumns];
+        }
+    },
+    params: {
+        type: Array,
+        default(rawProps) {
+            return [];
+        }
+    }
 });
 
 const columns = ref(null);
 const rows = ref(null);
 const sortDirection = ref(null);
 const sortColumn = ref(null);
+const state = reactive({
+    sort: {
+        column: props.sortColumn,
+        direction: props.sortDirection
+    },
+    displayColumns: [...props.displayColumns],
+    params: [...props.params]
+});
+const rowFilters = reactive({
+    'frequency_khz': frequencyFilters,
+    'bureau': [],
+    'function_identifier': [],
+    'tx_state_country_code': []
+});
+
+watchEffect(async () => {
+    let url = new URL('http://localhost:7007/getFilters');
+    const response = await fetch(url);
+    await response.json()
+        .then((response) => {
+            for (const field in rowFilters) {
+                for (const i in response[field]) {
+                    rowFilters[field].push({id: field+'Filter'+i, name: response[field][i], condition: {field: field, value: response[field][i]}});
+                }
+            }
+        })
+    // console.log(rowFilters);
+});
 
 watchEffect(async () => {
     let url = new URL('http://localhost:7007/query');
     let orderedColumns = [];
-    allColumns.forEach((column) => {if (props.state.displayColumns.includes(column)) {orderedColumns.push(column)}})
+    allColumns.forEach((column) => {if (state.displayColumns.includes(column)) {orderedColumns.push(column)}})
     orderedColumns.forEach((column) => url.searchParams.append('column', column));
-    url.searchParams.append('sortColumn', props.state.sort.column);
-    url.searchParams.append('sortDirection', props.state.sort.direction);
-    if (props.params) {
+    url.searchParams.append('sortColumn', state.sort.column);
+    url.searchParams.append('sortDirection', state.sort.direction);
+    if (state.params.length != 0) {
         let paramsList = [];
-        for (const i in props.params) {
-            paramsList.push(JSON.stringify(props.params[i]));
+        for (const i in state.params) {
+            paramsList.push(JSON.stringify(state.params[i]));
         }
         url.searchParams.append('params', `[${paramsList.join(',')}]`)
     }
@@ -33,40 +79,22 @@ watchEffect(async () => {
         .then((response) => {
             columns.value = response.columns;
             rows.value = response.rows;
-            sortDirection.value = props.state.sort.direction;
-            sortColumn.value = props.state.sort.column;
+            sortDirection.value = state.sort.direction;
+            sortColumn.value = state.sort.column;
         })
 });
 
-const recordColumns = computed(() => {
-    let recordColumns = [];
-    allColumns.forEach((column) => {
-        if (!(emissionGroup.includes(column) || txGroup.includes(column) || rxGroup.includes(column)))
-            {
-                recordColumns.push(column);
-            }
-    });
-    return recordColumns;
-});
-
-const visibleColumnGroups = reactive({
-    'Record Columns': recordColumns,
-    'Emission Group Columns': emissionGroup,
-    'Transmitter Columns': txGroup,
-    'Receiver Columns': rxGroup
-});
-
 function handleSort(column) {
-    if (column === props.state.sort.column) {
-        if (props.state.sort.direction === 'ascending')
-            props.state.sort.direction = 'descending';
+    if (column === state.sort.column) {
+        if (state.sort.direction === 'ascending')
+            state.sort.direction = 'descending';
         else
-            props.state.sort.direction = 'ascending';
+            state.sort.direction = 'ascending';
     } else {
-        props.state.sort.column = column;
-        props.state.sort.direction = 'ascending';
+        state.sort.column = column;
+        state.sort.direction = 'ascending';
     }
-    console.log('Sort rows by', props.state.sort.column, 'in', props.state.sort.direction, 'order');
+    console.log('Sort rows by', state.sort.column, 'in', state.sort.direction, 'order');
 }
 </script>
 
@@ -74,12 +102,23 @@ function handleSort(column) {
     <div class="tableWithSelects">
         <!-- Side Bar -->
         <div class="columnSelect">
+            <h2>Filters</h2>
+            <template v-for="key in Object.keys(rowFilters)">
+                <collapsibleGroup :group-name="headerMap(key)" collapsed>
+                    <template v-for="filter in rowFilters[key]">
+                        <div class="inputLine">
+                            <input type="checkbox" :id="filter.id" :value="filter.condition" v-model="state.params">
+                            <label :for="filter.id">{{ filter.name }}</label>
+                        </div>
+                    </template>
+                </collapsibleGroup>
+            </template>
             <h2>Column Select</h2>
             <template v-for="key in Object.keys(visibleColumnGroups)">
                 <collapsibleGroup :group-name="key">
                     <template v-for="column in visibleColumnGroups[key]">
                         <div class="inputLine">
-                            <input type="checkbox" :id="column" :value="column" v-model="props.state.displayColumns">
+                            <input type="checkbox" :id="column" :value="column" v-model="state.displayColumns">
                             <label :for="column">{{ headerMap(column) }}</label>
                         </div>
                     </template>

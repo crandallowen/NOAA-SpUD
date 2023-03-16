@@ -1,14 +1,10 @@
 import { reactive } from 'vue';
 import { defaultColumns } from '@/js/utils';
 
-export const homeTable = reactive({
-    filters: [],
-    sort: {column: 'frequency_khz', direction: 'ascending'},
-    displayColumns: [...defaultColumns]
-});
-
-export const searchResultsTable = reactive({
-    filters: [],
-    sort: {column: 'frequency_khz', direction: 'ascending'},
-    displayColumns: [...defaultColumns]
+export const searchResultsState = reactive({
+    title: 'Search Results',
+    sortColumn: 'frequency_khz', 
+    sortDirection: 'ascending',
+    displayColumns: [...defaultColumns],
+    params: []
 });

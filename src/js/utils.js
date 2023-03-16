@@ -47,31 +47,36 @@ export function frequencyToKHz(frequencyString) {
     return frequencyFloat.toPrecision(12).toString() / 1;
 };
 
-export const rowFilters = ['Frequency', 'Bureau', 'Function Identifier', 'Tx State/Country Code']
-
-export const frequencyFilters = {
-    band0: {
-        name: 'F < 400 MHz',
-        lowerBound: 0,
-        upperBound: 400000
-    },
-    band1: {
-        name: '400 MHz <= F < 411 MHz',
-        lowerBound: 400000,
-        upperBound: 411000
-    },
-    band2: {
-        name: 'F >= 411 MHz',
-        lowerBound: 411000,
-        upperBound: 300000000
-    }
-};
+export const frequencyFilters = [
+    {id: 'frequencyFilter0', name: 'F < 400 MHz', condition: {field: 'frequency_khz', relation: '<', value: 400000}},
+    {id: 'frequencyFilter1', name: '400 MHz <= F <= 410 MHz', condition: {field: 'frequency_khz', relation: 'between', lowerValue: 400000, higherValue: 410000}},
+    {id: 'frequencyFilter2', name: 'F > 410 MHz', condition: {field: 'frequency_khz', relation: '>=', value: 410000}}
+];
 
 export const defaultColumns = ['serial_num', 'bureau', 'main_function_id', 'frequency_khz', 'power', 'tx_state_country_code', 'tx_antenna_location', 'revision_date'];
 
 // export const hiddenColumns = []
 
+export const recordColumns = [
+    'serial_num',
+    'agency_action_num',
+    'bureau',
+    'agency',
+    'main_function_id',
+    'intermediate_function_id',
+    'detailed_function_id',
+    'frequency_khz',
+    'last_transaction_date',
+    'revision_date',
+    'authorization_date',
+    'expiration_date',
+    'review_date',
+    'entry_date',
+    'receipt_date'
+];
+
 export const emissionGroup = ['station_class', 'emission_designator', 'power'];
+
 export const txGroup = [
     'tx_state_country_code',
     'tx_antenna_location',
@@ -131,6 +136,13 @@ export const rxGroup = [
     'rx_antenna_polarization',
     'rx_JSC_area_code'
 ];
+
+export const visibleColumnGroups = {
+    'Record Columns': recordColumns,
+    'Emission Group Columns': emissionGroup,
+    'Transmitter Columns': txGroup,
+    'Receiver Columns': rxGroup
+};
 
 //Excludes frequency as a column, but should be added in final build
 export const allColumns = [

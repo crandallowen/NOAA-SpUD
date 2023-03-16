@@ -6,7 +6,6 @@ import notFound from './components/notFound.vue';
 import navigation from './components/navigation.vue';
 import searchResults from './components/searchResults.vue';
 
-const searchParams = ref(null);
 const routes = {
     '/': home,
     '/search': search,
@@ -23,15 +22,14 @@ const currentView = computed(() => {
     return routes[currentPath.value.slice(1) || '/'] || notFound
 });
 
-const currentProperties = computed (() => {
-    if (currentView.value.__name == 'searchResults') {
-        return {params: searchParams.value};
-    } else 
-        return {};
-});
+// const currentProperties = computed (() => {
+//     if (currentView.value.__name == 'searchResults') {
+//         return {};
+//     } else 
+//         return {};
+// });
 
-function onSearch(query) {
-    searchParams.value = JSON.parse(JSON.stringify(query));
+function onSearch() {
     window.location.href = '#/searchResults'
 }
 </script>
@@ -50,8 +48,8 @@ function onSearch(query) {
   </header>
 
   <main>
-    <KeepAlive>
-        <component :is="currentView" v-bind="currentProperties" @search="onSearch" />
+    <KeepAlive exclude="searchResults">
+        <component :is="currentView" @search="onSearch" />
     </KeepAlive>
   </main>
 </template>
