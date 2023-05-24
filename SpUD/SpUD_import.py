@@ -44,13 +44,12 @@ class RFAToSpUDMap():
                 return eval('{}(value)'.format(tuple[2]))
         raise KeyError('RFAToSpUDMap.eval(): Column or attribute name, {}, not recognized'.format(col))
 
+# TODO: These functions will likely be deprecated, but replaced with more specific handlers for different fields
 def quoteString(string): return "'"+string+"'"
-
 def queryFormatString(string): return None if string == '' else string
-
 def queryFormatList(List): return None if List == [] else List
-
 def queryFormatDate(date): return None if date == '' else date
+
 
 def config(filename='database.ini', section='postgresql'):
     parser = ConfigParser()
@@ -61,7 +60,7 @@ def config(filename='database.ini', section='postgresql'):
         for param in params:
             db[param[0]] = param[1]
     else:
-        raise Exception('Section {0} nor found in the {1} file.'.format(section, filename))
+        raise Exception('Section {0} not found in the {1} file.'.format(section, filename))
     return db
 
 def connect():
@@ -96,19 +95,24 @@ def importRFAs():
 
 def importRFAsFromFile(filename):
     RFAs = RFA.importRFAsFrom1ColFile(filename)
+    idMap = RFAToSpUDMap()
     columns = []
     placeholders = []
+    # TODO: Iterate through a different variable that includes all sql columns as there will be more than there are RFA-class attributes
+    # Alternatively, a second loop that specifically goes through the added columns
+    # In the common format, the RFA attributes will be one-to-one with RFA columns, and the additional columns will be found in different tables
     for key in RFAs[0].__dict__.keys():
         if idMap.testInclusion(key):
             col = idMap.toSQL(key)
             columns.append(col)
             placeholders.append('%s')
 
-    columns.append('frequency_KHz')
+    columns.append('frequency_hz')
     placeholders.append('%s')
 
     columns = ', '.join(columns)
     placeholders = ', '.join(placeholders)
+    # TODO: Rewrite this portion to utilize the psycopg2.sql module
     insertSQL = 'INSERT INTO RFAs ({}) VALUES ({});'.format(columns, placeholders)
     connection = connect()
     try:
@@ -130,5 +134,4 @@ def importRFAsFromFile(filename):
 
 
 if __name__ == '__main__':
-    idMap = RFAToSpUDMap()
     importRFAs()

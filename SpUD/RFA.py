@@ -13,44 +13,59 @@ from datetime import date
 #     in this object declaration. Columns that can only ever have one value are represented as strings.
 class RFA:
     def __init__(self):
-        self.serial = ''
-        self.classification = ''
-        self.agency_action_number = ''
-        self.bureau = ''
-        self.agency = ''
-        self.type = ''
-        self.main_function_ID = ''
-        self.intermediate_function_ID = ''
-        self.detailed_function_ID = ''
+        self.serial = None
+        self.agency_action_number = None
+        self.classification = None
+        self.bureau = None
+        self.agency = None
+        self.record_type = None
+        self.main_function_ID = None
+        self.intermediate_function_ID = None
+        self.detailed_function_ID = None
         self.IRAC_docket_number = []
-        self.docket_number_old = ''
-        self.frequency = ''
-        self.frequency_upper_limit = ''
+        self.docket_number_old = None
+        self.frequency = None
+        self.frequency_upper_limit = None
         self.excluded_frequency_bands = []
+        self.paired_frequency = []
+        self.time = None
+        self.IRAC_notes = []
+        self.free_text = []
+        self.misc_agency_data = []
+        self.FAS_agenda = []
+        self.supplementary_details = ''
+        self.point_of_contact = None
+        self.joint_agency_names = []
+        self.international_coordination_ID = None
+        self.Canadian_coordination_comments = []
+        self.Mexican_coordination_comments = []
+        self.user_net_code = []
+        # Emission group
         self.station_class = []
         self.emission_designator = []
         self.power = []
+        # These two are not used in DoC records
         self.effective_radiated_power = []
         self.power_augmentation = []
-        self.time = ''
-        self.tx_state_country_code = ''
-        self.tx_antenna_location = ''
-        self.tx_station_control = ''
-        self.tx_station_call_sign = ''
-        self.tx_antenna_latitude = ''
-        self.tx_antenna_longitude = ''
-        self.tx_authorized_radius = ''
-        self.tx_inclination_angle = ''
-        self.tx_apogee = ''
-        self.tx_perigee = ''
-        self.tx_period_of_orbit = ''
-        self.tx_number_of_satellites = ''
-        self.tx_power_density = ''
+        # Transmitter group
+        self.tx_state_country_code = None
+        self.tx_antenna_location = None
+        self.tx_station_control = None
+        self.tx_station_call_sign = None
+        self.tx_antenna_latitude = None
+        self.tx_antenna_longitude = None
+        self.tx_authorized_radius = None
+        self.tx_inclination_angle = None
+        self.tx_apogee = None
+        self.tx_perigee = None
+        self.tx_period_of_orbit = None
+        self.tx_number_of_satellites = None
+        self.tx_power_density = None
         self.tx_equipment_nomenclature = []
         self.tx_system_name = []
         self.tx_number_of_stations = []
         self.tx_OTS_equipment = []
-        self.tx_radar_tunability = ''
+        self.tx_radar_tunability = None
         self.tx_pulse_duration = []
         self.tx_pulse_repetition_rate = []
         self.tx_antenna_name = []
@@ -62,7 +77,8 @@ class RFA:
         self.tx_antenna_azimuth = []
         self.tx_antenna_orientation = []
         self.tx_antenna_polarization = []
-        self.tx_JSC_area_code = ''
+        self.tx_JSC_area_code = None
+        # Receiver group
         self.rx_state_country_code = []
         self.rx_antenna_location = []
         self.rx_control_ID_and_server_system_ID = []
@@ -87,12 +103,7 @@ class RFA:
         self.rx_antenna_orientation = []
         self.rx_antenna_polarization = []
         self.rx_JSC_area_code = []
-        self.IRAC_notes = []
-        self.free_text = []
-        self.misc_agency_data = []
-        self.FAS_agenda = []
-        self.paired_frequency = []
-        self.supplementary_details = ''
+        # Area authorization
         self.authorized_area_both = []
         self.tx_authorized_area = []
         self.excepted_states_both = []
@@ -101,23 +112,27 @@ class RFA:
         self.authorized_states_both = []
         self.rx_authorized_states = []
         self.tx_authorized_states = []
-        self.point_of_contact = ''
-        self.last_transaction_date = ''
-        self.revision_date = ''
-        self.authorization_date = ''
-        self.expiration_date = ''
-        self.review_date = ''
-        self.entry_date = ''
-        self.receipt_date = ''
-        self.FOI_exempt = ''
-        self.approval_authority = ''
-        self.joint_agency_names = []
-        self.international_coordination_ID = ''
-        self.Canadian_coordination_comments = []
-        self.Mexican_coordination_comments = []
-        self.user_net_code = []
-        self.data_source = ''
-        self.routine_agenda_item = ''
+        # Dates
+        self.last_transaction_date = None
+        self.revision_date = None
+        self.authorization_date = None
+        self.expiration_date = None
+        self.review_date = None
+        self.entry_date = None
+        self.receipt_date = None
+        # Likely not entered into database for now
+        self.FOI_exempt = None
+        self.approval_authority = None
+        self.data_source = None
+        self.routine_agenda_item = None
+        # custom columns
+        self.power_W = []
+        self.center_frequency_Hz = None
+        self.max_power = None
+        self.band = None
+        self.bandwidth = None
+        self.tx_lat_long = None
+        self.rx_lat_long = []
 
     # This method overrides the default str() function to print the RFA's serial number.
     def __str__(self):
@@ -134,8 +149,29 @@ class RFA:
                 value = '|'.join(value)
             elif isinstance(value, date):
                 value = value.strftime('%m/%d/%Y')
+            elif value is None:
+                value = ''
             row.append(value.replace(',',';'))
         return ','.join(row)
+    
+    # def toCSVRow_formatted(self):
+    #     row = []
+    #     for key, value in self.__dict__.items():
+    #         if key in ['frequency', 'frequency_upper_limit', 'excluded_frequency_bands', 'paired_frequency']:
+    #             if isinstance(value, list):
+    #                 value = '|'.join(map(formatFrequency, value))
+    #             else:
+    #                 value = formatFrequency(value)
+    #         elif key == 'power':
+    #             value = '|'.join(map(formatPower, value))
+    #         elif isinstance(value, list):
+    #             value = '|'.join(value)
+    #         elif isinstance(value, date):
+    #             value = value.strftime('%m/%d/%Y')
+    #         elif value is None:
+    #             value = ''
+    #         row.append(value.replace(',',';'))
+    #     return ','.join(row)
 
     # This method is the same as toCSVRow(), but it only outputs specified fields.
     def toCSVRow_NWSFormat(self):
@@ -150,11 +186,12 @@ class RFA:
         tx_antenna_name = '|'.join(self.tx_antenna_name)
         tx_antenna_polarization = '|'.join(self.tx_antenna_polarization)
         tx_antenna_orientation = '|'.join(self.tx_antenna_orientation)
-        return f'{self.serial},{self.agency_action_number},{main_function_ID},{intermediate_function_ID},{detailed_function_ID},{self.frequency},{point_of_contact},{revision_date},{self.tx_state_country_code},{self.tx_antenna_location},{self.tx_antenna_latitude},{self.tx_antenna_longitude},{station_classes},{emission_designators},{powers},{self.last_transaction_date},{self.type},{tx_antenna_name},{tx_antenna_polarization},{tx_antenna_orientation},{self.tx_station_call_sign}'
+        return f'{self.serial},{self.agency_action_number},{main_function_ID},{intermediate_function_ID},{detailed_function_ID},{self.frequency},{point_of_contact},{revision_date},{self.tx_state_country_code},{self.tx_antenna_location},{self.tx_antenna_latitude},{self.tx_antenna_longitude},{station_classes},{emission_designators},{powers},{self.last_transaction_date},{self.record_type},{tx_antenna_name},{tx_antenna_polarization},{tx_antenna_orientation},{self.tx_station_call_sign}'
     
     def toCSVRow_TrackerFormat(self):
         point_of_contact = self.point_of_contact.replace(',', ';')
         return f'{self.serial},{self.agency_action_number},{self.revision_date},{point_of_contact}'
+
 
 # This function expects a .txt file which was generated by SXXI using any of the SFAF 1 Column or GMF 1 Column output options
 #     and returns a list of RFA objects that correspond one-to-one with records found in the file. This function converts
@@ -180,7 +217,8 @@ def importRFAsFrom1ColFile(filename):
             print(f'{type(err)}: {err}')
             tag = line.strip()
             value = ''
-            print(f'Record {rfa.serial} has no value for tag {tag}') #May need to handle printing the serial for unknown SFAF tags less than 102
+            if tag != '115.':
+                print(f'Record {rfa.serial} has no value for tag {tag}') #May need to handle printing the serial for unknown SFAF tags less than 102
         except Exception as err:
             print(f'Unexpected {err} on record {rfa.serial}, {type(err)}')
             raise
@@ -190,6 +228,7 @@ def importRFAsFrom1ColFile(filename):
         #     first tag is '005' which is the security classification.
         if tag == 'SER01' or tag == '005.': #SFAF uses 005 for FOI and CDD in addition to CLA. May need to be handled differently
             if rfa != None:
+                addCustomColumns(rfa)
                 RFAs.append(rfa)
             rfa = RFA()
             if tag == 'SER01':
@@ -197,9 +236,10 @@ def importRFAsFrom1ColFile(filename):
             else:
                 rfa.classification = value
         elif tag == '102.':
+            # print(value)
             rfa.serial = value
         elif tag == 'TYP01' or tag == '010.':
-            rfa.type = value
+            rfa.record_type = value
         elif tag == 'DAT01' or tag == '911.':
             rfa.last_transaction_date = formatGMFDate(value) if tag == 'DAT01' else formatSFAFDate(value)
         elif tag == 'CLA01': 
@@ -220,8 +260,16 @@ def importRFAsFrom1ColFile(filename):
             rfa.agency = value
         elif tag[:3] == 'NET' or tag[:3] == '208':
             rfa.user_net_code.append(value)
-        elif tag == 'FRQ01' or tag == '110.':
+        elif tag == 'FRQ01':
             rfa.frequency = value
+        elif tag == '110.':
+            if '-' in value:
+                unit = value[0]
+                lower, upper = value[1:].split('-')
+                rfa.frequency = unit + lower
+                rfa.frequency_upper_limit = unit + upper
+            else:
+                rfa.frequency = value
         elif tag[:3] == 'PRD' or tag[:3] == '506':
             rfa.paired_frequency.append(value)
         elif tag == 'FRU01':
@@ -311,8 +359,8 @@ def importRFAsFrom1ColFile(filename):
         elif tag[:3] == 'RLG':
             rfa.rx_antenna_longitude.append(value)
         elif tag[:3] == '403':
-            rfa.rx_antenna_latitude = value[:7]
-            rfa.rx_antenna_longitude = value[7:]
+            rfa.rx_antenna_latitude.append(value[:7])
+            rfa.rx_antenna_longitude.append(value[7:])
         elif tag[:3] == 'RSE' or tag[:3] == '458':
             rfa.rx_antenna_elevation.append(value)
         elif tag[:3] == 'RRD' or tag[:3] == '406':
@@ -445,8 +493,10 @@ def importRFAsFrom1ColFile(filename):
             rfa.receipt_date = formatSFAFDate(value)
         else:
             print(f'Unknown Tag {tag} in record {rfa.serial}')
+    addCustomColumns(rfa)
     RFAs.append(rfa)
     return RFAs
+
 
 # This function takes a list of RFAs and a string that represents the name of a .csv file, and converts each RFA
 #     into .csv format, and exports them into a new file where each record is on its own line. The first line of
@@ -462,6 +512,17 @@ def exportRFAsToCSV(RFAs, filename='output.csv'):
         for rfa in RFAs:
             oFile.write(f'{rfa.toCSVRow()}\n')
 
+
+def exportRFAsToCSV_formatted(RFAs, filename='output.csv'):
+    if os.path.isdir('./outputs/'):
+        filename = './outputs/' + filename
+    with open(filename, 'w') as oFile:
+        headers = ','.join(RFAs[0].__dict__.keys())
+        oFile.write(f'{headers}\n')
+        for rfa in RFAs:
+            oFile.write(f'{rfa.toCSVRow_formatted()}\n')
+
+
 # This function is the same as exportRFAsToCSV(), but uses the NWS format.
 def exportRFAsToCSV_NWSFormat(RFAs, filename='output.csv'):
     if os.path.isdir('./outputs/'):
@@ -471,6 +532,7 @@ def exportRFAsToCSV_NWSFormat(RFAs, filename='output.csv'):
         for rfa in RFAs:
             oFile.write(f'{rfa.toCSVRow_NWSFormat()}\n')
 
+
 def exportRFAsToCSV_TrackerFormat(RFAs, filename='output.csv'):
     if os.path.isdir('./outputs/'):
         filename = './outputs/' + filename
@@ -479,6 +541,7 @@ def exportRFAsToCSV_TrackerFormat(RFAs, filename='output.csv'):
         for rfa in RFAs:
             oFile.write(f'{rfa.toCSVRow_TrackerFormat()}\n')
 
+
 # This function converts a frequency in SXXI format into kHz. The purpose of this function is to create a sortable
 #     format for frequencies.
 # Future versions will include formatting options.
@@ -486,18 +549,27 @@ def formatFrequency(SXXI_frequency):
     unit = SXXI_frequency[0].lower()
     quantity = SXXI_frequency[1:]
 
-    if unit == 'k':
+    if unit == 'h':
         conversion = 0
-    elif unit == 'm':
+    elif unit == 'k':
         conversion = 3
-    elif unit == 'g':
+    elif unit == 'm':
         conversion = 6
-    elif unit == 't':
+    elif unit == 'g':
         conversion = 9
+    elif unit == 't':
+        conversion = 12
     else:
         print(f'Unknown unit \'{unit}\'in frequency format')
 
-    return str(float(quantity) * (pow(10,conversion)))
+    return str(float(quantity) * (10 ** conversion))
+
+
+def formatFrequencyBand(SXXI_frequency_band):
+    unit = SXXI_frequency_band[0].lower()
+    lower_end, upper_end = map(formatFrequency, list(map(lambda x: unit + x, SXXI_frequency_band[1:].split('-'))))
+    return (lower_end, upper_end)
+
 
 # This function converts a date in GMF format into standard dd/mm/yyyy format.
 def formatGMFDate(GMF_date):
@@ -512,6 +584,7 @@ def formatGMFDate(GMF_date):
 
     return datetime.date(int(year), int(month), int(day))
 
+
 # This function converts a date in SFAF format into standard dd/mm/yyyy format.
 def formatSFAFDate(SFAF_date):
     year = SFAF_date[:4]
@@ -519,8 +592,11 @@ def formatSFAFDate(SFAF_date):
     day = SFAF_date[6:]
     return datetime.date(int(year), int(month), int(day))
 
+
 # This function converts a power in SXXI format into Watts.
 def formatPower(SXXI_power):
+    if SXXI_power is None or SXXI_power == '':
+        return str(0)
     unit = SXXI_power[0]
     quantity = SXXI_power[1:]
 
@@ -531,4 +607,97 @@ def formatPower(SXXI_power):
     elif unit == 'M':
         conversion = 6
 
-    return str(float(quantity) * (10 ^ conversion))
+    return str(float(quantity) * (10 ** conversion))
+
+
+def formatLatLong(SXXI_latitude, SXXI_longitude):
+    lat_degrees, lat_minutes, lat_seconds, lat_sign = [(SXXI_latitude[i:i+2]) for i in range(0, len(SXXI_latitude), 2)]
+    long_degrees, long_minutes, long_seconds, long_sign = SXXI_longitude[:3], SXXI_longitude[3:5], SXXI_longitude[5:7], SXXI_longitude[7]
+
+    if lat_sign == 'N':
+        lat_sign = 1
+    else:
+        lat_sign = -1
+
+    if long_sign == 'E':
+        long_sign = 1
+    else:
+        long_sign = -1
+
+    lat_degrees = lat_sign * DMSToDD(lat_degrees, lat_minutes, lat_seconds)
+    long_degrees = long_sign * DMSToDD(long_degrees, long_minutes, long_seconds)
+
+    return str(lat_degrees) + ',' + str(long_degrees)
+
+
+def DMSToDD(degrees, minutes, seconds):
+    return float(degrees) + (float(minutes) / 60) + (float(seconds) / 3600)
+
+
+def decodeEmissionDesignator(emissionDesignator):
+    before_point = ''
+    after_point = ''
+    unit = None
+    for char in emissionDesignator:
+        if unit is None:
+            if char.isnumeric():
+                before_point += char
+            else:
+                unit = char
+        else:
+            if char.isnumeric():
+                after_point += char
+            else:
+                break
+    if unit == 'N':
+        return None
+    else:
+        unit = unit.lower()
+        if after_point == '':
+            value = float(before_point)
+        else:
+            value = float(before_point + '.' + after_point)
+        if unit == 'h':
+            return value
+        elif unit == 'k':
+            return value * (10 ** 3)
+        elif unit == 'm':
+            return value * (10 ** 6)
+        elif unit == 'g':
+            return value * (10 ** 9)
+
+
+def addCustomColumns(rfa):
+    for power in rfa.power:
+        rfa.power_W.append(formatPower(power))
+
+    max_power = 0
+    for power in rfa.power_W:
+        power = float(power)
+        if power > max_power:
+            max_power = power
+    rfa.max_power = str(max_power)
+
+    if rfa.frequency_upper_limit is not None:
+        lower_limit = float(formatFrequency(rfa.frequency))
+        upper_limit = float(formatFrequency(rfa.frequency_upper_limit))
+        rfa.band = str(lower_limit) + ' - ' + str(upper_limit)
+        bandwidth = upper_limit - lower_limit
+        rfa.bandwidth = str(bandwidth)
+        rfa.center_frequency_Hz = str(lower_limit + (bandwidth / 2))
+    else:
+        rfa.center_frequency_Hz = formatFrequency(rfa.frequency)
+        bandwidth = 0
+        for emission_designator in rfa.emission_designator:
+            band = decodeEmissionDesignator(emission_designator)
+            if band is not None and band > bandwidth:
+                bandwidth = band
+        rfa.bandwidth = str(bandwidth)
+        rfa.band = str(float(rfa.center_frequency_Hz) - (bandwidth / 2)) + ' - ' + str(float(rfa.center_frequency_Hz) + (bandwidth / 2))
+    
+    if rfa.tx_antenna_latitude is not None and rfa.tx_antenna_longitude is not None:
+        rfa.tx_lat_long = formatLatLong(rfa.tx_antenna_latitude, rfa.tx_antenna_longitude)
+
+    for rx_lat, rx_long in zip(rfa.rx_antenna_latitude, rfa.rx_antenna_longitude):
+        # print(rx_lat, rx_long)
+        rfa.rx_lat_long.append(formatLatLong(rx_lat, rx_long))

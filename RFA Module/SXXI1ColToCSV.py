@@ -18,4 +18,4 @@ while(userIn[-len(acceptedOutFileExtension):] != acceptedOutFileExtension):
 outFilename = userIn
 
 RFAs = rfa.importRFAsFrom1ColFile(inFilename)
-rfa.exportRFAsToCSV_NWSFormat(RFAs, outFilename)
+rfa.exportRFAsToCSV(RFAs, outFilename)

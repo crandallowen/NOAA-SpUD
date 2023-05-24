@@ -5,7 +5,8 @@ agency,agency,queryFormatString
 main_function_ID,main_function_id,queryFormatString
 intermediate_function_ID,intermediate_function_id,queryFormatString
 detailed_function_ID,detailed_function_id,queryFormatString
-#
+# IRAC_docket_number,IRAC_docket_num,queryFormatList
+# 
 frequency,frequency,queryFormatString
 frequency_upper_limit,frequency_upper_limit,queryFormatString
 excluded_frequency_bands,excluded_frequency_bands,queryFormatList
