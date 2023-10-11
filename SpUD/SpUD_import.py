@@ -2,7 +2,7 @@ import psycopg2
 from configparser import ConfigParser
 import RFA
 
-RFA_source_file = './RFA Module/inputs/gmf 1 col all doc 2023.01.19.txt'
+RFA_source_file = '../RFA Module/inputs/sfaf 1 col all doc 2023.09.06.txt'
 
 class RFAToSpUDMap():
     def __init__(self):
@@ -107,8 +107,8 @@ def importRFAsFromFile(filename):
             columns.append(col)
             placeholders.append('%s')
 
-    columns.append('frequency_hz')
-    placeholders.append('%s')
+    # columns.append('frequency_hz')
+    # placeholders.append('%s')
 
     columns = ', '.join(columns)
     placeholders = ', '.join(placeholders)
@@ -122,8 +122,9 @@ def importRFAsFromFile(filename):
                 if idMap.testInclusion(key):
                     col = idMap.toSQL(key)
                     values.append(idMap.eval(col, value))
-            values.append(float(RFA.formatFrequency(rfa.frequency)))
+            # values.append(float(RFA.formatFrequency(rfa.frequency)))
             values = tuple(values)
+            # print(values)
             execute(connection, insertSQL, values=values)
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)

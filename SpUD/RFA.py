@@ -214,7 +214,7 @@ def importRFAsFrom1ColFile(filename):
         try:
             tag, value = line.strip().split(maxsplit=1)
         except ValueError as err:
-            print(f'{type(err)}: {err}')
+            # print(f'{type(err)}: {err}')
             tag = line.strip()
             value = ''
             if tag != '115.':
