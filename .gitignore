@@ -3,6 +3,8 @@
 **/RFA Module/inputs
 **/RFA Module/outputs
 **/RFA Module/driver.py
+**/SpUD/inputs
+**/SpUD/outputs
 **/__pycache__/*
 **/database.ini
 driver.py

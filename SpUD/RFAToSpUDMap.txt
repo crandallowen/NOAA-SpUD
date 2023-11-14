@@ -21,6 +21,8 @@ excluded_frequency_bands,SXXI_excluded_frequency_bands,queryFormatList
 #
 #
 point_of_contact,point_of_contact,queryFormatString
+point_of_contact_name,poc_name,queryFormatString
+point_of_contact_phone_number,poc_phone_number,queryFormatString
 #
 #
 #

@@ -6,6 +6,7 @@
 
 import os
 import datetime
+import re
 from datetime import date
 
 # An RFA object that represents a Radio Frequency Assignment from SXXI using fields derived from both GMF and SFAF format
@@ -35,6 +36,8 @@ class RFA:
         self.FAS_agenda = []
         self.supplementary_details = ''
         self.point_of_contact = None
+        self.point_of_contact_name = None
+        self.point_of_contact_phone_number = None
         self.joint_agency_names = []
         self.international_coordination_ID = None
         self.Canadian_coordination_comments = []
@@ -207,6 +210,9 @@ def importRFAsFrom1ColFile(filename):
     with open(filename, 'r') as iFile:
         lines = iFile.readlines()
 
+    # regular expressions strings
+    receiver_group_tag = '(.*),R\d{2}$'
+
     RFAs = []
     rfa = None
     for line in lines:
@@ -222,6 +228,10 @@ def importRFAsFrom1ColFile(filename):
         except Exception as err:
             print(f'Unexpected {err} on record {rfa.serial}, {type(err)}')
             raise
+        # Remove the ',R##' tags from values in receiver groups past the first. This only applies to files in SFAF format.
+        if matches := re.findall('(.*),R\d{2}$', value):
+            # print(f'{value} becomes {matches[0]}')
+            value = matches[0]
 
         # In these formats, there is no delimination between different records, so the end of a record is determined by the start
         #     of a new one. In GMF format, the first tag of a record is 'SER' which is the serial number, but in SFAF format, the
@@ -453,6 +463,7 @@ def importRFAsFrom1ColFile(filename):
             rfa.docket_number_old = value
         elif tag == 'POC01' or tag == '803.':
             rfa.point_of_contact = value
+            rfa.point_of_contact_name, rfa.point_of_contact_phone_number, _ = rfa.point_of_contact.split(',')
         elif tag[:3] == 'AGN' or tag[:3] == '503':
             rfa.misc_agency_data.append(value)
         elif tag[:3] == 'FAS' or tag[:3] == '504':
