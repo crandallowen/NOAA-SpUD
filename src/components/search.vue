@@ -48,7 +48,7 @@ const queryString = computed(() => {
             if (!Object.keys(queryObject).includes(query.value[i].field)) {
                 queryObject[query.value[i].field] = [];
             }
-            if (query.value[i].field === 'serial_num' || query.value[i].field === 'frequency_khz') {
+            if (query.value[i].field === 'serial_num' || query.value[i].field === 'center_frequency') {
                 if (query.value[i].relation != 'between')
                     queryObject[query.value[i].field].push(`${query.value[i].relation} ${format(query.value[i].value, query.value[i].field)}`);
                 else
@@ -59,7 +59,7 @@ const queryString = computed(() => {
         }
         let queryList = []
         for (const field in queryObject) {
-            if (field === 'serial_num' || field === 'frequency_khz')
+            if (field === 'serial_num' || field === 'center_frequency')
                 queryList.push(`${headerMap(field)} ${queryObject[field].join(' OR ')}`);
             else
                 queryList.push(`${headerMap(field)} in [${queryObject[field].join(', ')}]`)
@@ -82,11 +82,11 @@ function add(field) {
             input.serial_num.lowerValue = '';
             input.serial_num.relation = '';
         }
-    } else if (field === 'frequency_khz') {
-        let frequency_khz = frequencyToKHz(input.frequency.value);
+    } else if (field === 'center_frequency') {
+        let center_frequency = frequencyToKHz(input.frequency.value);
         if (input.frequency.relation != 'between') {
-            if (frequency_khz) {
-                query.value.push({field: field, relation: input.frequency.relation, value: frequency_khz});
+            if (center_frequency) {
+                query.value.push({field: field, relation: input.frequency.relation, value: center_frequency});
                 input.frequency.value = '';
                 input.frequency.relation = '';
             } else {
@@ -94,13 +94,13 @@ function add(field) {
             }
         } else {
             let frequencyLower_khz = frequencyToKHz(input.frequency.lowerValue);
-            if (frequency_khz && frequencyLower_khz) {
-                query.value.push({field: field, relation: input.frequency.relation, lowerValue: frequencyLower_khz, higherValue: frequency_khz});
+            if (center_frequency && frequencyLower_khz) {
+                query.value.push({field: field, relation: input.frequency.relation, lowerValue: frequencyLower_khz, higherValue: center_frequency});
                 input.frequency.value = '';
                 input.frequency.lowerValue = '';
                 input.frequency.relation = '';
             } else {
-                if (!frequency_khz) {
+                if (!center_frequency) {
                     console.log('Invalid frequency:', input.frequency.value);
                 } else {
                     console.log('Invalid frequency:', input.frequency.lowerValue);
@@ -177,7 +177,7 @@ function clear() {
                     <p class="inputSeperator">and</p>
                 </div>
                 <input v-model="input.frequency.value" />
-                <button @click="add('frequency_khz')" :disabled="input.frequency.relation === '' || input.frequency.value === '' || (input.frequency.relation === 'between' && input.frequency.lowerValue === '')">Add</button>
+                <button @click="add('center_frequency')" :disabled="input.frequency.relation === '' || input.frequency.value === '' || (input.frequency.relation === 'between' && input.frequency.lowerValue === '')">Add</button>
             </div>
             <div class="divider" />
             <div class="inputLine">

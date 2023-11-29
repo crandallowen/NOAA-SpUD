@@ -130,7 +130,7 @@ app.get('/query', async (request, response, next) => {
             }
             //Will want to make a list/object that groups fields into numerical or categorical
             //Handle numerical
-            if (params[i].field === 'serial_num' || params[i].field === 'frequency_khz') {
+            if (params[i].field === 'serial_num' || params[i].field === 'center_frequency') {
                 if (params[i].relation === 'between') {
                     let lowerValue = (params[i].field == 'serial_num') ? `C   ${params[i].lowerValue.padStart(6, '0')}` : parseFloat(params[i].lowerValue);
                     let higherValue = (params[i].field == 'serial_num') ? `C   ${params[i].higherValue.padStart(6, '0')}` : parseFloat(params[i].higherValue);
@@ -145,7 +145,7 @@ app.get('/query', async (request, response, next) => {
             }
         }
         for (const key in queryObject) {
-            if (key === 'serial_num' || key === 'frequency_khz') {
+            if (key === 'serial_num' || key === 'center_frequency') {
                 conditions.push(queryObject[key].join(' OR '));
             } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(key)) {
                 if (key == 'function_identifier') {

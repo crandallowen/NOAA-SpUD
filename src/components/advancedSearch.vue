@@ -31,7 +31,7 @@ const queryString = computed(() => {
             } else
                 queryString += ' '+queryObject+' ';
         } else {
-            if (queryObject.field == 'frequency_khz') {
+            if (queryObject.field == 'center_frequency') {
                 queryString += headerMap(queryObject.field) + ' ' + queryObject.relation + ' ' + formatFrequency(queryObject.value);
             } else {
                 queryString += headerMap(queryObject.field) + ' ' + queryObject.relation + ' ' + queryObject.value;
@@ -55,21 +55,21 @@ function add(event) {
         }
     } else if (event.srcElement.id == 'frequency') {
         if (frequencyInput.value != '') {
-            let frequency_khz = frequencyToKHz(frequencyInput.value);
-            if (frequencyRelation.value != '' && frequency_khz) {
-                query.value.push({field: 'frequency_khz', relation: frequencyRelation.value, value: frequency_khz});
+            let center_frequency = frequencyToKHz(frequencyInput.value);
+            if (frequencyRelation.value != '' && center_frequency) {
+                query.value.push({field: 'center_frequency', relation: frequencyRelation.value, value: center_frequency});
                 frequencyInput.value = '';
                 frequencyRelation.value = '';
                 conditionExpected.value = false;
             } else {
-                if (!frequency_khz) {
+                if (!center_frequency) {
                     // frequencyInput.value = '';
                     // frequencyRelation.value = '';
                     console.log('Invalid frequency:', frequencyInput.value);
                 } else {
                     // frequencyInput.value = '';
                     // frequencyRelation.value = '';
-                    console.log('Invalid frequency add:', frequency_khz, ',', frequencyRelation.value);
+                    console.log('Invalid frequency add:', center_frequency, ',', frequencyRelation.value);
                 }
             }
         } else {

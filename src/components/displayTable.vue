@@ -7,7 +7,7 @@ const props = defineProps({
     title: String,
     sortColumn: {
         type: String,
-        default: 'frequency_khz'
+        default: 'center_frequency'
     },
     sortDirection: {
         type: String,
@@ -40,7 +40,7 @@ const state = reactive({
     params: [...props.params]
 });
 const rowFilters = reactive({
-    'frequency_khz': frequencyFilters,
+    'center_frequency': frequencyFilters,
     'bureau': [],
     'function_identifier': [],
     'tx_state_country_code': []

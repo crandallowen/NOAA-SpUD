@@ -1,14 +1,10 @@
-.gitignore
 .gitattributes
-**/RFA Module/inputs
-**/RFA Module/outputs
-**/RFA Module/driver.py
+**/RFA Module
 **/SpUD/inputs
 **/SpUD/outputs
 **/__pycache__/*
 **/database.ini
 driver.py
-RFA.py
 **/node_modules
 **/Project Documents
 db.config.js
