@@ -3,7 +3,7 @@ import { defaultColumns } from '@/js/utils';
 
 export const searchResultsState = reactive({
     title: 'Search Results',
-    sortColumn: 'frequency_khz', 
+    sortColumn: 'center_frequency', 
     sortDirection: 'ascending',
     displayColumns: [...defaultColumns],
     params: []

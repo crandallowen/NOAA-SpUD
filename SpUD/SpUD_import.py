@@ -2,7 +2,7 @@ import psycopg2
 from configparser import ConfigParser
 import RFA
 
-RFA_source_file = './inputs/sfaf 1 col all doc 2023.10.24.txt'
+RFA_source_file = './inputs/sfaf 1 col all doc 2024.01.23.txt'
 
 class RFAToSpUDMap():
     def __init__(self):

@@ -3,7 +3,7 @@ const express = require('express');
 // const cors = require('cors'); //Will likely be needed for deployment
 // const serveStatic = require('serve-static'); //May be able to uninstall
 const { Client } = require('pg');
-const { clientConfig } = require('./db.config');
+const { clientConfig } = require('./db.config'); //Will not be used in production
 const format = require('pg-format');
 
 const app = express();
@@ -33,8 +33,14 @@ app.use((request, response, next) => {
     next();
 });
 
-app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/', express.static(path.join(__dirname, 'dist')));
+
+app.use((request, response, next) => {
+    response.append('Access-Control-Allow-Origin', ['*']);
+    response.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    response.append('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+});
 
 app.get('/', (request, response) => {
     response.sendFile(path.join(__dirname, 'dist', 'src', 'html', 'index.html'));

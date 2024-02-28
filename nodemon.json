@@ -1,8 +1,4 @@
 {
     "verbose": true,
-    "watch": [
-        "src/",
-        "server.js"
-    ],
     "ext": "js,json,html,css,vue"
 }

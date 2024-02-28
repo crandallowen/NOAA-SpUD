@@ -1,5 +1,5 @@
 <script setup>
-import displayTable from './displayTable.vue';
+import displayTable from '@/components/displayTable.vue';
 import { searchResultsState } from '@/js/state';
 
 </script>

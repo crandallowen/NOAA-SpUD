@@ -2,20 +2,22 @@ export function headerMap(field) {
     return RFAHeaderMap[field];
 };
 
-export function formatFrequency(frequency_khz) {
-    if (frequency_khz > 10 ** 9)
-        return '' + (parseFloat(frequency_khz) / (10 ** 9)).toPrecision(12)/1 + ' THz';
-    else if (frequency_khz >= 10 ** 6)
-        return '' + (parseFloat(frequency_khz) / (10 ** 6)).toPrecision(12)/1 + ' GHz';
-    else if (frequency_khz >= 10 ** 4)
-        return '' + (parseFloat(frequency_khz) / (10 ** 3)).toPrecision(12)/1 + ' MHz';
-    else return '' + (parseFloat(frequency_khz).toPrecision(12))/1 + ' KHz';
+export function formatFrequency(frequency_hz) {
+    if (frequency_hz > 10 ** 12)
+        return '' + (parseFloat(frequency_hz) / (10 ** 12)).toPrecision(12)/1 + ' THz';
+    else if (frequency_hz >= 10 ** 9)
+        return '' + (parseFloat(frequency_hz) / (10 ** 9)).toPrecision(12)/1 + ' GHz';
+    else if (frequency_hz >= 10 ** 6)
+        return '' + (parseFloat(frequency_hz) / (10 ** 6)).toPrecision(12)/1 + ' MHz';
+    else if (frequency_hz >= 10 ** 4)
+        return '' + (parseFloat(frequency_hz) / (10 ** 3)).toPrecision(12)/1 + ' kHz';
+    else return '' + (parseFloat(frequency_hz).toPrecision(12))/1 + ' Hz';
 };
 
 export function format(value, field) {
     if (Array.isArray(value))
         return value.join('\n');
-    else if (field === 'frequency_khz')
+    else if (field === 'center_frequency')
         return formatFrequency(value);
     else if (field.slice(-4) === 'date' && value != null)
         return value.substring(5, 7) + '/' + value.substring(8, 10) + '/' + value.substring(0, 4);
@@ -48,12 +50,12 @@ export function frequencyToKHz(frequencyString) {
 };
 
 export const frequencyFilters = [
-    {id: 'frequencyFilter0', name: 'F < 400 MHz', condition: {field: 'frequency_khz', relation: '<', value: 400000}},
-    {id: 'frequencyFilter1', name: '400 MHz <= F <= 410 MHz', condition: {field: 'frequency_khz', relation: 'between', lowerValue: 400000, higherValue: 410000}},
-    {id: 'frequencyFilter2', name: 'F > 410 MHz', condition: {field: 'frequency_khz', relation: '>=', value: 410000}}
+    {id: 'frequencyFilter0', name: 'F < 400 MHz', condition: {field: 'center_frequency', relation: '<', value: 400000000}},
+    {id: 'frequencyFilter1', name: '400 MHz <= F <= 410 MHz', condition: {field: 'center_frequency', relation: 'between', lowerValue: 400000000, higherValue: 410000000}},
+    {id: 'frequencyFilter2', name: 'F > 410 MHz', condition: {field: 'center_frequency', relation: '>=', value: 410000000}}
 ];
 
-export const defaultColumns = ['serial_num', 'bureau', 'main_function_id', 'frequency_khz', 'power', 'tx_state_country_code', 'tx_antenna_location', 'revision_date'];
+export const defaultColumns = ['serial_num', 'bureau', 'main_function_id', 'center_frequency', 'power', 'tx_state_country_code', 'tx_antenna_location', 'revision_date'];
 
 // export const hiddenColumns = []
 
@@ -65,7 +67,7 @@ export const recordColumns = [
     'main_function_id',
     'intermediate_function_id',
     'detailed_function_id',
-    'frequency_khz',
+    'center_frequency',
     'last_transaction_date',
     'revision_date',
     'authorization_date',
@@ -153,7 +155,7 @@ export const allColumns = [
     'main_function_id',
     'intermediate_function_id',
     'detailed_function_id',
-    'frequency_khz',
+    'center_frequency',
     'station_class',
     'emission_designator',
     'power',
@@ -229,7 +231,7 @@ export const RFAHeaderMap = {
     intermediate_function_id: 'Intermediate Function Indentifier',
     detailed_function_id: 'Detailed Function Identifier',
     function_identifier: 'Function Identifier',
-    frequency_khz: 'Frequency',
+    center_frequency: 'Frequency',
     frequency: 'SXXI Frequency',
     station_class: 'Station Class',
     emission_designator: 'Emission Designator',

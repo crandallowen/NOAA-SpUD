@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, computed, watchEffect } from 'vue';
 import { format, headerMap, visibleColumnGroups, allColumns, defaultColumns, frequencyFilters } from '@/js/utils';
-import collapsibleGroup from './collapsibleGroup.vue';
+import collapsibleGroup from '@/components/collapsibleGroup.vue';
 
 const props = defineProps({
     title: String,

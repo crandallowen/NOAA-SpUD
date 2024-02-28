@@ -19,8 +19,8 @@ export default defineConfig({
     }
   },
   server: {
-    port: '7007',
-    strictPort: true,
-    open: './src/html/index.html'
-  }
+    // port: '7008',
+    // strictPort: true,
+    open: './src/html/index.html',
+  },
 })

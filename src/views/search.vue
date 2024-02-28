@@ -2,8 +2,9 @@
 import { ref, reactive, computed, watchEffect } from 'vue';
 import { frequencyToKHz, headerMap, defaultColumns, allColumns, format } from '@/js/utils';
 import { searchResultsState } from '@/js/state'
+import router from '@/router'
 
-const emit = defineEmits(['search']);
+// const emit = defineEmits(['search']);
 
 const options = ref({});
 
@@ -134,7 +135,8 @@ function add(field) {
 
 function search() {
     searchResultsState.params = [...query.value];
-    emit('search');
+    // emit('search');
+    router.push({name: 'searchResults', params: [...query.value]});
 }
 
 function clear() {

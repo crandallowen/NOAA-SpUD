@@ -13,10 +13,10 @@ center_frequency_Hz,center_frequency,queryFormatString
 frequency_upper_limit,frequency_upper_limit,queryFormatString
 excluded_frequency_bands,SXXI_excluded_frequency_bands,queryFormatList
 #
+# paired_frequency,SXXI_paired_frequency,queryFormatList
 #
 #
-#
-#
+IRAC_notes,IRAC_notes,queryFormatList
 #
 #
 #

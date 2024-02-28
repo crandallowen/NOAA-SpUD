@@ -1,12 +1,8 @@
 <template>
     <span class="navigationBar">
-        <div class="item">
-            <slot name="home"></slot>
-        </div>
-        <div class="item"> | </div>
-        <div class="item">
-            <slot name="search"></slot>
-        </div>
+        <router-link :to="{name: 'home'}">Home</router-link> 
+        <span> | </span>
+        <router-link :to="{name: 'search'}">Search</router-link>
     </span>
 </template>
 
@@ -15,9 +11,9 @@
     display: flex;
     flex-direction: row;
 }
-.item {
+.navigationBar > * {
     margin: 2rem auto 0;
-    padding: 5px 8px 0;
+    padding: 0 4px;
     color: var(--color-navigation)
 }
 </style>
