@@ -1,12 +1,13 @@
 .gitattributes
 **/RFA Module
-**/SpUD/inputs
-**/SpUD/outputs
+**/inputs
+**/outputs
 **/__pycache__/*
 **/database.ini
 driver.py
 **/node_modules
 **/Project Documents
 db.config.js
+rds-ca-cert.pem
 .vscode/*
 !.vscode/extensions.json

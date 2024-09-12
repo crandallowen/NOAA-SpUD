@@ -1,19 +1,16 @@
 <script setup>
 import { ref, reactive, computed, watchEffect } from 'vue';
-import { frequencyToKHz, headerMap, defaultColumns, allColumns, format } from '@/js/utils';
-import { searchResultsState } from '@/js/state'
-import router from '@/router'
-
-// const emit = defineEmits(['search']);
+import { frequencyStringToHz, headerMap, allColumns, format, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
+import { searchResultsState } from '@/js/state';
+import router from '@/router';
 
 const options = ref({});
 
 watchEffect(async () => {
-    let url = new URL('http://localhost:7007/getOptions');
+    let url = new URL(`${window.location.origin}/api/getOptions`);
     const response = await fetch(url);
     await response.json()
         .then((response) => {
-            // console.log(response);
             options.value = response;
         })
 });
@@ -24,7 +21,7 @@ const input = reactive({
         lowerValue: '',
         relation: '',
     },
-    frequency: {
+    center_frequency: {
         value: '',
         lowerValue: '',
         relation: '',
@@ -37,111 +34,221 @@ const input = reactive({
     station_class: '',
     function_identifier: ''
 });
-const numericRelations = ['==', '>=', '>', '<=', '<', '!=', 'between'];
+const numericRelations = ['=', '>=', '>', '<=', '<', '!=', 'between'];
 
-const query = ref([]);
+const queryObject = reactive({});
 
 const queryString = computed(() => {
     let queryString = '';
-    if (query.value.length != 0) {
-        let queryObject = {}
-        for (const i in query.value) {
-            if (!Object.keys(queryObject).includes(query.value[i].field)) {
-                queryObject[query.value[i].field] = [];
-            }
-            if (query.value[i].field === 'serial_num' || query.value[i].field === 'center_frequency') {
-                if (query.value[i].relation != 'between')
-                    queryObject[query.value[i].field].push(`${query.value[i].relation} ${format(query.value[i].value, query.value[i].field)}`);
-                else
-                    queryObject[query.value[i].field].push(`${query.value[i].relation} ${format(query.value[i].lowerValue, query.value[i].field)} and ${format(query.value[i].higherValue, query.value[i].field)}`);
-            } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(query.value[i].field)) {
-                queryObject[query.value[i].field].push(query.value[i].value)            
-            }
-        }
+    if (Object.keys(queryObject).length != 0) {    
         let queryList = []
         for (const field in queryObject) {
-            if (field === 'serial_num' || field === 'center_frequency')
-                queryList.push(`${headerMap(field)} ${queryObject[field].join(' OR ')}`);
-            else
-                queryList.push(`${headerMap(field)} in [${queryObject[field].join(', ')}]`)
+            let temp = [];
+            for (const condition of queryObject[field]) {
+                let parameters = condition.parameters;
+                if (field === 'serial_num' || field === 'center_frequency') {
+                    if (parameters.relation != 'between')
+                        temp.push(`${parameters.relation} ${format(parameters.value, field)}`);
+                    else
+                        temp.push(`${parameters.relation} ${format(parameters.lowerValue, field)} and ${format(parameters.higherValue, field)}`);
+                } else
+                    temp.push(parameters.value);
+            }
+            queryList.push(['serial_num', 'center_frequency'].includes(field) ? `${headerMap(field)} ${temp.join(` OR ${headerMap(field)} `)}` : `${headerMap(field)} in [${temp.join(', ')}]`);
         }
         queryString = queryList.join('\n');
     }
     return queryString;
 });
 
+const queryParams = computed(() => {
+    let queryParams = [];
+    if (Object.keys(queryObject).length != 0) {
+        for (const field in queryObject)
+            for (const condition of queryObject[field])
+                queryParams.push({field: field, ...condition.parameters});
+    }
+    return queryParams;
+});
+
 function add(field) {
-    //Need to catch invalid serial numbers (greater than 6 digits) or includes leading 'C   '
+    if (!Object.hasOwn(queryObject, field))
+        queryObject[field] = [];
+    let parameters;
     if (field === 'serial_num') {
         if (input.serial_num.relation != 'between') {
-            query.value.push({field: field, relation: input.serial_num.relation, value: input.serial_num.value});
+            parameters = {
+                relation: input.serial_num.relation,
+                value: isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value,
+            };
             input.serial_num.value = '';
             input.serial_num.relation = '';
         } else {
-            query.value.push({field: field, relation: input.serial_num.relation, lowerValue: input.serial_num.lowerValue, higherValue: input.serial_num.value});
+            parameters = {
+                relation: input.serial_num.relation,
+                lowerValue: isShortSerialNumber(input.serial_num.lowerValue) ? appendCommerceSerialNumber(input.serial_num.lowerValue) : input.serial_num.lowerValue,
+                higherValue: isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value,
+            };
             input.serial_num.value = '';
             input.serial_num.lowerValue = '';
             input.serial_num.relation = '';
         }
     } else if (field === 'center_frequency') {
-        let center_frequency = frequencyToKHz(input.frequency.value);
-        if (input.frequency.relation != 'between') {
-            if (center_frequency) {
-                query.value.push({field: field, relation: input.frequency.relation, value: center_frequency});
-                input.frequency.value = '';
-                input.frequency.relation = '';
-            } else {
-                console.log('Invalid frequency:', input.frequency.value);
-            }
+        let center_frequency = frequencyStringToHz(input.center_frequency.value);
+        if (input.center_frequency.relation != 'between') {
+            parameters = {
+                relation: input.center_frequency.relation,
+                value: center_frequency
+            };
+            input.center_frequency.value = '';
+            input.center_frequency.relation = '';
         } else {
-            let frequencyLower_khz = frequencyToKHz(input.frequency.lowerValue);
-            if (center_frequency && frequencyLower_khz) {
-                query.value.push({field: field, relation: input.frequency.relation, lowerValue: frequencyLower_khz, higherValue: center_frequency});
-                input.frequency.value = '';
-                input.frequency.lowerValue = '';
-                input.frequency.relation = '';
-            } else {
-                if (!center_frequency) {
-                    console.log('Invalid frequency:', input.frequency.value);
-                } else {
-                    console.log('Invalid frequency:', input.frequency.lowerValue);
-                }
-            }
+            let frequencyLower_khz = frequencyStringToHz(input.center_frequency.lowerValue);
+            parameters = {
+                relation: input.center_frequency.relation,
+                lowerValue: frequencyLower_khz,
+                higherValue: center_frequency
+            };
+            input.center_frequency.value = '';
+            input.center_frequency.lowerValue = '';
+            input.center_frequency.relation = '';
         }
-    } else if (field == 'bureau') {
-        query.value.push({field: field, value: input.bureau});
-        input.bureau = '';
-    } else if (field === 'tx_state_country_code') {
-        query.value.push({field: field, value: input.tx_state_country_code});
-        input.tx_state_country_code = '';
-    } else if (field === 'rx_state_country_code') {
-        query.value.push({field: field, value: input.rx_state_country_code});
-        input.rx_state_country_code = '';
-    } else if (field === 'tx_antenna_location') {
-        query.value.push({field: field, value: input.tx_antenna_location});
-        input.tx_antenna_location = '';
-    } else if (field === 'rx_antenna_location') {
-        query.value.push({field: field, value: input.rx_antenna_location});
-        input.rx_antenna_location = '';
-    } else if (field === 'station_class') {
-        query.value.push({field: field, value: input.station_class});
-        input.station_class = '';
-    } else if (field === 'function_identifier') {
-        query.value.push({field: field, value: input.function_identifier});
-        input.function_identifier = '';
+    } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)) {
+        parameters = {
+            value: input[field]
+        };
+        input[field] = '';
     }
-    // console.log(query.value);
-}
+    queryObject[field].push({
+        parameters: parameters,
+        id: Symbol()
+    });
+};
+
+function remove(field, id) {
+
+};
 
 function search() {
-    searchResultsState.params = [...query.value];
-    // emit('search');
-    router.push({name: 'searchResults', params: [...query.value]});
-}
+    searchResultsState.params = [...queryParams.value];
+    router.push({name: 'searchResults', params: [...queryParams.value]});
+};
 
 function clear() {
-    query.value = [];
-}
+    for (const field in queryObject) delete queryObject[field];
+};
+
+// const query = ref([]);
+
+// const queryString = computed(() => {
+//     let queryString = '';
+//     if (query.value.length != 0) {
+//         let queryObject = {};
+//         for (const i in query.value) {
+//             if (!Object.keys(queryObject).includes(query.value[i].field)) {
+//                 queryObject[query.value[i].field] = [];
+//             }
+//             if (query.value[i].field === 'serial_num' || query.value[i].field === 'center_frequency') {
+//                 if (query.value[i].relation != 'between')
+//                     queryObject[query.value[i].field].push(`${query.value[i].relation} ${format(query.value[i].value, query.value[i].field)}`);
+//                 else
+//                     queryObject[query.value[i].field].push(`${query.value[i].relation} ${format(query.value[i].lowerValue, query.value[i].field)} and ${format(query.value[i].higherValue, query.value[i].field)}`);
+//             } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(query.value[i].field)) {
+//                 queryObject[query.value[i].field].push(query.value[i].value)            
+//             }
+//         }
+//         let queryList = []
+//         for (const field in queryObject) {
+//             if (field === 'serial_num' || field === 'center_frequency')
+//                 queryList.push(`${headerMap(field)} ${queryObject[field].join(' OR ')}`);
+//             else
+//                 queryList.push(`${headerMap(field)} in [${queryObject[field].join(', ')}]`)
+//         }
+//         queryString = queryList.join('\n');
+//     }
+//     return queryString;
+// });
+
+// function add(field) {
+//     if (field === 'serial_num') {
+//         if (input.serial_num.relation != 'between') {
+//             query.value.push({
+//                 field: field,
+//                 relation: input.serial_num.relation,
+//                 value: isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value
+//             });
+//             input.serial_num.value = '';
+//             input.serial_num.relation = '';
+//         } else {
+//             query.value.push({
+//                 field: field,
+//                 relation: input.serial_num.relation,
+//                 lowerValue: isShortSerialNumber(input.serial_num.lowerValue) ? appendCommerceSerialNumber(input.serial_num.lowerValue) : input.serial_num.lowerValue,
+//                 higherValue: isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value
+//             });
+//             input.serial_num.value = '';
+//             input.serial_num.lowerValue = '';
+//             input.serial_num.relation = '';
+//         }
+//     } else if (field === 'center_frequency') {
+//         let center_frequency = frequencyStringToHz(input.frequency.value);
+//         if (input.frequency.relation != 'between') {
+//             if (center_frequency) {
+//                 query.value.push({field: field, relation: input.frequency.relation, value: center_frequency});
+//                 input.frequency.value = '';
+//                 input.frequency.relation = '';
+//             } else {
+//                 console.log('Invalid frequency:', input.frequency.value);
+//             }
+//         } else {
+//             let frequencyLower_khz = frequencyToHz(input.frequency.lowerValue);
+//             if (center_frequency && frequencyLower_khz) {
+//                 query.value.push({field: field, relation: input.frequency.relation, lowerValue: frequencyLower_khz, higherValue: center_frequency});
+//                 input.frequency.value = '';
+//                 input.frequency.lowerValue = '';
+//                 input.frequency.relation = '';
+//             } else {
+//                 if (!center_frequency) {
+//                     console.log('Invalid frequency:', input.frequency.value);
+//                 } else {
+//                     console.log('Invalid frequency:', input.frequency.lowerValue);
+//                 }
+//             }
+//         }
+//     } else if (field === 'bureau') {
+//         query.value.push({field: field, value: input.bureau});
+//         input.bureau = '';
+//     } else if (field === 'tx_state_country_code') {
+//         query.value.push({field: field, value: input.tx_state_country_code});
+//         input.tx_state_country_code = '';
+//     } else if (field === 'rx_state_country_code') {
+//         query.value.push({field: field, value: input.rx_state_country_code});
+//         input.rx_state_country_code = '';
+//     } else if (field === 'tx_antenna_location') {
+//         query.value.push({field: field, value: input.tx_antenna_location});
+//         input.tx_antenna_location = '';
+//     } else if (field === 'rx_antenna_location') {
+//         query.value.push({field: field, value: input.rx_antenna_location});
+//         input.rx_antenna_location = '';
+//     } else if (field === 'station_class') {
+//         query.value.push({field: field, value: input.station_class});
+//         input.station_class = '';
+//     } else if (field === 'function_identifier') {
+//         query.value.push({field: field, value: input.function_identifier});
+//         input.function_identifier = '';
+//     }
+//     query.value[query.value.length-1]['id'] = Symbol();
+// };
+
+// function search() {
+//     searchResultsState.params = [...query.value];
+//     // emit('search');
+//     router.push({name: 'searchResults', params: [...query.value]});
+// };
+
+// function clear() {
+//     query.value = [];
+// };
 
 </script>
 
@@ -168,18 +275,18 @@ function clear() {
             <div class="divider" />
             <div class="inputLine">
                 <h3 class="inputLabel">Frequency</h3>
-                <select v-model="input.frequency.relation">
+                <select v-model="input.center_frequency.relation">
                     <option disabled value=""></option>
                     <option v-for="relation in numericRelations" :value="relation">
                         {{ relation }}
                     </option>
                 </select>
-                <div v-show="input.frequency.relation === 'between'" class="inputLine">
-                    <input v-model="input.frequency.lowerValue" />
+                <div v-show="input.center_frequency.relation === 'between'" class="inputLine">
+                    <input v-model="input.center_frequency.lowerValue" />
                     <p class="inputSeperator">and</p>
                 </div>
-                <input v-model="input.frequency.value" />
-                <button @click="add('center_frequency')" :disabled="input.frequency.relation === '' || input.frequency.value === '' || (input.frequency.relation === 'between' && input.frequency.lowerValue === '')">Add</button>
+                <input v-model="input.center_frequency.value" />
+                <button @click="add('center_frequency')" :disabled="input.center_frequency.relation === '' || input.center_frequency.value === '' || (input.center_frequency.relation === 'between' && input.center_frequency.lowerValue === '')">Add</button>
             </div>
             <div class="divider" />
             <div class="inputLine">
@@ -277,7 +384,7 @@ function clear() {
                 <pre>{{ queryString }}</pre>
             </div>
             <div class="inputLine">
-                <button @click="search" :disabled="Object.keys(query).length == 0">Search</button>
+                <button @click="search" :disabled="Object.keys(queryObject).length === 0">Search</button>
                 <button @click="clear">Clear</button>
             </div>
         </div>
@@ -318,11 +425,24 @@ input, select, button {
     color: var(--color-text);
 }
 
+select, button {
+    cursor: pointer;
+}
+
+button {
+    font-family: inherit;
+}
+
 label, input, select, button {
     padding: 2px 5px;
 }
 
 pre {
     font-family: inherit;
+}
+
+button:disabled, button[disabled] {
+    color: var(--color-text-inactive);
+    cursor: default;
 }
 </style>

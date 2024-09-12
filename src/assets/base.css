@@ -17,10 +17,12 @@
   --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
   --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
 
-  --vt-c-text-light-1: var(--vt-c-indigo);
+  --vt-c-text-light-1: var(--vt-c-black);
   --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
+  --vt-c-text-light-inactive: rgba(60, 60, 60, 0.33);
   --vt-c-text-dark-1: var(--vt-c-white);
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+  --vt-c-text-dark-inactive: rgba(235, 235, 235, 0.35);
 }
 
 /* semantic color variables for this project */
@@ -34,6 +36,7 @@
 
   --color-heading: var(--vt-c-text-light-1);
   --color-text: var(--vt-c-text-light-1);
+  --color-text-inactive: var(--vt-c-text-light-inactive);
   --color-navigation: var(--vt-c-text-light-1);
 
   --color-toggle-active: var(--vt-c-ice-blue);
@@ -53,6 +56,7 @@
 
     --color-heading: var(--vt-c-text-dark-1);
     --color-text: var(--vt-c-text-dark-2);
+    --color-text-inactive: var(--vt-c-text-dark-inactive);
     --color-navigation: var(--vt-c-text-dark-1);
 
     --color-toggle-active: var(--vt-c-dark-blue);

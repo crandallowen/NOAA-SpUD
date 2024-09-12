@@ -14,7 +14,7 @@ const props = defineProps({
         default: 'ascending'
     },
     displayColumns: {
-        type: String,
+        type: Array,
         default(rawProps) {
             return [...defaultColumns];
         }
@@ -39,6 +39,7 @@ const state = reactive({
     displayColumns: [...props.displayColumns],
     params: [...props.params]
 });
+
 const rowFilters = reactive({
     'center_frequency': frequencyFilters,
     'bureau': [],
@@ -47,7 +48,7 @@ const rowFilters = reactive({
 });
 
 watchEffect(async () => {
-    let url = new URL('http://localhost:7007/getFilters');
+    let url = new URL(`${window.location.origin}/api/getFilters`);
     const response = await fetch(url);
     await response.json()
         .then((response) => {
@@ -61,9 +62,12 @@ watchEffect(async () => {
 });
 
 watchEffect(async () => {
-    let url = new URL('http://localhost:7007/query');
+    let url = new URL(`${window.location.origin}/api/query`);
     let orderedColumns = [];
-    allColumns.forEach((column) => {if (state.displayColumns.includes(column)) {orderedColumns.push(column)}})
+    if (state.displayColumns.length != 0)
+        allColumns.forEach((column) => {if (state.displayColumns.includes(column)) {orderedColumns.push(column)}});
+    else
+        allColumns.forEach((column) => {orderedColumns.push(column)});
     orderedColumns.forEach((column) => url.searchParams.append('column', column));
     url.searchParams.append('sortColumn', state.sort.column);
     url.searchParams.append('sortDirection', state.sort.direction);
@@ -72,7 +76,7 @@ watchEffect(async () => {
         for (const i in state.params) {
             paramsList.push(JSON.stringify(state.params[i]));
         }
-        url.searchParams.append('params', `[${paramsList.join(',')}]`)
+        url.searchParams.append('params', `[${paramsList.join(',')}]`);
     }
     const response = await fetch(url);
     await response.json()
@@ -81,7 +85,7 @@ watchEffect(async () => {
             rows.value = response.rows;
             sortDirection.value = state.sort.direction;
             sortColumn.value = state.sort.column;
-        })
+        });
 });
 
 function handleSort(column) {
@@ -95,7 +99,28 @@ function handleSort(column) {
         state.sort.direction = 'ascending';
     }
     console.log('Sort rows by', state.sort.column, 'in', state.sort.direction, 'order');
-}
+};
+
+function downloadCSVData() {
+    let csv = `${columns.value.map((col) => headerMap(col)).join(',')}\n`;
+    rows.value.forEach((row) => {
+        let temp = []
+        for (const [key, value] of Object.entries(row)) {
+            if (Array.isArray(value))
+                temp.push(value.join('|'));
+            else if (key.includes('date'))
+                temp.push(format(value, key));
+            else
+                temp.push(value);
+        };
+        csv += `${temp.join()}\n`;
+    });
+    const anchor = document.createElement('a');
+    anchor.href = `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`;
+    anchor.target = '_blank';
+    anchor.download = `${props.title}.csv`;
+    anchor.click();
+};
 </script>
 
 <template>
@@ -127,7 +152,11 @@ function handleSort(column) {
         </div>
         <!-- Table -->
         <div class="tableContainer">
-            <h2>{{ props.title }}</h2>
+            <div class="titleBar">
+                <h2 class="title">{{ props.title }}</h2>
+                <button type="button" id="exportButton" @click="downloadCSVData">Export to .csv</button>
+                <p id="rowCount">{{ rows !== null ? `${Object.keys(rows).length} result${Object.keys(rows).length == 1 ? '' : 's'}` : ''}}</p>
+            </div>
             <table class="displayTable">
                 <thead>
                 <tr>
@@ -147,7 +176,8 @@ function handleSort(column) {
                 <tr v-for="row in rows">
                     <template v-for="(value, key) in row">
                         <td>
-                            <pre>{{ format(value, key) }}</pre>
+                            <!-- Will want to on include certain fields in the <pre/> tags in the future -->
+                            <pre>{{ format(value, key) }}</pre> 
                         </td>
                     </template>
                 </tr>
@@ -158,7 +188,31 @@ function handleSort(column) {
 </template>
 
 <style scoped>
-.tableWithSelects, .inputLine, .headerBox {
+
+button {
+    background-color: var(--color-background-soft);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-family: inherit;
+}
+
+#rowCount, #exportButton {
+    align-self: flex-end;
+    margin: 3px;
+}
+
+#exportButton {
+    line-height: 1.6;
+}
+
+.title {
+    flex-grow: 1
+}
+
+.tableWithSelects, .inputLine, .headerBox, .titleBar {
     display: flex;
     flex-direction: row;
 }
@@ -203,9 +257,10 @@ function handleSort(column) {
     color: var(--color-text);
     white-space: nowrap;
     padding: 0 5px;
+    cursor:pointer
 }
 
-.sortButton, .headerBox {
+.sortButton, .headerBox, input {
     cursor: pointer;
 }
 
@@ -218,5 +273,6 @@ function handleSort(column) {
 
 pre {
     font-family: inherit;
+    text-wrap: balance; /* Will move text-wrap property to .displayTable :deep(th) in the future */
 }
 </style>

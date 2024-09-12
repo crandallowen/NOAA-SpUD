@@ -38,6 +38,7 @@ class RFA:
         self.point_of_contact = None
         self.point_of_contact_name = None
         self.point_of_contact_phone_number = None
+        self.point_of_contact_verification_date = None
         self.joint_agency_names = []
         self.international_coordination_ID = None
         self.Canadian_coordination_comments = []
@@ -108,6 +109,7 @@ class RFA:
         self.rx_JSC_area_code = []
         # Area authorization
         self.authorized_area_both = []
+        self.rx_authorized_area = []
         self.tx_authorized_area = []
         self.excepted_states_both = []
         self.rx_excepted_states = []
@@ -210,8 +212,12 @@ def importRFAsFrom1ColFile(filename):
     with open(filename, 'r') as iFile:
         lines = iFile.readlines()
 
-    # regular expressions strings
+    # regular expression strings
     receiver_group_tag = '(.*),R\d{2}$'
+
+    serial_suffix = ''
+    if '_p_' in filename:
+        serial_suffix = 'p'
 
     RFAs = []
     rfa = None
@@ -233,6 +239,10 @@ def importRFAsFrom1ColFile(filename):
             # print(f'{value} becomes {matches[0]}')
             value = matches[0]
 
+        # If a value is '$', the loop will skip to the next iteration and not record the value. May need to be handled different at client request.
+        if value == '$':
+            continue
+
         # In these formats, there is no delimination between different records, so the end of a record is determined by the start
         #     of a new one. In GMF format, the first tag of a record is 'SER' which is the serial number, but in SFAF format, the
         #     first tag is '005' which is the security classification.
@@ -242,12 +252,12 @@ def importRFAsFrom1ColFile(filename):
                 RFAs.append(rfa)
             rfa = RFA()
             if tag == 'SER01':
-                rfa.serial = value
+                rfa.serial = value + serial_suffix
             else:
                 rfa.classification = value
         elif tag == '102.':
             # print(value)
-            rfa.serial = value
+            rfa.serial = value + serial_suffix
         elif tag == 'TYP01' or tag == '010.':
             rfa.record_type = value
         elif tag == 'DAT01' or tag == '911.':
@@ -607,7 +617,7 @@ def formatSFAFDate(SFAF_date):
 # This function converts a power in SXXI format into Watts.
 def formatPower(SXXI_power):
     if SXXI_power is None or SXXI_power == '':
-        return str(0)
+        return 0
     unit = SXXI_power[0]
     quantity = SXXI_power[1:]
 
@@ -618,7 +628,7 @@ def formatPower(SXXI_power):
     elif unit == 'M':
         conversion = 6
 
-    return str(float(quantity) * (10 ** conversion))
+    return float(quantity) * (10 ** conversion)
 
 
 def formatLatLong(SXXI_latitude, SXXI_longitude):

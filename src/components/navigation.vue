@@ -14,6 +14,5 @@
 .navigationBar > * {
     margin: 2rem auto 0;
     padding: 0 4px;
-    color: var(--color-navigation)
 }
 </style>

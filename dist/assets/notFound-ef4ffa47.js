@@ -1,0 +1,1 @@
+import{_ as n,D as a,o as r,b as s,d as o,E as e,G as c,H as _,F as l}from"./app-ff17e2a2.js";const d={},u=o("h1",null,"404",-1);function f(m,i){const t=a("router-link");return r(),s(l,null,[u,o("p",null,[e(" Page not found. "),c(t,{to:"/"},{default:_(()=>[e("Go Home")]),_:1})])],64)}const x=n(d,[["render",f]]);export{x as default};
