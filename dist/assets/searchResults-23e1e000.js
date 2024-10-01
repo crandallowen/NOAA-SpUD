@@ -1,1 +1,0 @@
-import{B as o,r as n,C as c}from"./app-087d24ab.js";const a=o("searchResultsOptions",()=>{const e=n({column:"center_frequency",direction:"ascending"}),s=n([...c]),t=n([]);function r(){e.value.direction=e.value.direction==="ascending"?"descending":"ascending"}return{sort:e,displayColumns:s,params:t,invertSort:r}});export{a as u};

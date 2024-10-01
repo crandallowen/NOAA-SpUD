@@ -9,6 +9,14 @@ export const useHomeTableStore = defineStore('homeTableOptions', () => {
     });
     const displayColumns = ref([...defaultColumns]);
     const params = ref([]);
+
+    if(localStorage.getItem('homeTableOptions')){
+        var state = JSON.parse(localStorage.getItem('homeTableOptions'));
+        sort.value = state.sort;
+        displayColumns.value = state.displayColumns;
+        params.value = state.params;
+    }
+
     function invertSort() {
         sort.value.direction = (sort.value.direction === 'ascending') ? 'descending' : 'ascending';
     };

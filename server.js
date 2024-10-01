@@ -38,7 +38,7 @@ const saml_options = {};
 var sessionOptions = {
     secret: ' secret spud ',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {}
 };
 
@@ -107,8 +107,9 @@ app.use((request, response, next) => {
     let filename = path.basename(request.url);
     let extension = path.extname(filename);
     if (FILE_EXT.includes(extension)) {
-        console.log(`Serving file ${filename} for session ${request.sessionID}`);
+        console.log(`Serving file: ${filename}`);
     }
+    console.log(`Session: ${request.sessionID}`)
     next();
 });
 
@@ -131,13 +132,6 @@ app.get('(?!/api)/*', (request, response) => {
 
 app.get('/api/getFilters', async (request, response, next) => {
     let filtersJSON = {};
-    // const client = new Client(clientConfig);
-    // await client.connect()
-    //     .then(() => console.log('Connected to', clientConfig.database, 'at', clientConfig.host+':'+clientConfig.port))
-    //     .catch((error) => {
-    //         console.error('Connection error:', error.stack)
-    //         next(error);
-    //     });
     const client = await connectToDB();
     for (const i in ROW_FILTERS) {
         let field = ROW_FILTERS[i];
@@ -146,7 +140,6 @@ app.get('/api/getFilters', async (request, response, next) => {
             text: OPTION_QUERIES[field]
         })
             .then((result) => {
-                // console.log(result);
                 filtersJSON[field] = [];
                 result.rows.forEach((row) => {
                     if (row != '') {filtersJSON[field].push(row[0]);}
@@ -163,19 +156,11 @@ app.get('/api/getFilters', async (request, response, next) => {
             console.error('End error:', error.stack);
             next(error);
         });
-    // console.log(filtersJSON);
     response.json(filtersJSON);
 });
 
 app.get('/api/getOptions', async (request, response, next) => {
     let optionsJSON = {};
-    // const client = new Client(clientConfig);
-    // await client.connect()
-    //     .then(() => console.log('Connected to', clientConfig.database, 'at', clientConfig.host+':'+clientConfig.port))
-    //     .catch((error) => {
-    //         console.error('Connection error:', error.stack)
-    //         next(error);
-    //     });
     const client = await connectToDB();
     for (const field in OPTION_QUERIES) {
         await client.query({
@@ -183,7 +168,6 @@ app.get('/api/getOptions', async (request, response, next) => {
             text: OPTION_QUERIES[field]
         })
             .then((result) => {
-                // console.log(result);
                 optionsJSON[field] = [];
                 result.rows.forEach((row) => {
                     if (row != '') {optionsJSON[field].push(row[0]);}
@@ -200,7 +184,6 @@ app.get('/api/getOptions', async (request, response, next) => {
             console.error('End error:', error.stack);
             next(error);
         });
-    // console.log(optionsJSON);
     response.json(optionsJSON);
 });
 
@@ -251,14 +234,6 @@ app.get('/api/query', async (request, response, next) => {
             }
         }
     }
-    // console.log(params);
-    // const client = new Client(clientConfig);
-    // await client.connect()
-    //     .then(() => console.log('Connected to', clientConfig.database, 'at', clientConfig.host+':'+clientConfig.port))
-    //     .catch((error) => {
-    //         console.error('Connection error:', error.stack)
-    //         next(error);
-    //     });
     const client = await connectToDB();
     let selectSQL = format.withArray(`SELECT ${'%I, '.repeat(columns.length).slice(0, -2)}`, columns);
     //Modify this when more tables/views are in use
@@ -266,7 +241,6 @@ app.get('/api/query', async (request, response, next) => {
     let whereSQL = format.withArray(`WHERE ${'%s AND '.repeat(conditions.length).slice(0, -5)}`, conditions);
     let orderBySQL = format(`ORDER BY %I %s`, sort.column, sort.direction);
     let sql = (params && params.length != 0) ? `${selectSQL} ${fromSQL} ${whereSQL} ${orderBySQL}` : `${selectSQL} ${fromSQL} ${orderBySQL}`;
-    console.log(sql);
     await client.query(sql)
         .then((result) => {
             console.log('Returned', result.rowCount, 'rows.');

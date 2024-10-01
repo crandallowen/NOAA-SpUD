@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, watchEffect } from 'vue';
+import { ref, reactive, computed, watch, watchEffect } from 'vue';
 import { frequencyStringToHz, headerMap, allColumns, format, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
 import { useSearchResultsStore } from '@/stores/searchResults';
 import router from '@/router';
@@ -7,9 +7,13 @@ import router from '@/router';
 const options = ref({});
 const store = useSearchResultsStore();
 
+watch(store, (store) => {
+    localStorage.setItem(store.$id, JSON.stringify(store))
+}, {deep: true});
+
 watchEffect(async () => {
     let url = new URL(`${window.location.origin}/api/getOptions`);
-    const response = await fetch(url);
+    const response = await fetch(url, {credentials: 'include'});
     await response.json()
         .then((response) => {
             options.value = response;

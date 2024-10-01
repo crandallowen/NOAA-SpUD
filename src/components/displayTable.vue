@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, watchEffect } from 'vue';
+import { ref, reactive, watch, watchEffect } from 'vue';
 import { format, headerMap, visibleColumnGroups, allColumns, defaultColumns, frequencyFilters, frequencyHzTokHz } from '@/js/utils';
 import collapsibleGroup from '@/components/collapsibleGroup.vue';
 
@@ -8,9 +8,13 @@ const props = defineProps({
     useStore: Function,
 });
 
-const store = props.useStore();
 const columns = ref(null);
 const rows = ref(null);
+const store = props.useStore();
+
+watch(store, (store) => {
+    localStorage.setItem(store.$id, JSON.stringify(store))
+}, {deep: true});
 
 const rowFilters = reactive({
     'center_frequency': frequencyFilters,
@@ -21,7 +25,7 @@ const rowFilters = reactive({
 
 watchEffect(async () => {
     let url = new URL(`${window.location.origin}/api/getFilters`);
-    const response = await fetch(url);
+    const response = await fetch(url, {credentials: 'include'});
     await response.json()
         .then((response) => {
             for (const field in rowFilters) {
@@ -50,7 +54,7 @@ watchEffect(async () => {
         }
         url.searchParams.append('params', `[${paramsList.join(',')}]`);
     }
-    const response = await fetch(url);
+    const response = await fetch(url, {credentials: 'include'});
     await response.json()
         .then((response) => {
             columns.value = response.columns;
