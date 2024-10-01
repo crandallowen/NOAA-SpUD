@@ -3,7 +3,7 @@
 **/inputs
 **/outputs
 **/__pycache__/*
-**/database.ini
+**/database*.ini
 driver.py
 **/node_modules
 **/Project Documents

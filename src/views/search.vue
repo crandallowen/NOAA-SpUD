@@ -1,10 +1,11 @@
 <script setup>
 import { ref, reactive, computed, watchEffect } from 'vue';
 import { frequencyStringToHz, headerMap, allColumns, format, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
-import { searchResultsState } from '@/js/state';
+import { useSearchResultsStore } from '@/stores/searchResults';
 import router from '@/router';
 
 const options = ref({});
+const store = useSearchResultsStore();
 
 watchEffect(async () => {
     let url = new URL(`${window.location.origin}/api/getOptions`);
@@ -130,125 +131,13 @@ function remove(field, id) {
 };
 
 function search() {
-    searchResultsState.params = [...queryParams.value];
+    store.params = [...queryParams.value];
     router.push({name: 'searchResults', params: [...queryParams.value]});
 };
 
 function clear() {
     for (const field in queryObject) delete queryObject[field];
 };
-
-// const query = ref([]);
-
-// const queryString = computed(() => {
-//     let queryString = '';
-//     if (query.value.length != 0) {
-//         let queryObject = {};
-//         for (const i in query.value) {
-//             if (!Object.keys(queryObject).includes(query.value[i].field)) {
-//                 queryObject[query.value[i].field] = [];
-//             }
-//             if (query.value[i].field === 'serial_num' || query.value[i].field === 'center_frequency') {
-//                 if (query.value[i].relation != 'between')
-//                     queryObject[query.value[i].field].push(`${query.value[i].relation} ${format(query.value[i].value, query.value[i].field)}`);
-//                 else
-//                     queryObject[query.value[i].field].push(`${query.value[i].relation} ${format(query.value[i].lowerValue, query.value[i].field)} and ${format(query.value[i].higherValue, query.value[i].field)}`);
-//             } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(query.value[i].field)) {
-//                 queryObject[query.value[i].field].push(query.value[i].value)            
-//             }
-//         }
-//         let queryList = []
-//         for (const field in queryObject) {
-//             if (field === 'serial_num' || field === 'center_frequency')
-//                 queryList.push(`${headerMap(field)} ${queryObject[field].join(' OR ')}`);
-//             else
-//                 queryList.push(`${headerMap(field)} in [${queryObject[field].join(', ')}]`)
-//         }
-//         queryString = queryList.join('\n');
-//     }
-//     return queryString;
-// });
-
-// function add(field) {
-//     if (field === 'serial_num') {
-//         if (input.serial_num.relation != 'between') {
-//             query.value.push({
-//                 field: field,
-//                 relation: input.serial_num.relation,
-//                 value: isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value
-//             });
-//             input.serial_num.value = '';
-//             input.serial_num.relation = '';
-//         } else {
-//             query.value.push({
-//                 field: field,
-//                 relation: input.serial_num.relation,
-//                 lowerValue: isShortSerialNumber(input.serial_num.lowerValue) ? appendCommerceSerialNumber(input.serial_num.lowerValue) : input.serial_num.lowerValue,
-//                 higherValue: isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value
-//             });
-//             input.serial_num.value = '';
-//             input.serial_num.lowerValue = '';
-//             input.serial_num.relation = '';
-//         }
-//     } else if (field === 'center_frequency') {
-//         let center_frequency = frequencyStringToHz(input.frequency.value);
-//         if (input.frequency.relation != 'between') {
-//             if (center_frequency) {
-//                 query.value.push({field: field, relation: input.frequency.relation, value: center_frequency});
-//                 input.frequency.value = '';
-//                 input.frequency.relation = '';
-//             } else {
-//                 console.log('Invalid frequency:', input.frequency.value);
-//             }
-//         } else {
-//             let frequencyLower_khz = frequencyToHz(input.frequency.lowerValue);
-//             if (center_frequency && frequencyLower_khz) {
-//                 query.value.push({field: field, relation: input.frequency.relation, lowerValue: frequencyLower_khz, higherValue: center_frequency});
-//                 input.frequency.value = '';
-//                 input.frequency.lowerValue = '';
-//                 input.frequency.relation = '';
-//             } else {
-//                 if (!center_frequency) {
-//                     console.log('Invalid frequency:', input.frequency.value);
-//                 } else {
-//                     console.log('Invalid frequency:', input.frequency.lowerValue);
-//                 }
-//             }
-//         }
-//     } else if (field === 'bureau') {
-//         query.value.push({field: field, value: input.bureau});
-//         input.bureau = '';
-//     } else if (field === 'tx_state_country_code') {
-//         query.value.push({field: field, value: input.tx_state_country_code});
-//         input.tx_state_country_code = '';
-//     } else if (field === 'rx_state_country_code') {
-//         query.value.push({field: field, value: input.rx_state_country_code});
-//         input.rx_state_country_code = '';
-//     } else if (field === 'tx_antenna_location') {
-//         query.value.push({field: field, value: input.tx_antenna_location});
-//         input.tx_antenna_location = '';
-//     } else if (field === 'rx_antenna_location') {
-//         query.value.push({field: field, value: input.rx_antenna_location});
-//         input.rx_antenna_location = '';
-//     } else if (field === 'station_class') {
-//         query.value.push({field: field, value: input.station_class});
-//         input.station_class = '';
-//     } else if (field === 'function_identifier') {
-//         query.value.push({field: field, value: input.function_identifier});
-//         input.function_identifier = '';
-//     }
-//     query.value[query.value.length-1]['id'] = Symbol();
-// };
-
-// function search() {
-//     searchResultsState.params = [...query.value];
-//     // emit('search');
-//     router.push({name: 'searchResults', params: [...query.value]});
-// };
-
-// function clear() {
-//     query.value = [];
-// };
 
 </script>
 
@@ -371,7 +260,7 @@ function clear() {
             <div class="columns">
                 <template v-for="column in allColumns">
                     <div class="inputLine">
-                        <input type="checkbox" :id="column" :value="column" v-model="searchResultsState.displayColumns">
+                        <input type="checkbox" :id="column" :value="column" v-model="store.displayColumns">
                         <label :for="column">{{ headerMap(column) }}</label>
                     </div>
                 </template>

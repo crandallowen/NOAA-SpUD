@@ -1,23 +1,24 @@
 const path = require('path');
 const express = require('express');
+const session = require('express-session');
 const fs = require('fs');
 // const cors = require('cors'); //Will likely be needed for deployment
 const { Client } = require('pg');
-// const { clientConfig } = require('./db.config'); //Will not be used in production
 const format = require('pg-format');
 const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
-// const { fromContainerMetadata } = require('@aws-sdk/credential-providers');
-const { fromSSO } = require('@aws-sdk/credential-providers');
+const { fromContainerMetadata, fromSSO } = require('@aws-sdk/credential-providers');
+const { SAML } = require('@node-saml/passport-saml');
 
-const app = express();
-const port = process.env.PORT || 7007;
-const file_ext = ['.css', '.html', '.js'];
-const db_user = 'postgres'
-const db_host = 'spud-test-1.cduw4y6qos2l.us-east-1.rds.amazonaws.com'
-const db_port = '5432'
-const database = 'spud'
+const IS_DEV = process.env.NODE_ENV.trim() === 'development';
+const IS_PROD = process.env.NODE_ENV.trim() === 'production';
+const PORT = process.env.PORT || 7007;
+const FILE_EXT = ['.css', '.html', '.js'];
+const DB_USER = process.env.DB_USER || 'postgres';
+const DB_HOST = process.env.DB_HOST || 'spud-test-1.cduw4y6qos2l.us-east-1.rds.amazonaws.com';
+const DB_PORT = process.env.DB_PORT || '5432';
+const DB = process.env.DB || 'spud';
 
-const optionQueries = {
+const OPTION_QUERIES = {
     'bureau': `SELECT DISTINCT bureau FROM RFAs ORDER BY bureau ASC`,
     'tx_state_country_code': `SELECT DISTINCT tx_state_country_code FROM RFAs ORDER BY tx_state_country_code ASC`,
     'rx_state_country_code': `SELECT DISTINCT unnest(rx_state_country_code) AS rx_state_country_code FROM RFAs ORDER BY rx_state_country_code ASC`,
@@ -25,23 +26,43 @@ const optionQueries = {
     'rx_antenna_location': `SELECT DISTINCT unnest(rx_antenna_location) AS rx_antenna_location FROM RFAs ORDER BY rx_antenna_location ASC`,
     'station_class': `SELECT DISTINCT unnest(station_class) AS station_class FROM RFAs ORDER BY station_class ASC`,
     'function_identifier': `SELECT DISTINCT function_identifier FROM (SELECT main_function_id AS function_identifier FROM RFAs UNION SELECT intermediate_function_id AS function_identifier FROM RFAs UNION SELECT detailed_function_id AS function_identifier FROM RFAs) AS function_identifiers ORDER BY function_identifier ASC`, 
+    'point_of_contact': `SELECT DISTINCT point_of_contact FROM RFAs`,
 };
 
-const rowFilters = ['bureau', 'function_identifier', 'tx_state_country_code'];
+const ROW_FILTERS = ['bureau', 'function_identifier', 'tx_state_country_code'];
 
-const pointOfContactOptions = `SELECT DISTINCT point_of_contact FROM RFAs`;
+const app = express();
+const saml_options = {};
+// const saml = new SAML(saml_options);
+
+var sessionOptions = {
+    secret: ' secret spud ',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {}
+};
+
+if (IS_PROD) {
+    sessionOptions.cookie.secure = true;
+};
 
 async function connectToDB() {
     const secret_name = "rds!db-b1c2087a-1f45-4ad0-a23f-264ad481c0b4";
-    const secrets_client = new SecretsManagerClient({
-        // credentials: fromContainerMetadata({
-        //     timeout: 1000,
-        //     maxRetries: 0,
-        // }),
-        credentials: fromSSO({
-            profile: 'default',
-        }),
-    });
+    let secrets_client;
+    if (IS_DEV) {
+        secrets_client = new SecretsManagerClient({
+            credentials: fromSSO({
+                profile: 'default',
+            }),
+        });
+    } else {
+        secrets_client = new SecretsManagerClient({
+            credentials: fromContainerMetadata({
+                timeout: 1000,
+                maxRetries: 0,
+            }),
+        });
+    }
     let response;
 
     try {
@@ -61,9 +82,9 @@ async function connectToDB() {
     const client = new Client({
         user: secret.username, 
         password: secret.password,
-        host: db_host,
-        port: db_port,
-        database: database,
+        host: DB_HOST,
+        port: DB_PORT,
+        database: DB,
         ssl: {
             require: true,
             rejectUnauthorized: true,
@@ -72,7 +93,7 @@ async function connectToDB() {
     });
 
     await client.connect()
-        .then(() => console.log('Connected to', database, 'as', db_user, 'at', db_host+':'+db_port))
+        .then(() => console.log('Connected to', DB, 'as', DB_USER, 'at', DB_HOST+':'+DB_PORT))
         .catch((error) => {
             console.error('Connection error:', error.stack)
             next(error);
@@ -80,11 +101,13 @@ async function connectToDB() {
     return client;
 };
 
+app.use(session(sessionOptions));
+
 app.use((request, response, next) => {
     let filename = path.basename(request.url);
     let extension = path.extname(filename);
-    if (file_ext.includes(extension)) {
-        console.log("Serving file: " + filename);
+    if (FILE_EXT.includes(extension)) {
+        console.log(`Serving file ${filename} for session ${request.sessionID}`);
     }
     next();
 });
@@ -116,11 +139,11 @@ app.get('/api/getFilters', async (request, response, next) => {
     //         next(error);
     //     });
     const client = await connectToDB();
-    for (const i in rowFilters) {
-        let field = rowFilters[i];
+    for (const i in ROW_FILTERS) {
+        let field = ROW_FILTERS[i];
         await client.query({
             rowMode: 'array',
-            text: optionQueries[field]
+            text: OPTION_QUERIES[field]
         })
             .then((result) => {
                 // console.log(result);
@@ -135,7 +158,7 @@ app.get('/api/getFilters', async (request, response, next) => {
             })
     }
     await client.end()
-        .then(() => console.log(db_user, 'has successfully disconnected.'))
+        .then(() => console.log(DB_USER, 'has successfully disconnected.'))
         .catch((error) => {
             console.error('End error:', error.stack);
             next(error);
@@ -154,10 +177,10 @@ app.get('/api/getOptions', async (request, response, next) => {
     //         next(error);
     //     });
     const client = await connectToDB();
-    for (const field in optionQueries) {
+    for (const field in OPTION_QUERIES) {
         await client.query({
             rowMode: 'array',
-            text: optionQueries[field]
+            text: OPTION_QUERIES[field]
         })
             .then((result) => {
                 // console.log(result);
@@ -172,7 +195,7 @@ app.get('/api/getOptions', async (request, response, next) => {
             })
     }
     await client.end()
-        .then(() => console.log(db_user, 'has successfully disconnected.'))
+        .then(() => console.log(DB_USER, 'has successfully disconnected.'))
         .catch((error) => {
             console.error('End error:', error.stack);
             next(error);
@@ -258,7 +281,7 @@ app.get('/api/query', async (request, response, next) => {
         })
         .finally(async () => {
             await client.end()
-                .then(() => console.log(db_user, 'has successfully disconnected.'))
+                .then(() => console.log(DB_USER, 'has successfully disconnected.'))
                 .catch((error) => {
                     console.error('End error:', error.stack);
                     next(error);
@@ -266,6 +289,6 @@ app.get('/api/query', async (request, response, next) => {
         });
 });
 
-app.listen(port, () => {
-    console.log('App listening on port', port);
+app.listen(PORT, () => {
+    console.log('App listening on PORT', PORT);
 });

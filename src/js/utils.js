@@ -87,6 +87,10 @@ export function frequencyStringToHz(frequencyString) {
     return frequencyFloat.toPrecision(12).toString() / 1;
 };
 
+export function frequencyHzTokHz(frequency_hz) {
+    return frequency_hz * (10 ** -3);
+};
+
 export const frequencyFilters = [
     {id: 'frequencyFilter0', name: 'F < 400 MHz', condition: {field: 'center_frequency', relation: '<', value: 400000000}},
     {id: 'frequencyFilter1', name: '400 MHz <= F <= 410 MHz', condition: {field: 'center_frequency', relation: 'between', lowerValue: 400000000, higherValue: 410000000}},

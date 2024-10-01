@@ -1,11 +1,10 @@
 <script setup>
 import displayTable from '@/components/displayTable.vue';
-import { searchResultsState } from '@/js/state';
-
+import { useSearchResultsStore } from '@/stores/searchResults';
 </script>
 
 <template>
-    <displayTable v-bind="searchResultsState" />
+    <displayTable title="Search Results" :use-store="useSearchResultsStore" />
 </template>
 
 <style scoped>

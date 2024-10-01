@@ -1,44 +1,16 @@
 <script setup>
 import { ref, reactive, computed, watchEffect } from 'vue';
-import { format, headerMap, visibleColumnGroups, allColumns, defaultColumns, frequencyFilters } from '@/js/utils';
+import { format, headerMap, visibleColumnGroups, allColumns, defaultColumns, frequencyFilters, frequencyHzTokHz } from '@/js/utils';
 import collapsibleGroup from '@/components/collapsibleGroup.vue';
 
 const props = defineProps({
     title: String,
-    sortColumn: {
-        type: String,
-        default: 'center_frequency'
-    },
-    sortDirection: {
-        type: String,
-        default: 'ascending'
-    },
-    displayColumns: {
-        type: Array,
-        default(rawProps) {
-            return [...defaultColumns];
-        }
-    },
-    params: {
-        type: Array,
-        default(rawProps) {
-            return [];
-        }
-    }
+    useStore: Function,
 });
 
+const store = props.useStore();
 const columns = ref(null);
 const rows = ref(null);
-const sortDirection = ref(null);
-const sortColumn = ref(null);
-const state = reactive({
-    sort: {
-        column: props.sortColumn,
-        direction: props.sortDirection
-    },
-    displayColumns: [...props.displayColumns],
-    params: [...props.params]
-});
 
 const rowFilters = reactive({
     'center_frequency': frequencyFilters,
@@ -58,23 +30,23 @@ watchEffect(async () => {
                 }
             }
         })
-    // console.log(rowFilters);
 });
 
 watchEffect(async () => {
+    document.body.style.cursor='wait';
     let url = new URL(`${window.location.origin}/api/query`);
     let orderedColumns = [];
-    if (state.displayColumns.length != 0)
-        allColumns.forEach((column) => {if (state.displayColumns.includes(column)) {orderedColumns.push(column)}});
+    if (store.displayColumns.length != 0)
+        allColumns.forEach((column) => {if (store.displayColumns.includes(column)) {orderedColumns.push(column)}});
     else
         allColumns.forEach((column) => {orderedColumns.push(column)});
     orderedColumns.forEach((column) => url.searchParams.append('column', column));
-    url.searchParams.append('sortColumn', state.sort.column);
-    url.searchParams.append('sortDirection', state.sort.direction);
-    if (state.params.length != 0) {
+    url.searchParams.append('sortColumn', store.sort.column);
+    url.searchParams.append('sortDirection', store.sort.direction);
+    if (store.params.length != 0) {
         let paramsList = [];
-        for (const i in state.params) {
-            paramsList.push(JSON.stringify(state.params[i]));
+        for (const i in store.params) {
+            paramsList.push(JSON.stringify(store.params[i]));
         }
         url.searchParams.append('params', `[${paramsList.join(',')}]`);
     }
@@ -83,22 +55,18 @@ watchEffect(async () => {
         .then((response) => {
             columns.value = response.columns;
             rows.value = response.rows;
-            sortDirection.value = state.sort.direction;
-            sortColumn.value = state.sort.column;
+            document.body.style.cursor='default';
         });
 });
 
 function handleSort(column) {
-    if (column === state.sort.column) {
-        if (state.sort.direction === 'ascending')
-            state.sort.direction = 'descending';
-        else
-            state.sort.direction = 'ascending';
+    if (column === store.sort.column) {
+        store.invertSort();
     } else {
-        state.sort.column = column;
-        state.sort.direction = 'ascending';
+        store.sort.column = column;
+        store.sort.direction = 'ascending';
     }
-    console.log('Sort rows by', state.sort.column, 'in', state.sort.direction, 'order');
+    console.log('Sort rows by', store.sort.column, 'in', store.sort.direction, 'order');
 };
 
 function downloadCSVData() {
@@ -110,6 +78,8 @@ function downloadCSVData() {
                 temp.push(value.join('|'));
             else if (key.includes('date'))
                 temp.push(format(value, key));
+            else if (key === 'center_frequency')
+                temp.push(frequencyHzTokHz(value));
             else
                 temp.push(value);
         };
@@ -132,7 +102,7 @@ function downloadCSVData() {
                 <collapsibleGroup :group-name="headerMap(key)" collapsed>
                     <template v-for="filter in rowFilters[key]">
                         <div class="inputLine">
-                            <input type="checkbox" :id="filter.id" :value="filter.condition" v-model="state.params">
+                            <input type="checkbox" :id="filter.id" :value="filter.condition" v-model="store.params">
                             <label :for="filter.id">{{ filter.name }}</label>
                         </div>
                     </template>
@@ -143,7 +113,7 @@ function downloadCSVData() {
                 <collapsibleGroup :group-name="key">
                     <template v-for="column in visibleColumnGroups[key]">
                         <div class="inputLine">
-                            <input type="checkbox" :id="column" :value="column" v-model="state.displayColumns">
+                            <input type="checkbox" :id="column" :value="column" v-model="store.displayColumns">
                             <label :for="column">{{ headerMap(column) }}</label>
                         </div>
                     </template>
@@ -165,7 +135,7 @@ function downloadCSVData() {
                             <div class="headerBox">
                                 {{ headerMap(value) }}
                                 <button @click.stop="handleSort(value)" class="sortButton">
-                                    {{ sortColumn != value ? '\u25B2/\u25BC' : (sortDirection === 'ascending' ? '\u25B2' : '\u25BC') }}
+                                    {{ store.sort.column != value ? '\u25B2/\u25BC' : (store.sort.direction === 'ascending' ? '\u25B2' : '\u25BC') }}
                                 </button>
                             </div>
                         </th>
@@ -176,7 +146,7 @@ function downloadCSVData() {
                 <tr v-for="row in rows">
                     <template v-for="(value, key) in row">
                         <td>
-                            <!-- Will want to on include certain fields in the <pre/> tags in the future -->
+                            <!-- Will want to only include certain fields in the <pre/> tags in the future -->
                             <pre>{{ format(value, key) }}</pre> 
                         </td>
                     </template>
