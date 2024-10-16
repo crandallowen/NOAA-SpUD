@@ -12,7 +12,7 @@ import navigation from '@/components/navigation.vue';
   </header>
 
   <main>
-    <router-view></router-view>
+    <router-view />
   </main>
 </template>
 
