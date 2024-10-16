@@ -2,6 +2,7 @@
 import { ref, reactive, watch, watchEffect } from 'vue';
 import { format, headerMap, visibleColumnGroups, allColumns, frequencyFilters, frequencyHzTokHz } from '@/js/utils';
 import collapsibleGroup from '@/components/collapsibleGroup.vue';
+import { useAuthStore } from '@/stores/auth';
 
 const props = defineProps({
     title: String,
@@ -10,6 +11,7 @@ const props = defineProps({
 
 const columns = ref(null);
 const rows = ref(null);
+const auth = useAuthStore();
 const store = props.useStore();
 
 watch(store, (store) => {
@@ -25,15 +27,19 @@ const rowFilters = reactive({
 
 watchEffect(async () => {
     let url = new URL(`${window.location.origin}/api/getFilters`);
-    const response = await fetch(url, {credentials: 'include'});
-    await response.json()
-        .then((response) => {
-            for (const field in rowFilters) {
-                for (const i in response[field]) {
-                    rowFilters[field].push({id: field+'Filter'+i, name: response[field][i], condition: {field: field, value: response[field][i]}});
+    const response = await fetch(url, {credentials: 'include'})
+    if (response.status === 403) {
+        auth.logout();
+    } else {
+        response.json()
+            .then((response) => {
+                for (const field in rowFilters) {
+                    for (const i in response[field]) {
+                        rowFilters[field].push({id: field+'Filter'+i, name: response[field][i], condition: {field: field, value: response[field][i]}});
+                    }
                 }
-            }
-        })
+            })
+    }
 });
 
 watchEffect(async () => {
@@ -55,12 +61,17 @@ watchEffect(async () => {
         url.searchParams.append('params', `[${paramsList.join(',')}]`);
     }
     const response = await fetch(url, {credentials: 'include'});
-    await response.json()
-        .then((response) => {
-            columns.value = response.columns;
-            rows.value = response.rows;
-            document.body.style.cursor='default';
-        });
+    if (response.status === 403) {
+        document.body.style.cursor='default';
+        auth.logout();
+    } else {
+        response.json()
+            .then((response) => {
+                columns.value = response.columns;
+                rows.value = response.rows;
+            });
+        document.body.style.cursor='default';
+    }
 });
 
 function handleSort(column) {

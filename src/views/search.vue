@@ -2,10 +2,12 @@
 import { ref, reactive, computed, watch, watchEffect } from 'vue';
 import { frequencyStringToHz, headerMap, allColumns, format, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
 import { useSearchResultsStore } from '@/stores/searchResults';
+import { useAuthStore } from '@/stores/auth';
 import router from '@/router';
 
 const options = ref({});
 const store = useSearchResultsStore();
+const auth = useAuthStore();
 
 watch(store, (store) => {
     localStorage.setItem(store.$id, JSON.stringify(store))
@@ -14,10 +16,14 @@ watch(store, (store) => {
 watchEffect(async () => {
     let url = new URL(`${window.location.origin}/api/getOptions`);
     const response = await fetch(url, {credentials: 'include'});
-    await response.json()
-        .then((response) => {
-            options.value = response;
-        })
+    if (response.status === 403) {
+        auth.logout();
+    } else {
+        response.json()
+            .then((response) => {
+                options.value = response;
+            });
+    }
 });
 
 const input = reactive({

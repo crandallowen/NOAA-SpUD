@@ -2,7 +2,7 @@ const path = require('path');
 const express = require('express');
 const session = require('express-session');
 const fs = require('fs');
-// const cors = require('cors'); //Will likely be needed for deployment
+const cors = require('cors'); //Will likely be needed for deployment
 const { Client } = require('pg');
 const format = require('pg-format');
 const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
@@ -72,7 +72,7 @@ if (IS_PROD) {
 };
 
 function checkAuth(request, response, next) {
-    if (request.user.username) {
+    if (request.user) {
         next();
     } else {
         response.status(403);
