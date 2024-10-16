@@ -7,6 +7,7 @@
 driver.py
 **/node_modules
 **/Project Documents
+dist/*
 db.config.js
 rds-ca-cert.pem
 .vscode/*
