@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { defaultColumns } from '@/js/utils';
 import { ref } from 'vue';
 
-export const useHomeTableStore = defineStore('homeTableOptions', () => {
+export const useHomeTableStore = defineStore('homeTable', () => {
     const sort = ref({
         column: 'center_frequency',
         direction: 'ascending'
@@ -10,8 +10,8 @@ export const useHomeTableStore = defineStore('homeTableOptions', () => {
     const displayColumns = ref([...defaultColumns]);
     const params = ref([]);
 
-    if(localStorage.getItem('homeTableOptions')){
-        var state = JSON.parse(localStorage.getItem('homeTableOptions'));
+    if (localStorage.getItem('homeTable')) {
+        let state = JSON.parse(localStorage.getItem('homeTable'));
         sort.value = state.sort;
         displayColumns.value = state.displayColumns;
         params.value = state.params;

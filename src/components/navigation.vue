@@ -1,9 +1,9 @@
 <template>
-    <span class="navigationBar">
+    <nav class="navigationBar">
         <router-link :to="{name: 'home'}">Home</router-link> 
         <span> | </span>
         <router-link :to="{name: 'search'}">Search</router-link>
-    </span>
+    </nav>
 </template>
 
 <style scoped>

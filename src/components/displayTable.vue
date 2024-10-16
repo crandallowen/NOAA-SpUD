@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, watch, watchEffect } from 'vue';
-import { format, headerMap, visibleColumnGroups, allColumns, defaultColumns, frequencyFilters, frequencyHzTokHz } from '@/js/utils';
+import { format, headerMap, visibleColumnGroups, allColumns, frequencyFilters, frequencyHzTokHz } from '@/js/utils';
 import collapsibleGroup from '@/components/collapsibleGroup.vue';
 
 const props = defineProps({
@@ -139,7 +139,7 @@ function downloadCSVData() {
                             <div class="headerBox">
                                 {{ headerMap(value) }}
                                 <button @click.stop="handleSort(value)" class="sortButton">
-                                    {{ store.sort.column != value ? '\u25B2/\u25BC' : (store.sort.direction === 'ascending' ? '\u25B2' : '\u25BC') }}
+                                    {{ store.sort.column != value ? '\u25B2/\u25BC' : (store.sort.direction === 'ascending' ? '\u25B2' : '\u25BC') }} <!--Will need to handle changing the displayed sort direction until after data has loaded in new order-->
                                 </button>
                             </div>
                         </th>
@@ -247,6 +247,6 @@ button {
 
 pre {
     font-family: inherit;
-    text-wrap: balance; /* Will move text-wrap property to .displayTable :deep(th) in the future */
+    text-wrap: balance; /* Will move text-wrap property to .displayTable :deep(td) in the future */
 }
 </style>

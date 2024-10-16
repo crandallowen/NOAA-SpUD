@@ -1,18 +1,18 @@
 <script setup>
 import navigation from '@/components/navigation.vue';
-// function onSearch() {
-//     window.location.href = '#/searchResults'
-// }
+import { useAuthStore } from '@/stores/auth';
+
+const authStore = useAuthStore();
 </script>
 
 <template>
   <header>
     <img alt="Generic logo" class="logo" src="./assets/genericLogo.svg" width="55" height="55" />
-    <navigation />
+    <navigation v-show="authStore.user" />
   </header>
 
   <main>
-    <router-view></router-view>
+    <router-view />
   </main>
 </template>
 

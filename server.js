@@ -8,6 +8,8 @@ const format = require('pg-format');
 const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
 const { fromContainerMetadata, fromSSO } = require('@aws-sdk/credential-providers');
 const { SAML } = require('@node-saml/passport-saml');
+const passport = require('passport');
+const localStrategy = require('passport-local').Strategy;
 
 const IS_DEV = process.env.NODE_ENV.trim() === 'development';
 const IS_PROD = process.env.NODE_ENV.trim() === 'production';
@@ -35,6 +37,17 @@ const app = express();
 const saml_options = {};
 // const saml = new SAML(saml_options);
 
+// Dev passport strategy
+if (IS_DEV) {
+    passport.use(new localStrategy((username, password, done) => {
+        if (username === 'user' && password === 'password') {
+            return done(null, {id: 1, username: 'user'});
+        } else {
+            return done(null, false, {message: 'Invalid credentials'});
+        }
+    }));
+}
+
 var sessionOptions = {
     secret: ' secret spud ',
     resave: false,
@@ -44,6 +57,15 @@ var sessionOptions = {
 
 if (IS_PROD) {
     sessionOptions.cookie.secure = true;
+};
+
+function checkAuth(request, response, next) {
+    if (request.session.username) {
+        next();
+    } else {
+        response.status(403);
+        response.send();
+    }
 };
 
 async function connectToDB() {
@@ -101,7 +123,10 @@ async function connectToDB() {
     return client;
 };
 
+app.use(express.urlencoded({extended: true}));
 app.use(session(sessionOptions));
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use((request, response, next) => {
     let filename = path.basename(request.url);
@@ -122,15 +147,15 @@ app.use((request, response, next) => {
     next();
 });
 
-app.get('/', (request, response) => {
-    response.sendFile(path.join(__dirname, 'dist', 'src', 'html', 'index.html'));
+app.post('/login', (request, response) => {
+    console.log(request);
 });
 
 app.get('(?!/api)/*', (request, response) => {
     response.sendFile(path.join(__dirname, 'dist', 'src', 'html', 'index.html'));
 });
 
-app.get('/api/getFilters', async (request, response, next) => {
+app.get('/api/getFilters', checkAuth, async (request, response, next) => {
     let filtersJSON = {};
     const client = await connectToDB();
     for (const i in ROW_FILTERS) {
@@ -159,7 +184,7 @@ app.get('/api/getFilters', async (request, response, next) => {
     response.json(filtersJSON);
 });
 
-app.get('/api/getOptions', async (request, response, next) => {
+app.get('/api/getOptions', checkAuth, async (request, response, next) => {
     let optionsJSON = {};
     const client = await connectToDB();
     for (const field in OPTION_QUERIES) {
@@ -187,7 +212,7 @@ app.get('/api/getOptions', async (request, response, next) => {
     response.json(optionsJSON);
 });
 
-app.get('/api/query', async (request, response, next) => {
+app.get('/api/query', checkAuth, async (request, response, next) => {
     let columns = Array.isArray(request.query.column) ? request.query.column : [request.query.column];
     let sort = {
         column: request.query.sortColumn,
