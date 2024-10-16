@@ -12,16 +12,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function login(username, password) {
-        let url = new URL(`${window.location.origin}/login`);
-        const user = await fetch(url, {
+        let url = new URL(`${window.location.origin}/login`);    
+        const request = new Request(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({username, password})
-        })
-        .then((response) => response.text())
-        .then((text) => {
+        });
+        const name = await fetch(request)
+        .then((response) => response.text().then((text) => {
             const data = text && JSON.parse(text);
             if (!response.ok) {
                 if([401, 403].includes(response.status) && user.value) {
@@ -31,9 +31,9 @@ export const useAuthStore = defineStore('auth', () => {
                 return Promise.reject(error);
             }
             return data;
-        });
-        user.value = user;
-        localStorage.setItem('user', JSON.stringify(user));
+        }));
+        user.value = name;
+        localStorage.setItem('user', JSON.stringify(user.value));
         router.push(returnURL.value || '/');
     };
 
@@ -43,5 +43,5 @@ export const useAuthStore = defineStore('auth', () => {
         router.push('/login');
     };
 
-    return { user, redirectURL, login, logout };
+    return { user, returnURL, login, logout };
 });

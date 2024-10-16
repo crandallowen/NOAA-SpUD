@@ -39,13 +39,25 @@ const saml_options = {};
 
 // Dev passport strategy
 if (IS_DEV) {
-    passport.use(new localStrategy((username, password, done) => {
-        if (username === 'user' && password === 'password') {
-            return done(null, {id: 1, username: 'user'});
+    passport.use(new localStrategy(function verify(username, password, done) {
+        if (username === password) {
+            return done(null, {id: 1, username: username});
         } else {
             return done(null, false, {message: 'Invalid credentials'});
         }
     }));
+
+    passport.serializeUser((user, done) => {
+        process.nextTick(() => {
+            done(null, {id: user.id, username: user.username});
+        });
+    });
+
+    passport.deserializeUser((user, done) => {
+        process.nextTick(() => {
+            return done(null, user);
+        });
+    });
 }
 
 var sessionOptions = {
@@ -60,7 +72,7 @@ if (IS_PROD) {
 };
 
 function checkAuth(request, response, next) {
-    if (request.session.username) {
+    if (request.user.username) {
         next();
     } else {
         response.status(403);
@@ -123,9 +135,10 @@ async function connectToDB() {
     return client;
 };
 
+app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(session(sessionOptions));
-app.use(passport.initialize());
+// app.use(passport.initialize());
 app.use(passport.session());
 
 app.use((request, response, next) => {
@@ -147,8 +160,8 @@ app.use((request, response, next) => {
     next();
 });
 
-app.post('/login', (request, response) => {
-    console.log(request);
+app.post('/login', passport.authenticate('local', {failureMessage: true}), (request, response) => {
+    response.json(request.user.username);
 });
 
 app.get('(?!/api)/*', (request, response) => {

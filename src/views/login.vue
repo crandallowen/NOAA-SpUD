@@ -9,7 +9,7 @@ const input = reactive({
 
 function onSubmit() {
     const auth = useAuthStore();
-    const { username, password } = values;
+    const { username, password } = input;
     return auth.login(username, password)
         .catch((error) => console.error(error));
 };
@@ -21,13 +21,13 @@ function onSubmit() {
         <form name="login-form">
             <div>
                 <label for="username">Username: </label>
-                <input id="username" type="text" v-model="input.username" :disabled="input.username === ''"/>
+                <input id="username" type="text" v-model="input.username"/>
             </div>
             <div>
                 <label for="password">Password: </label>
-                <input id="password" type="password" v-model="input.password" :disabled="input.password === ''"/>
+                <input id="password" type="password" v-model="input.password"/>
             </div>
-            <button type="submit" @click.prevent="onSubmit()">Login</button>
+            <button type="submit" @click.prevent="onSubmit()" :disabled="input.password === '' || input.username === ''">Login</button>
         </form>
     </div>
 </template>
