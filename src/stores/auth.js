@@ -33,7 +33,7 @@ export const useAuthStore = defineStore('auth', () => {
             return data;
         }));
         user.value = name;
-        localStorage.setItem('user', JSON.stringify(user.value));
+        localStorage.setItem('user', JSON.stringify({user: user.value}));
         router.push(returnURL.value || '/');
     };
 
