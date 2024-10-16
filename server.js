@@ -9,7 +9,6 @@ const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client
 const { fromContainerMetadata, fromSSO } = require('@aws-sdk/credential-providers');
 const { SAML } = require('@node-saml/passport-saml');
 const passport = require('passport');
-const localStrategy = require('passport-local').Strategy;
 
 const IS_DEV = process.env.NODE_ENV.trim() === 'development';
 const IS_PROD = process.env.NODE_ENV.trim() === 'production';
@@ -39,6 +38,7 @@ const saml_options = {};
 
 // Dev passport strategy
 if (IS_DEV) {
+    const localStrategy = require('passport-local').Strategy;
     passport.use(new localStrategy(function verify(username, password, done) {
         if (username === password) {
             return done(null, {id: 1, username: username});
@@ -145,9 +145,8 @@ app.use((request, response, next) => {
     let filename = path.basename(request.url);
     let extension = path.extname(filename);
     if (FILE_EXT.includes(extension)) {
-        console.log(`Serving file: ${filename}`);
+        console.log(`Serving file ${filename} for session ${request.sessionID}`);
     }
-    console.log(`Session: ${request.sessionID}`)
     next();
 });
 
