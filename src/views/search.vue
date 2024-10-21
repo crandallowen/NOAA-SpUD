@@ -16,8 +16,9 @@ watch(store, (store) => {
 watchEffect(async () => {
     let url = new URL(`${window.location.origin}/api/getOptions`);
     const response = await fetch(url, {credentials: 'include'});
-    if (response.status === 403) {
-        auth.logout();
+    if ([401, 403].includes(response.status)) {
+        auth.returnURL = router.currentRoute.value.fullPath;
+        router.push('/login');
     } else {
         response.json()
             .then((response) => {

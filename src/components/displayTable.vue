@@ -1,8 +1,9 @@
 <script setup>
-import { ref, reactive, watch, watchEffect } from 'vue';
+import { ref, reactive, watch, watchEffect, onBeforeMount, onBeforeUpdate, onUpdated } from 'vue';
 import { format, headerMap, visibleColumnGroups, allColumns, frequencyFilters, frequencyHzTokHz } from '@/js/utils';
 import collapsibleGroup from '@/components/collapsibleGroup.vue';
 import { useAuthStore } from '@/stores/auth';
+import router from '@/router';
 
 const props = defineProps({
     title: String,
@@ -28,8 +29,9 @@ const rowFilters = reactive({
 watchEffect(async () => {
     let url = new URL(`${window.location.origin}/api/getFilters`);
     const response = await fetch(url, {credentials: 'include'})
-    if (response.status === 403) {
-        auth.logout();
+    if ([401, 403].includes(response.status)) {
+        auth.returnURL = router.currentRoute.value.fullPath;
+        router.push('/login');
     } else {
         response.json()
             .then((response) => {
@@ -61,9 +63,10 @@ watchEffect(async () => {
         url.searchParams.append('params', `[${paramsList.join(',')}]`);
     }
     const response = await fetch(url, {credentials: 'include'});
-    if (response.status === 403) {
+    if ([401, 403].includes(response.status)) {
         document.body.style.cursor='default';
-        auth.logout();
+        auth.returnURL = router.currentRoute.value.fullPath;
+        router.push('/login');
     } else {
         response.json()
             .then((response) => {
