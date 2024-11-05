@@ -8,18 +8,44 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
         direction: 'ascending'
     });
     const displayColumns = ref([...defaultColumns]);
-    const params = ref([]);
+    const params = ref({});
+    const filters = ref([]);
+    const savedQueries = ref([]);
 
     if (localStorage.getItem('searchResults')) {
         let state = JSON.parse(localStorage.getItem('searchResults'));
-        sort.value = state.sort;
-        displayColumns.value = state.displayColumns;
-        params.value = state.params;
+        // sort.value = structuredClone(state.sort); //May use in prod, but spread syntax is likey sufficient and faster
+        sort.value = {...state.sort};
+        displayColumns.value = [...state.displayColumns];
+        params.value = {...state.params};
+        filters.value = state.filters.map((filter) => {return {...filter}});
+        savedQueries.value = structuredClone(state.savedQueries); //Object structure is more complicated than above, but may use spread syntax as above if possible
     }
 
     function invertSort() {
         sort.value.direction = (sort.value.direction === 'ascending') ? 'descending' : 'ascending';
     };
 
-    return {sort, displayColumns, params, invertSort};
+    function saveQuery(name) {
+        if (savedQueries.value.some((query) => query.name === name)) {
+            throw Error('Name already used');
+        }
+        savedQueries.value.push({name: name, params: {...params}});
+    };
+    
+    function deleteQuery(name) {
+        if (!savedQueries.value.some((query) => query.name === name)) {
+            throw Error(`No query with name ${name}`);
+        }
+        savedQueries.value.splice(savedQueries.value.findIndex((query) => query.name === name), 1);
+    };
+
+    function loadQuery(name) {
+        if (!savedQueries.value.some((query) => query.name === name)) {
+            throw Error(`No query with name ${name}`);
+        }
+        params.value = {...savedQueries.value.find((query) => query.name === name)};
+    };
+
+    return {sort, displayColumns, params, filters, savedQueries, invertSort, saveQuery, deleteQuery, loadQuery};
 });

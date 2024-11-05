@@ -48,44 +48,30 @@ const input = reactive({
 });
 const numericRelations = ['=', '>=', '>', '<=', '<', '!=', 'between'];
 
-const queryObject = reactive({});
-
-const queryString = computed(() => {
-    let queryString = '';
-    if (Object.keys(queryObject).length != 0) {    
-        let queryList = []
-        for (const field in queryObject) {
-            let temp = [];
-            for (const condition of queryObject[field]) {
-                let parameters = condition.parameters;
-                if (field === 'serial_num' || field === 'center_frequency') {
-                    if (parameters.relation != 'between')
-                        temp.push(`${parameters.relation} ${format(parameters.value, field)}`);
-                    else
-                        temp.push(`${parameters.relation} ${format(parameters.lowerValue, field)} and ${format(parameters.higherValue, field)}`);
-                } else
-                    temp.push(parameters.value);
-            }
-            queryList.push(['serial_num', 'center_frequency'].includes(field) ? `${headerMap(field)} ${temp.join(` OR ${headerMap(field)} `)}` : `${headerMap(field)} in [${temp.join(', ')}]`);
-        }
-        queryString = queryList.join('\n');
+function formatParameter(field, param) {
+    if (field === 'serial_num' || field === 'center_frequency') {
+        if (param.relation !== 'between')
+            return `${headerMap(field)} ${param.relation} ${format(param.value, field)}`;
+        else
+            return `${headerMap(field)} ${param.relation} ${format(param.lowerValue, field)} and ${format(param.higherValue, field)}`;
+    } else {
+        return param.value;
     }
-    return queryString;
-});
+};
 
 const queryParams = computed(() => {
     let queryParams = [];
-    if (Object.keys(queryObject).length != 0) {
-        for (const field in queryObject)
-            for (const condition of queryObject[field])
+    if (Object.keys(store.params).length != 0) {
+        for (const field in store.params)
+            for (const condition of store.params[field])
                 queryParams.push({field: field, ...condition.parameters});
     }
     return queryParams;
 });
 
 function add(field) {
-    if (!Object.hasOwn(queryObject, field))
-        queryObject[field] = [];
+    if (!Object.hasOwn(store.params, field))
+        store.params[field] = [];
     let parameters;
     if (field === 'serial_num') {
         if (input.serial_num.relation != 'between') {
@@ -131,14 +117,15 @@ function add(field) {
         };
         input[field] = '';
     }
-    queryObject[field].push({
+    store.params[field].push({
         parameters: parameters,
-        id: Symbol()
     });
+    console.log(store.params)
 };
 
-function remove(field, id) {
-
+function remove(field, index) {
+    store.params[field].splice(index, 1);
+    if (store.params[field].length === 0) delete store.params[field];
 };
 
 function search() {
@@ -147,7 +134,7 @@ function search() {
 };
 
 function clear() {
-    for (const field in queryObject) delete queryObject[field];
+    for (const field in store.params) delete store.params[field];
 };
 
 </script>
@@ -280,11 +267,20 @@ function clear() {
         <div class="divider" />
         <div class="divider" />
         <div id="queryDisplay">
-            <div v-show="queryString != ''">
-                <pre>{{ queryString }}</pre>
+            <div v-show="Object.keys(store.params).length !== 0">
+                <div v-for="field in Object.keys(store.params)" class="queryDisplayField">
+                    <p v-show="!['serial_number', 'center_frequency'].includes(field)">{{ `${headerMap(field)} in [` }}</p>
+                        <template v-for="(condition, index) in store.params[field]" class="queryDisplayCondition">
+                            {{ formatParameter(field, condition.parameters) }}
+                            <button @click="remove(field, index)">x</button>
+                            <p v-show="!['serial_number', 'center_frequency'].includes(field) && index !== store.params[field].length-1">,&nbsp;</p>
+                            <p v-show="['serial_number', 'center_frequency'].includes(field) && index !== store.params[field].length-1">&nbsp;OR&nbsp;</p>
+                        </template>
+                    <p v-show="!['serial_number', 'center_frequency'].includes(field)">]</p>
+                </div>
             </div>
             <div class="inputLine">
-                <button @click="search" :disabled="Object.keys(queryObject).length === 0">Search</button>
+                <button @click="search" :disabled="Object.keys(store.params).length === 0">Search</button>
                 <button @click="clear">Clear</button>
             </div>
         </div>
@@ -292,7 +288,12 @@ function clear() {
 </template>
 
 <style scoped>
-.inputLine, #searchInputs {
+#queryDisplay {
+    display: flex;
+    flex-direction: column;
+}
+
+.inputLine, .queryDisplayField, #searchInputs {
     display: flex;
     flex-direction: row;
 }

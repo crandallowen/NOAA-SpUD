@@ -22,16 +22,19 @@ export const useAuthStore = defineStore('auth', () => {
         });
         const name = await fetch(request)
         .then((response) => response.text().then((text) => {
-            const data = text && JSON.parse(text);
             if (!response.ok) {
                 if([401, 403].includes(response.status) && user.value) {
                     logout();
                 }
-                const error = (data && data.message) || response.statusText;
-                return Promise.reject(error);
+                return Promise.reject(response.statusText);
             }
+            const data = text && JSON.parse(text);
             return data;
-        }));
+        }))
+        .catch((error) => {
+            console.error(error);
+            alert('Authentication failed');
+        });
         user.value = name;
         localStorage.setItem('user', JSON.stringify({user: user.value}));
         router.push(returnURL.value || '/');

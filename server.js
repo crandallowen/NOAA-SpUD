@@ -2,13 +2,13 @@ const path = require('path');
 const express = require('express');
 const session = require('express-session');
 const fs = require('fs');
-const cors = require('cors'); //Will likely be needed for deployment
+const cors = require('cors');
 const { Client } = require('pg');
 const format = require('pg-format');
 const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
 const { fromContainerMetadata, fromSSO } = require('@aws-sdk/credential-providers');
-const { SAML } = require('@node-saml/passport-saml');
 const passport = require('passport');
+const SamlStrategy = require('@node-saml/passport-saml').Strategy;
 
 const IS_DEV = process.env.NODE_ENV.trim() === 'development';
 const IS_PROD = process.env.NODE_ENV.trim() === 'production';
@@ -33,7 +33,22 @@ const OPTION_QUERIES = {
 const ROW_FILTERS = ['bureau', 'function_identifier', 'tx_state_country_code'];
 
 const app = express();
-const saml_options = {};
+// const saml_options = {
+//     callbackUrl: 'login/callback',
+//     entryPoint: '',
+//     issuer: 'spud-saml',
+//     idpCert: '',
+//     privateKey: fs.readFileSync('./privateKey.pem', 'latin1'),
+//     publicCert: '',
+//     decryptionPvk: '',
+//     signatureAlgorithm: 'sha256',
+//     digestAlgorithm: '',
+//     additionalParams: {},
+//     passReqToCallback: false,
+//     allowCreate: false,
+//     signMetadata: true,
+//     name: 'saml',
+// };
 // const saml = new SAML(saml_options);
 
 // Dev passport strategy
@@ -58,9 +73,12 @@ if (IS_DEV) {
             return done(null, user);
         });
     });
+
+    // Will enable cors only for specific routes in production
+    app.use(cors());
 }
 
-var sessionOptions = {
+const sessionOptions = {
     secret: ' secret spud ',
     resave: false,
     saveUninitialized: true,
@@ -71,11 +89,12 @@ if (IS_PROD) {
     sessionOptions.cookie.secure = true;
 };
 
-function checkAuth(request, response, next) {
+function isAuthenticated(request, response, next) {
     if (request.user) {
         next();
     } else {
-        response.status(403);
+        response.status(401);
+        response.append('WWW-Authenticate', 'HOBA');
         response.send();
     }
 };
@@ -152,22 +171,24 @@ app.use((request, response, next) => {
 
 app.use('/', express.static(path.join(__dirname, 'dist')));
 
-app.use((request, response, next) => {
-    response.append('Access-Control-Allow-Origin', ['*']);
-    response.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    response.append('Access-Control-Allow-Headers', 'Content-Type');
-    next();
-});
+// app.use((request, response, next) => {
+//     response.append('Access-Control-Allow-Origin', ['*']);
+//     response.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+//     response.append('Access-Control-Allow-Headers', 'Content-Type');
+//     next();
+// });
 
-app.post('/login', passport.authenticate('local', {failureMessage: true}), (request, response) => {
-    response.json(request.user.username);
-});
+if(IS_DEV) {
+    app.post('/login', passport.authenticate('local', {failureMessage: true}), (request, response) => {
+        response.json(request.user.username);
+    });
+}
 
 app.get('(?!/api)/*', (request, response) => {
     response.sendFile(path.join(__dirname, 'dist', 'src', 'html', 'index.html'));
 });
 
-app.get('/api/getFilters', checkAuth, async (request, response, next) => {
+app.get('/api/getFilters', isAuthenticated, async (request, response, next) => {
     let filtersJSON = {};
     const client = await connectToDB();
     for (const i in ROW_FILTERS) {
@@ -196,7 +217,7 @@ app.get('/api/getFilters', checkAuth, async (request, response, next) => {
     response.json(filtersJSON);
 });
 
-app.get('/api/getOptions', checkAuth, async (request, response, next) => {
+app.get('/api/getOptions', isAuthenticated, async (request, response, next) => {
     let optionsJSON = {};
     const client = await connectToDB();
     for (const field in OPTION_QUERIES) {
@@ -224,7 +245,7 @@ app.get('/api/getOptions', checkAuth, async (request, response, next) => {
     response.json(optionsJSON);
 });
 
-app.get('/api/query', checkAuth, async (request, response, next) => {
+app.get('/api/query', isAuthenticated, async (request, response, next) => {
     let columns = Array.isArray(request.query.column) ? request.query.column : [request.query.column];
     let sort = {
         column: request.query.sortColumn,
