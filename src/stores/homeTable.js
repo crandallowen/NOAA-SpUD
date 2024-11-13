@@ -21,5 +21,9 @@ export const useHomeTableStore = defineStore('homeTable', () => {
         sort.value.direction = (sort.value.direction === 'ascending') ? 'descending' : 'ascending';
     };
 
-    return {sort, displayColumns, filters, invertSort};
+    function clearFilters() {
+        filters.value.splice(0);
+    };
+
+    return {sort, displayColumns, filters, invertSort, clearFilters};
 });

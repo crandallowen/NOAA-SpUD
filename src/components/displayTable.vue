@@ -117,7 +117,10 @@ function downloadCSVData() {
     <div class="tableWithSelects">
         <!-- Side Bar -->
         <div class="columnSelect">
-            <h2>Filters</h2>
+            <span class="titleBar">
+                <h2 class="filterHeader">Filters</h2>
+                <button id="clearFiltersButton" @click="store.clearFilters()">Clear</button>
+            </span>
             <template v-for="key in Object.keys(rowFilters)">
                 <collapsibleGroup :group-name="headerMap(key)" collapsed>
                     <template v-for="filter in rowFilters[key]">
@@ -187,19 +190,26 @@ button {
     border-radius: 4px;
     padding: 2px 5px;
     font-family: inherit;
+    
 }
 
 #rowCount, #exportButton {
     align-self: flex-end;
+    line-height: 1.6;
     margin: 3px;
 }
 
-#exportButton {
+#clearFiltersButton {
     line-height: 1.6;
+    margin: 3px;
 }
 
 .title {
     flex-grow: 1
+}
+
+.filterHeader {
+    flex-grow: 1;
 }
 
 .tableWithSelects, .inputLine, .headerBox, .titleBar {
@@ -219,6 +229,7 @@ button {
 
 .columnSelect {
     min-width: 27ch;
+    margin-right: 20px;
 }
 
 .displayTable, .displayTable :deep(td), .displayTable :deep(th) {

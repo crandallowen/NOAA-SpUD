@@ -59,16 +59,6 @@ function formatParameter(field, param) {
     }
 };
 
-// const queryParams = computed(() => {
-//     let queryParams = [];
-//     if (Object.keys(store.params).length !== 0) {
-//         for (const field in store.params)
-//             for (const param of store.params[field])
-//                 queryParams.push({field: field, ...param});
-//     }
-//     return queryParams;
-// });
-
 const queryObject = computed(() => {
     let queryObject = {};
     if (store.params.length !== 0) {
