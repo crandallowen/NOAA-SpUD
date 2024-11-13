@@ -265,7 +265,7 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
             if (params[i].field === 'serial_num' || params[i].field === 'center_frequency') {
                 if (params[i].relation === 'between') {
                     let lowerValue = (params[i].field === 'serial_num') ? params[i].lowerValue : parseFloat(params[i].lowerValue);
-                    let higherValue = (params[i].field === 'serial_num') ? params[i].higherValue : parseFloat(params[i].higherValue);
+                    let higherValue = (params[i].field === 'serial_num') ? params[i].value : parseFloat(params[i].value);
                     queryObject[params[i].field].push(format(`(%I >= %L AND %I <= %L)`, params[i].field, lowerValue, params[i].field, higherValue));
                 } else {
                     let value = (params[i].field === 'serial_num') ? params[i].value : parseFloat(params[i].value);

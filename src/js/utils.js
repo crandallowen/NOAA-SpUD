@@ -27,7 +27,7 @@ export function formatPower(power_w) {
 };
 
 export function formatDate(date) {
-    return `${date.substring(5, 7)}/${date.substring(8, 10)}/${date.substring(0, 4)}`;
+    return `${date.substring(4, 6)}/${date.substring(6, 8)}/${date.substring(0, 4)}`;
 };
 
 // TODO: Handle area codes in the future; not initially necessary as SXXI does not allow for more than 10 characters in this field
@@ -89,6 +89,10 @@ export function frequencyStringToHz(frequencyString) {
 
 export function frequencyHzTokHz(frequency_hz) {
     return frequency_hz * (10 ** -3);
+};
+
+export function dateStringToSQL(date) {
+
 };
 
 export const frequencyFilters = [

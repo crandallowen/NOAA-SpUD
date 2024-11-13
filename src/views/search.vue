@@ -44,12 +44,28 @@ const input = reactive({
     tx_antenna_location: '',
     rx_antenna_location: '',
     station_class: '',
-    function_identifier: ''
+    function_identifier: '',
+    review_date: {
+        value: '',
+        lowerValue: '',
+        relation: '',
+    },
+    expiration_date: {
+        value: '',
+        lowerValue: '',
+        relation: '',
+    },
+    revision_date: {
+        value: '',
+        lowerValue: '',
+        relation: '',
+    }
 });
 const numericRelations = ['=', '>=', '>', '<=', '<', '!=', 'between'];
+const dateRelations = ['=', '>=', '>', '<=', '<', 'between'];
 
 function formatParameter(field, param) {
-    if (field === 'serial_num' || field === 'center_frequency') {
+    if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {
         if (param.relation !== 'between')
             return `${headerMap(field)} ${param.relation} ${format(param.value, field)}`;
         else
@@ -67,7 +83,7 @@ const queryObject = computed(() => {
             temp.index = index;
             if (!Object.hasOwn(queryObject, param.field))
                 queryObject[param.field] = [];
-            if (['serial_num', 'center_frequency'].includes(param.field)) {
+            if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(param.field)) {
                 temp.relation = param.relation;
                 if (param.relation === 'between') {
                     temp.lowerValue = param.lowerValue;
@@ -87,44 +103,29 @@ const queryObject = computed(() => {
 function add(field) {
     let parameters = {};
     parameters.field = field;
-    if (field === 'serial_num') {
-        if (input.serial_num.relation != 'between') {
-            parameters = {
-                relation: input.serial_num.relation,
-                value: isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value,
-            };
-            input.serial_num.value = '';
-            input.serial_num.relation = '';
-        } else {
-            parameters = {
-                relation: input.serial_num.relation,
-                lowerValue: isShortSerialNumber(input.serial_num.lowerValue) ? appendCommerceSerialNumber(input.serial_num.lowerValue) : input.serial_num.lowerValue,
-                higherValue: isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value,
-            };
-            input.serial_num.value = '';
-            input.serial_num.lowerValue = '';
-            input.serial_num.relation = '';
+    if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {
+        parameters.relation = input[field].relation;
+        switch(field) {
+            case 'serial_num':
+                parameters.value = isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value;
+                if (input[field].relation === 'between') {parameters.lowerValue = isShortSerialNumber(input.serial_num.lowerValue) ? appendCommerceSerialNumber(input.serial_num.lowerValue) : input.serial_num.lowerValue;}
+                break;
+            case 'center_frequency':
+                parameters.value = frequencyStringToHz(input.center_frequency.value);
+                if (input[field].relation === 'between') {parameters.lowerValue = frequencyStringToHz(input.center_frequency.lowerValue);}
+                break;
+            case 'review_date':
+            case 'expiration_date':
+            case 'revision_date':
+                parameters.value = input[field].value;
+                if (input[field].relation === 'between') {parameters.lowerValue = input[field].lowerValue;}
+                break;
+            default:
+                console.log('No field identified in add() switch statement');
         }
-    } else if (field === 'center_frequency') {
-        let center_frequency = frequencyStringToHz(input.center_frequency.value);
-        if (input.center_frequency.relation != 'between') {
-            parameters = {
-                relation: input.center_frequency.relation,
-                value: center_frequency
-            };
-            input.center_frequency.value = '';
-            input.center_frequency.relation = '';
-        } else {
-            let frequencyLower_khz = frequencyStringToHz(input.center_frequency.lowerValue);
-            parameters = {
-                relation: input.center_frequency.relation,
-                lowerValue: frequencyLower_khz,
-                higherValue: center_frequency
-            };
-            input.center_frequency.value = '';
-            input.center_frequency.lowerValue = '';
-            input.center_frequency.relation = '';
-        }
+        input[field].value = '';
+        input[field].lowerValue = '';
+        input[field].relation = '';
     } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)) {
         parameters.value = input[field]
         input[field] = '';
@@ -132,6 +133,7 @@ function add(field) {
     store.params.push({...parameters});
 };
 
+// Should be moved to inside of store
 function remove(index) {
     store.params.splice(index, 1);
 };
@@ -140,10 +142,18 @@ function search() {
     router.push({name: 'searchResults'});
 };
 
+// Should be moved to inside of store
 function clear() {
-    store.params = [];
+    store.params.splice(0);
 };
 
+function validateFrequencyInput() {
+
+};
+
+function validateDateInput() {
+
+};
 </script>
 
 <template>
@@ -260,6 +270,54 @@ function clear() {
                 <button @click="add('function_identifier')" :disabled="input.function_identifier === ''">Add</button>
             </div>
             <div class="divider" />
+            <div class="inputLine">
+                <h3 class="inputLabel">Review Date</h3>
+                <select v-model="input.review_date.relation">
+                    <option disabled value=""></option>
+                    <option v-for="relation in dateRelations" :value="relation">
+                        {{ relation }}
+                    </option>
+                </select>
+                <div v-show="input.review_date.relation === 'between'" class="inputLine">
+                    <input v-model="input.review_date.lowerValue" />
+                    <p class="inputSeperator">and</p>
+                </div>
+                <input v-model="input.review_date.value" />
+                <button @click="add('review_date')" :disabled="input.review_date.relation === '' || input.review_date.value === '' || (input.review_date.relation === 'between' && input.review_date.lowerValue === '')">Add</button>
+            </div>
+            <div class="divider" />
+            <div class="inputLine">
+                <h3 class="inputLabel">Expiration Date</h3>
+                <select v-model="input.expiration_date.relation">
+                    <option disabled value=""></option>
+                    <option v-for="relation in dateRelations" :value="relation">
+                        {{ relation }}
+                    </option>
+                </select>
+                <div v-show="input.expiration_date.relation === 'between'" class="inputLine">
+                    <input v-model="input.expiration_date.lowerValue" />
+                    <p class="inputSeperator">and</p>
+                </div>
+                <input v-model="input.expiration_date.value" />
+                <button @click="add('expiration_date')" :disabled="input.expiration_date.relation === '' || input.expiration_date.value === '' || (input.expiration_date.relation === 'between' && input.expiration_date.lowerValue === '')">Add</button>
+            </div>
+            <div class="divider" />
+            <div class="inputLine">
+                <h3 class="inputLabel">Revision Date</h3>
+                <select v-model="input.revision_date.relation">
+                    <option disabled value=""></option>
+                    <option v-for="relation in dateRelations" :value="relation">
+                        {{ relation }}
+                    </option>
+                </select>
+                <div v-show="input.revision_date.relation === 'between'" class="inputLine">
+                    <input v-model="input.revision_date.lowerValue" />
+                    <p class="inputSeperator">and</p>
+                </div>
+                <input v-model="input.revision_date.value" />
+                <button @click="add('revision_date')" :disabled="input.revision_date.relation === '' || input.revision_date.value === '' || (input.revision_date.relation === 'between' && input.revision_date.lowerValue === '')">Add</button>
+            </div>
+            <div class="divider" />
             <!-- Results Columns -->
             <h3>Result Columns</h3>
             <div class="columns">
@@ -276,14 +334,14 @@ function clear() {
         <div id="queryDisplay">
             <div v-show="Object.keys(queryObject).length !== 0">
                 <div v-for="field in Object.keys(queryObject)" class="queryDisplayField">
-                    <p v-show="!['serial_number', 'center_frequency'].includes(field)">{{ `${headerMap(field)} in [` }}</p>
-                    <template v-for="param in queryObject[field]" class="queryDisplayCondition">
+                    <p v-show="!['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)">{{ `${headerMap(field)} in [` }}</p>
+                    <template v-for="(param, index) in queryObject[field]" class="queryDisplayCondition">
                         {{ formatParameter(field, param) }}
                         <button @click="remove(param.index)">x</button>
-                        <p v-show="!['serial_number', 'center_frequency'].includes(field) && param.index !== queryObject[field].length-1">,&nbsp;</p>
-                        <p v-show="['serial_number', 'center_frequency'].includes(field) && param.index !== queryObject[field].length-1">&nbsp;OR&nbsp;</p>
+                        <p v-show="!['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">,&nbsp;</p>
+                        <p v-show="['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">&nbsp;OR&nbsp;</p>
                     </template>
-                    <p v-show="!['serial_number', 'center_frequency'].includes(field)">]</p>
+                    <p v-show="!['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)">]</p>
                 </div>
             </div>
             <div class="inputLine">
