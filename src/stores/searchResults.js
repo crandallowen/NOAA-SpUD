@@ -8,7 +8,7 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
         direction: 'ascending'
     });
     const displayColumns = ref([...defaultColumns]);
-    const params = ref({});
+    const params = ref([]);
     const filters = ref([]);
     const savedQueries = ref([]);
 
@@ -17,7 +17,7 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
         // sort.value = structuredClone(state.sort); //May use in prod, but spread syntax is likey sufficient and faster
         sort.value = {...state.sort};
         displayColumns.value = [...state.displayColumns];
-        params.value = {...state.params};
+        params.value = state.params.map((param) => {return {...param}});
         filters.value = state.filters.map((filter) => {return {...filter}});
         savedQueries.value = structuredClone(state.savedQueries); //Object structure is more complicated than above, but may use spread syntax as above if possible
     }
@@ -30,7 +30,7 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
         if (savedQueries.value.some((query) => query.name === name)) {
             throw Error('Name already used');
         }
-        savedQueries.value.push({name: name, params: {...params}});
+        savedQueries.value.push({name: name, params: params.value.map((param) => {return {...param}})});
     };
     
     function deleteQuery(name) {
@@ -44,7 +44,7 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
         if (!savedQueries.value.some((query) => query.name === name)) {
             throw Error(`No query with name ${name}`);
         }
-        params.value = {...savedQueries.value.find((query) => query.name === name)};
+        params.value = savedQueries.value.find((query) => query.name === name).map((param) => {return {...param}});
     };
 
     return {sort, displayColumns, params, filters, savedQueries, invertSort, saveQuery, deleteQuery, loadQuery};

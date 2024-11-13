@@ -59,20 +59,44 @@ function formatParameter(field, param) {
     }
 };
 
-const queryParams = computed(() => {
-    let queryParams = [];
-    if (Object.keys(store.params).length != 0) {
-        for (const field in store.params)
-            for (const condition of store.params[field])
-                queryParams.push({field: field, ...condition.parameters});
+// const queryParams = computed(() => {
+//     let queryParams = [];
+//     if (Object.keys(store.params).length !== 0) {
+//         for (const field in store.params)
+//             for (const param of store.params[field])
+//                 queryParams.push({field: field, ...param});
+//     }
+//     return queryParams;
+// });
+
+const queryObject = computed(() => {
+    let queryObject = {};
+    if (store.params.length !== 0) {
+        for (const [index, param] of store.params.entries()) {
+            let temp = {};
+            temp.index = index;
+            if (!Object.hasOwn(queryObject, param.field))
+                queryObject[param.field] = [];
+            if (['serial_num', 'center_frequency'].includes(param.field)) {
+                temp.relation = param.relation;
+                if (param.relation === 'between') {
+                    temp.lowerValue = param.lowerValue;
+                    temp.higherValue = param.higherValue;
+                } else {
+                    temp.value = param.value;
+                }
+            } else {
+                temp.value = param.value;
+            }
+            queryObject[param.field].push({...temp});
+        }
     }
-    return queryParams;
+    return queryObject;
 });
 
 function add(field) {
-    if (!Object.hasOwn(store.params, field))
-        store.params[field] = [];
-    let parameters;
+    let parameters = {};
+    parameters.field = field;
     if (field === 'serial_num') {
         if (input.serial_num.relation != 'between') {
             parameters = {
@@ -112,29 +136,22 @@ function add(field) {
             input.center_frequency.relation = '';
         }
     } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)) {
-        parameters = {
-            value: input[field]
-        };
+        parameters.value = input[field]
         input[field] = '';
     }
-    store.params[field].push({
-        parameters: parameters,
-    });
-    console.log(store.params)
+    store.params.push({...parameters});
 };
 
-function remove(field, index) {
-    store.params[field].splice(index, 1);
-    if (store.params[field].length === 0) delete store.params[field];
+function remove(index) {
+    store.params.splice(index, 1);
 };
 
 function search() {
-    store.params = [...queryParams.value];
-    router.push({name: 'searchResults', params: [...queryParams.value]});
+    router.push({name: 'searchResults'});
 };
 
 function clear() {
-    for (const field in store.params) delete store.params[field];
+    store.params = [];
 };
 
 </script>
@@ -267,15 +284,15 @@ function clear() {
         <div class="divider" />
         <div class="divider" />
         <div id="queryDisplay">
-            <div v-show="Object.keys(store.params).length !== 0">
-                <div v-for="field in Object.keys(store.params)" class="queryDisplayField">
+            <div v-show="Object.keys(queryObject).length !== 0">
+                <div v-for="field in Object.keys(queryObject)" class="queryDisplayField">
                     <p v-show="!['serial_number', 'center_frequency'].includes(field)">{{ `${headerMap(field)} in [` }}</p>
-                        <template v-for="(condition, index) in store.params[field]" class="queryDisplayCondition">
-                            {{ formatParameter(field, condition.parameters) }}
-                            <button @click="remove(field, index)">x</button>
-                            <p v-show="!['serial_number', 'center_frequency'].includes(field) && index !== store.params[field].length-1">,&nbsp;</p>
-                            <p v-show="['serial_number', 'center_frequency'].includes(field) && index !== store.params[field].length-1">&nbsp;OR&nbsp;</p>
-                        </template>
+                    <template v-for="param in queryObject[field]" class="queryDisplayCondition">
+                        {{ formatParameter(field, param) }}
+                        <button @click="remove(param.index)">x</button>
+                        <p v-show="!['serial_number', 'center_frequency'].includes(field) && param.index !== queryObject[field].length-1">,&nbsp;</p>
+                        <p v-show="['serial_number', 'center_frequency'].includes(field) && param.index !== queryObject[field].length-1">&nbsp;OR&nbsp;</p>
+                    </template>
                     <p v-show="!['serial_number', 'center_frequency'].includes(field)">]</p>
                 </div>
             </div>

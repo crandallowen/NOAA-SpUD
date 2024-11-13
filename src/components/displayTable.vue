@@ -48,20 +48,22 @@ watchEffect(async () => {
     document.body.style.cursor='wait';
     let url = new URL(`${window.location.origin}/api/query`);
     let orderedColumns = [];
-    if (store.displayColumns.length != 0)
+    if (store.displayColumns.length !== 0)
         allColumns.forEach((column) => {if (store.displayColumns.includes(column)) {orderedColumns.push(column)}});
     else
         allColumns.forEach((column) => {orderedColumns.push(column)});
     orderedColumns.forEach((column) => url.searchParams.append('column', column));
     url.searchParams.append('sortColumn', store.sort.column);
     url.searchParams.append('sortDirection', store.sort.direction);
-    if (store.params.length != 0) {
-        let paramsList = [];
-        for (const i in store.params) {
+    let paramsList = [];
+    if (Object.hasOwn(store, 'params') && store.params.length !== 0)
+        for (const i in store.params)
             paramsList.push(JSON.stringify(store.params[i]));
-        }
+    if (store.filters.length !== 0)
+        for (const i in store.filters)
+            paramsList.push(JSON.stringify(store.filters[i]))
+    if (paramsList.length !== 0)
         url.searchParams.append('params', `[${paramsList.join(',')}]`);
-    }
     const response = await fetch(url, {credentials: 'include'});
     if ([401, 403].includes(response.status)) {
         document.body.style.cursor='default';
@@ -120,7 +122,7 @@ function downloadCSVData() {
                 <collapsibleGroup :group-name="headerMap(key)" collapsed>
                     <template v-for="filter in rowFilters[key]">
                         <div class="inputLine">
-                            <input type="checkbox" :id="filter.id" :value="filter.condition" v-model="store.params">
+                            <input type="checkbox" :id="filter.id" :value="filter.condition" v-model="store.filters">
                             <label :for="filter.id">{{ filter.name }}</label>
                         </div>
                     </template>

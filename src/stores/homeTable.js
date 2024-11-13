@@ -8,18 +8,18 @@ export const useHomeTableStore = defineStore('homeTable', () => {
         direction: 'ascending'
     });
     const displayColumns = ref([...defaultColumns]);
-    const params = ref([]);
+    const filters = ref([]);
 
     if (localStorage.getItem('homeTable')) {
         let state = JSON.parse(localStorage.getItem('homeTable'));
         sort.value = state.sort;
         displayColumns.value = state.displayColumns;
-        params.value = state.params;
+        filters.value = state.filters;
     }
 
     function invertSort() {
         sort.value.direction = (sort.value.direction === 'ascending') ? 'descending' : 'ascending';
     };
 
-    return {sort, displayColumns, params, invertSort};
+    return {sort, displayColumns, filters, invertSort};
 });
