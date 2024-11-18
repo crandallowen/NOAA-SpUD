@@ -260,9 +260,9 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
             if (!Object.keys(queryObject).includes(params[i].field)) {
                 queryObject[params[i].field] = [];
             }
-            //Will want to make a list/object that groups fields into numerical or categorical
+            //Will want to make a list/object that groups fields into numerical, categorical, or lexicographical
             //Handle numerical
-            if (params[i].field === 'serial_num' || params[i].field === 'center_frequency') {
+            if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(params[i].field)) {
                 if (params[i].relation === 'between') {
                     let lowerValue = (params[i].field === 'serial_num') ? params[i].lowerValue : parseFloat(params[i].lowerValue);
                     let higherValue = (params[i].field === 'serial_num') ? params[i].value : parseFloat(params[i].value);
@@ -274,10 +274,13 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
             //Handle categorical
             } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(params[i].field)) {
                 queryObject[params[i].field].push(params[i].value);
+            //Handle lexicographical 
+            } else if (['supplementary_details'].includes(params[i].field)) {
+                queryObject[params[i].field].push(format(`lower(%I) ${params[i].relation} lower('%' || %L || '%')`, params[i].field, params[i].value));
             }
         }
         for (const key in queryObject) {
-            if (key === 'serial_num' || key === 'center_frequency') {
+            if (['serial_num', 'center_frequency', 'supplementary_details', 'review_date', 'expiration_date', 'revision_date'].includes(key)) {
                 conditions.push(queryObject[key].join(' OR '));
             } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(key)) {
                 if (key === 'function_identifier') {
@@ -299,6 +302,7 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
     let whereSQL = format.withArray(`WHERE ${'%s AND '.repeat(conditions.length).slice(0, -5)}`, conditions);
     let orderBySQL = format(`ORDER BY %I %s`, sort.column, sort.direction);
     let sql = (params && params.length != 0) ? `${selectSQL} ${fromSQL} ${whereSQL} ${orderBySQL}` : `${selectSQL} ${fromSQL} ${orderBySQL}`;
+    console.log(sql);
     await client.query(sql)
         .then((result) => {
             console.log('Returned', result.rowCount, 'rows.');

@@ -39,6 +39,7 @@ const input = reactive({
         relation: '',
     },
     bureau: '',
+    supplementary_details: '',
     tx_state_country_code: '',
     rx_state_country_code: '',
     tx_antenna_location: '',
@@ -65,15 +66,18 @@ const numericRelations = ['=', '>=', '>', '<=', '<', '!=', 'between'];
 
 function formatParameter(field, param) {
     if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {
-        if (param.relation !== 'between')
-            return `${headerMap(field)} ${param.relation} ${format(param.value, field)}`;
-        else
-            return `${headerMap(field)} ${param.relation} ${format(param.lowerValue, field)} and ${format(param.higherValue, field)}`;
-    } else if (['review_date', 'expiration_date', 'revision_date'].includes(field)) {
-        if (param.relation !== 'between')
-            return `${headerMap(field)} ${param.relation} ${formatDateYYYYMMDD(param.value)}`;
-        else
-            return `${headerMap(field)} ${param.relation} ${formatDateYYYYMMDD(param.lowerValue)} and ${formatDateYYYYMMDD(param.higherValue)}`;
+        // Will remove this if-clause when format() detects date format input
+        if (['review_date', 'expiration_date', 'revision_date'].includes(field)) {
+            if (param.relation !== 'between')
+                return `${headerMap(field)} ${param.relation} ${formatDateYYYYMMDD(param.value)}`;
+            else
+                return `${headerMap(field)} ${param.relation} ${formatDateYYYYMMDD(param.lowerValue)} and ${formatDateYYYYMMDD(param.value)}`;
+        } else {
+            if (param.relation !== 'between')
+                return `${headerMap(field)} ${param.relation} ${format(param.value, field)}`;
+            else
+                return `${headerMap(field)} ${param.relation} ${format(param.lowerValue, field)} and ${format(param.value, field)}`;
+        }
     } else {
         return param.value;
     }
@@ -91,7 +95,7 @@ const queryObject = computed(() => {
                 temp.relation = param.relation;
                 if (param.relation === 'between') {
                     temp.lowerValue = param.lowerValue;
-                    temp.higherValue = param.higherValue;
+                    temp.value = param.value;
                 } else {
                     temp.value = param.value;
                 }
@@ -132,6 +136,10 @@ function add(field) {
         input[field].relation = '';
     } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)) {
         parameters.value = input[field]
+        input[field] = '';
+    } else if (['supplementary_details'].includes(field)) {
+        parameters.value = input[field]
+        parameters.relation = 'LIKE';
         input[field] = '';
     }
     store.params.push({...parameters});
@@ -196,6 +204,13 @@ function validateDateInput() {
                     </option>
                 </select>
                 <button @click="add('bureau')" :disabled="input.bureau === ''">Add</button>
+            </div>
+            <div class="divider" />
+            <div class="inputLine">
+                <h3 class="inputLabel">Supplementary Details</h3>
+                <textarea v-model="input.supplementary_details">
+                </textarea>
+                <button @click="add('supplementary_details')" :disabled="input.supplementary_details === ''">Add</button>
             </div>
             <div class="divider" />
             <div class="inputLine">
@@ -328,14 +343,17 @@ function validateDateInput() {
         <div id="queryDisplay">
             <div v-show="Object.keys(queryObject).length !== 0">
                 <div v-for="field in Object.keys(queryObject)" class="queryDisplayField">
-                    <p v-show="!['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)">{{ `${headerMap(field)} in [` }}</p>
+                    <p v-show="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">{{ `${headerMap(field)} in [` }}</p>
+                    <p v-show="['supplementary_details'].includes(field)">{{ `${headerMap(field)} contains` }}&nbsp;</p>
                     <template v-for="(param, index) in queryObject[field]" class="queryDisplayCondition">
                         {{ formatParameter(field, param) }}
                         <button @click="store.removeParam(param.index)">x</button>
-                        <p v-show="!['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">,&nbsp;</p>
+                        <p v-show="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field) && index !== queryObject[field].length-1">,&nbsp;</p>
+                        <p v-show="['supplementary_details'].includes(field) && queryObject[field].length >= 3 && index <= queryObject[field].length-1">,&nbsp;</p>
+                        <p v-show="['supplementary_details'].includes(field) && queryObject[field].length >= 2 && index === queryObject[field].length-2">or&nbsp;</p>
                         <p v-show="['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">&nbsp;OR&nbsp;</p>
                     </template>
-                    <p v-show="!['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)">]</p>
+                    <p v-show="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">]</p>
                 </div>
             </div>
             <div class="inputLine">
@@ -375,14 +393,15 @@ function validateDateInput() {
     padding: 0 5px;
 }
 
-input, select, button {
-    border-radius: 4px;
+textarea {
+    font-size: 14px;
 }
 
-input, select, button {
+input, select, button, textarea {
     background-color: var(--color-background-soft);
     border: 1px solid var(--color-border);
     color: var(--color-text);
+    border-radius: 4px;
 }
 
 select, button {

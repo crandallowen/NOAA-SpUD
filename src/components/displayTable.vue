@@ -26,7 +26,7 @@ const rowFilters = reactive({
     'isAssignment': [
         {id: 'isAssignment', name: 'Assignments', condition: {field: 'serial_num', relation: '!~', value: 'p$'}},
         {id: 'isProposal', name: 'Proposals', condition: {field: 'serial_num', relation: '~', value: 'p$'}}
-    ]
+    ],
 });
 
 watchEffect(async () => {

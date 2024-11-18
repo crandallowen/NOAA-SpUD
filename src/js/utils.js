@@ -134,7 +134,6 @@ export const recordColumns = [
     'canadian_coordination_comments',
     'mexican_coordination_comments',
     'user_net_code',
-    
 ];
 
 export const emissionGroup = ['station_class', 'emission_designator', 'power_w', 'max_power'];
