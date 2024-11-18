@@ -57,7 +57,7 @@ export function isShortSerialNumber(serial_num) {
 };
 
 export function appendCommerceSerialNumber(serial_num) {
-    return `C   ${serial_num.padStart(6, '0')}`;
+    return `C   ${serial_num.padEnd(6, '0')}`;
 };
 
 export function validateSerialNumberString(serialNumString) {

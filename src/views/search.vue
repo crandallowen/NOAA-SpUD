@@ -62,7 +62,6 @@ const input = reactive({
     }
 });
 const numericRelations = ['=', '>=', '>', '<=', '<', '!=', 'between'];
-const dateRelations = ['=', '>=', '>', '<=', '<', 'between'];
 
 function formatParameter(field, param) {
     if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {
@@ -133,18 +132,8 @@ function add(field) {
     store.params.push({...parameters});
 };
 
-// Should be moved to inside of store
-function remove(index) {
-    store.params.splice(index, 1);
-};
-
 function search() {
     router.push({name: 'searchResults'});
-};
-
-// Should be moved to inside of store
-function clear() {
-    store.params.splice(0);
 };
 
 function validateFrequencyInput() {
@@ -274,7 +263,7 @@ function validateDateInput() {
                 <h3 class="inputLabel">Review Date</h3>
                 <select v-model="input.review_date.relation">
                     <option disabled value=""></option>
-                    <option v-for="relation in dateRelations" :value="relation">
+                    <option v-for="relation in numericRelations" :value="relation">
                         {{ relation }}
                     </option>
                 </select>
@@ -290,7 +279,7 @@ function validateDateInput() {
                 <h3 class="inputLabel">Expiration Date</h3>
                 <select v-model="input.expiration_date.relation">
                     <option disabled value=""></option>
-                    <option v-for="relation in dateRelations" :value="relation">
+                    <option v-for="relation in numericRelations" :value="relation">
                         {{ relation }}
                     </option>
                 </select>
@@ -306,7 +295,7 @@ function validateDateInput() {
                 <h3 class="inputLabel">Revision Date</h3>
                 <select v-model="input.revision_date.relation">
                     <option disabled value=""></option>
-                    <option v-for="relation in dateRelations" :value="relation">
+                    <option v-for="relation in numericRelations" :value="relation">
                         {{ relation }}
                     </option>
                 </select>
@@ -337,7 +326,7 @@ function validateDateInput() {
                     <p v-show="!['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)">{{ `${headerMap(field)} in [` }}</p>
                     <template v-for="(param, index) in queryObject[field]" class="queryDisplayCondition">
                         {{ formatParameter(field, param) }}
-                        <button @click="remove(param.index)">x</button>
+                        <button @click="store.removeParam(param.index)">x</button>
                         <p v-show="!['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">,&nbsp;</p>
                         <p v-show="['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">&nbsp;OR&nbsp;</p>
                     </template>
@@ -346,7 +335,7 @@ function validateDateInput() {
             </div>
             <div class="inputLine">
                 <button @click="search" :disabled="Object.keys(store.params).length === 0">Search</button>
-                <button @click="clear">Clear</button>
+                <button @click="store.clearParams()">Clear</button>
             </div>
         </div>
     </div>

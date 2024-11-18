@@ -30,6 +30,14 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
         filters.value.splice(0);
     };
 
+    function removeParam(index) {
+        params.value.splice(index, 1);
+    };
+
+    function clearParams() {
+        params.value.splice(0);
+    };
+
     function saveQuery(name) {
         if (savedQueries.value.some((query) => query.name === name)) {
             throw Error('Name already used');
@@ -51,5 +59,5 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
         params.value = savedQueries.value.find((query) => query.name === name).map((param) => {return {...param}});
     };
 
-    return {sort, displayColumns, params, filters, savedQueries, invertSort, clearFilters, saveQuery, deleteQuery, loadQuery};
+    return {sort, displayColumns, params, filters, savedQueries, invertSort, clearFilters, removeParam, clearParams, saveQuery, deleteQuery, loadQuery};
 });
