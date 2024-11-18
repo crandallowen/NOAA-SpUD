@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, computed, watch, watchEffect } from 'vue';
-import { frequencyStringToHz, headerMap, allColumns, format, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
+import { frequencyStringToHz, headerMap, allColumns, format, formatDateYYYYMMDD, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
 import { useSearchResultsStore } from '@/stores/searchResults';
 import { useAuthStore } from '@/stores/auth';
 import router from '@/router';
@@ -69,6 +69,11 @@ function formatParameter(field, param) {
             return `${headerMap(field)} ${param.relation} ${format(param.value, field)}`;
         else
             return `${headerMap(field)} ${param.relation} ${format(param.lowerValue, field)} and ${format(param.higherValue, field)}`;
+    } else if (['review_date', 'expiration_date', 'revision_date'].includes(field)) {
+        if (param.relation !== 'between')
+            return `${headerMap(field)} ${param.relation} ${formatDateYYYYMMDD(param.value)}`;
+        else
+            return `${headerMap(field)} ${param.relation} ${formatDateYYYYMMDD(param.lowerValue)} and ${formatDateYYYYMMDD(param.higherValue)}`;
     } else {
         return param.value;
     }

@@ -26,7 +26,12 @@ export function formatPower(power_w) {
     else return '' + (parseFloat(power_w).toPrecision(12))/1 + ' W';
 };
 
+// TODO: identify date format first to apply proper formatting
 export function formatDate(date) {
+    return `${date.substring(5, 7)}/${date.substring(8, 10)}/${date.substring(0, 4)}`;
+};
+
+export function formatDateYYYYMMDD(date) {
     return `${date.substring(4, 6)}/${date.substring(6, 8)}/${date.substring(0, 4)}`;
 };
 
@@ -94,12 +99,6 @@ export function frequencyHzTokHz(frequency_hz) {
 export function dateStringToSQL(date) {
 
 };
-
-export const frequencyFilters = [
-    {id: 'frequencyFilter0', name: 'F < 400 MHz', condition: {field: 'center_frequency', relation: '<', value: 400000000}},
-    {id: 'frequencyFilter1', name: '400 MHz <= F <= 410 MHz', condition: {field: 'center_frequency', relation: 'between', lowerValue: 400000000, higherValue: 410000000}},
-    {id: 'frequencyFilter2', name: 'F > 410 MHz', condition: {field: 'center_frequency', relation: '>=', value: 410000000}}
-];
 
 export const defaultColumns = ['serial_num', 'bureau', 'main_function_id', 'center_frequency', 'power_w', 'tx_state_country_code', 'tx_antenna_location', 'revision_date'];
 
@@ -219,84 +218,10 @@ export const visibleColumnGroups = {
 };
 
 export const allColumns = [...recordColumns, ...emissionGroup, ...txGroup, ...rxGroup, ...recordDates];
-//Excludes frequency as a column, but should be added in final build
-// export const allColumns = [
-//     'serial_num',
-//     'agency_action_num',
-//     'bureau',
-//     'agency',
-//     'main_function_id',
-//     'intermediate_function_id',
-//     'detailed_function_id',
-//     'center_frequency',
-//     'station_class',
-//     'emission_designator',
-//     'power',
-//     'tx_state_country_code',
-//     'tx_antenna_location',
-//     'tx_station_control',
-//     'tx_station_call_sign',
-//     'tx_antenna_latitude',
-//     'tx_antenna_longitude',
-//     'tx_authorized_radius',
-//     'tx_inclination_angle',
-//     'tx_apogee',
-//     'tx_perigee',
-//     'tx_period_of_orbit',
-//     'tx_number_of_satellites',
-//     'tx_power_density',
-//     'tx_equipment_nomenclature',
-//     'tx_system_name',
-//     'tx_number_of_stations',
-//     'tx_ots_equipment',
-//     'tx_radar_tunability',
-//     'tx_pulse_duration',
-//     'tx_pulse_repetition_rate',
-//     'tx_antenna_name',
-//     'tx_antenna_nomenclature',
-//     'tx_antenna_gain',
-//     'tx_antenna_elevation',
-//     'tx_antenna_feed_point_height',
-//     'tx_antenna_horizontal_beamwidth',
-//     'tx_antenna_azimuth',
-//     'tx_antenna_orientation',
-//     'tx_antenna_polarization',
-//     'tx_JSC_area_code',
-//     'rx_state_country_code',
-//     'rx_antenna_location',
-//     'rx_control_ID_and_server_system_ID',
-//     'rx_antenna_latitude',
-//     'rx_antenna_longitude',
-//     'rx_station_call_sign',
-//     'rx_authorized_radius',
-//     'rx_repeater_indicator',
-//     'rx_inclination_angle',
-//     'rx_apogee',
-//     'rx_perigee',
-//     'rx_period_of_orbit',
-//     'rx_number_of_satellites',
-//     'rx_equipment_nomenclature',
-//     'rx_antenna_name',
-//     'rx_antenna_nomenclature',
-//     'rx_antenna_gain',
-//     'rx_antenna_elevation',
-//     'rx_antenna_feed_point_height',
-//     'rx_antenna_horizontal_beamwidth',
-//     'rx_antenna_azimuth',
-//     'rx_antenna_orientation',
-//     'rx_antenna_polarization',
-//     'rx_JSC_area_code',
-//     'last_transaction_date',
-//     'revision_date',
-//     'authorization_date',
-//     'expiration_date',
-//     'review_date',
-//     'entry_date',
-//     'receipt_date'
-// ];
 
 export const RFAHeaderMap = {
     serial_num: 'Serial Number',
+    isAssignment: 'Assignments/Proposals',
     agency_action_num: 'Agency Action Number',
     bureau: 'Bureau',
     agency: 'Agency',

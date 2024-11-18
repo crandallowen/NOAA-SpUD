@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, watch, watchEffect, onBeforeMount, onBeforeUpdate, onUpdated } from 'vue';
-import { format, headerMap, visibleColumnGroups, allColumns, frequencyFilters, frequencyHzTokHz } from '@/js/utils';
+import { format, headerMap, visibleColumnGroups, allColumns, frequencyHzTokHz } from '@/js/utils';
 import collapsibleGroup from '@/components/collapsibleGroup.vue';
 import { useAuthStore } from '@/stores/auth';
 import router from '@/router';
@@ -20,10 +20,13 @@ watch(store, (store) => {
 }, {deep: true});
 
 const rowFilters = reactive({
-    'center_frequency': frequencyFilters,
     'bureau': [],
     'function_identifier': [],
-    'tx_state_country_code': []
+    'tx_state_country_code': [], 
+    'isAssignment': [
+        {id: 'isAssignment', name: 'Assignments', condition: {field: 'serial_num', relation: '!~', value: 'p$'}},
+        {id: 'isProposal', name: 'Proposals', condition: {field: 'serial_num', relation: '~', value: 'p$'}}
+    ]
 });
 
 watchEffect(async () => {
