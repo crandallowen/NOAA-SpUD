@@ -14,6 +14,7 @@ const columns = ref(null);
 const rows = ref(null);
 const auth = useAuthStore();
 const store = props.useStore();
+const today = new Date();
 
 watch(store, (store) => {
     localStorage.setItem(store.$id, JSON.stringify(store))
@@ -24,9 +25,16 @@ const rowFilters = reactive({
     'function_identifier': [],
     'tx_state_country_code': [], 
     'isAssignment': [
+        // Utilizes standard condition of query route built for serial_num search
         {id: 'isAssignment', name: 'Assignments', condition: {field: 'serial_num', relation: '!~', value: 'p$'}},
         {id: 'isProposal', name: 'Proposals', condition: {field: 'serial_num', relation: '~', value: 'p$'}}
     ],
+    'due_for_review': [
+        // Utilizes a special condition in query route
+        {id: 'overdue', name: 'Overdue', condition: {field: 'review_date', relation: 'between', lowerValue: `19000101`, value: `${today.getFullYear()}${today.getMonth()+1}${today.getDate()-1}`}},
+        {id: 'thisYear', name: 'Due this year', condition: {field: 'review_date', relation: 'between', lowerValue: `${today.getFullYear()}0101`, value: `${today.getFullYear()}1231`}},
+        {id: 'nextYear', name: 'Due next year', condition: {field: 'review_date', relation: 'between', lowerValue: `${today.getFullYear()+1}0101`, value: `${today.getFullYear()+1}1231`}}
+    ]
 });
 
 watchEffect(async () => {
@@ -122,7 +130,7 @@ function downloadCSVData() {
         <div class="columnSelect">
             <span class="titleBar">
                 <h2 class="filterHeader">Filters</h2>
-                <button id="clearFiltersButton" @click="store.clearFilters()">Clear</button>
+                <button id="clearFiltersButton" @click="store.clearFilters()">Clear All</button>
             </span>
             <template v-for="key in Object.keys(rowFilters)">
                 <collapsibleGroup :group-name="headerMap(key)" collapsed>

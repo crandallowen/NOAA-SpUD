@@ -29,7 +29,6 @@ const OPTION_QUERIES = {
     'function_identifier': `SELECT DISTINCT function_identifier FROM (SELECT main_function_id AS function_identifier FROM RFAs UNION SELECT intermediate_function_id AS function_identifier FROM RFAs UNION SELECT detailed_function_id AS function_identifier FROM RFAs) AS function_identifiers ORDER BY function_identifier ASC`, 
     'point_of_contact': `SELECT DISTINCT point_of_contact FROM RFAs`,
 };
-
 const ROW_FILTERS = ['bureau', 'function_identifier', 'tx_state_country_code'];
 
 const app = express();
@@ -302,7 +301,6 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
     let whereSQL = format.withArray(`WHERE ${'%s AND '.repeat(conditions.length).slice(0, -5)}`, conditions);
     let orderBySQL = format(`ORDER BY %I %s`, sort.column, sort.direction);
     let sql = (params && params.length != 0) ? `${selectSQL} ${fromSQL} ${whereSQL} ${orderBySQL}` : `${selectSQL} ${fromSQL} ${orderBySQL}`;
-    console.log(sql);
     await client.query(sql)
         .then((result) => {
             console.log('Returned', result.rowCount, 'rows.');

@@ -220,7 +220,6 @@ export const allColumns = [...recordColumns, ...emissionGroup, ...txGroup, ...rx
 
 export const RFAHeaderMap = {
     serial_num: 'Serial Number',
-    isAssignment: 'Assignments/Proposals',
     agency_action_num: 'Agency Action Number',
     bureau: 'Bureau',
     agency: 'Agency',
@@ -315,5 +314,7 @@ export const RFAHeaderMap = {
     expiration_date: 'Expiration Date',
     review_date: 'Review Date',
     entry_date: 'Entry Date',
-    receipt_date: 'Receipt Date'
+    receipt_date: 'Receipt Date',
+    isAssignment: 'Assignments/Proposals',
+    due_for_review: 'Due for Review',
 };
