@@ -21,9 +21,18 @@ export const useHomeTableStore = defineStore('homeTable', () => {
         sort.value.direction = (sort.value.direction === 'ascending') ? 'descending' : 'ascending';
     };
 
+    function handleSort(column) {
+        if (column === sort.value.column) {
+            invertSort();
+        } else {
+            sort.value.column = column;
+            sort.value.direction = 'ascending';
+        }
+    };
+
     function clearFilters() {
         filters.value.splice(0);
     };
 
-    return {sort, displayColumns, filters, invertSort, clearFilters};
+    return {sort, displayColumns, filters, invertSort, handleSort, clearFilters};
 });

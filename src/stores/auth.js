@@ -10,6 +10,10 @@ export const useAuthStore = defineStore('auth', () => {
         let state = JSON.parse(localStorage.getItem('user'));
         user.value = state.user;
     }
+    if (localStorage.getItem('auth')) {
+        let state = JSON.parse(localStorage.getItem('auth'));
+        returnURL.value = state.returnURL;
+    }
 
     async function login(username, password) {
         let url = new URL(`${window.location.origin}/login`);    
@@ -38,11 +42,14 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = name;
         localStorage.setItem('user', JSON.stringify({user: user.value}));
         router.push(returnURL.value || '/');
+        localStorage.removeItem('auth');
     };
 
     function logout() {
         user.value = null;
         localStorage.removeItem('user');
+        returnURL.value = router.currentRoute.value.fullPath;
+        localStorage.setItem('auth', JSON.stringify({returnURL: returnURL.value}));
         router.push('/login');
     };
 

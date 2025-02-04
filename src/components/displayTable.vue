@@ -1,9 +1,8 @@
 <script setup>
-import { ref, reactive, watch, watchEffect, onBeforeMount, onBeforeUpdate, onUpdated } from 'vue';
-import { format, headerMap, visibleColumnGroups, allColumns, frequencyHzTokHz } from '@/js/utils';
+import { ref, reactive, watch, watchEffect } from 'vue';
+import { format, headerMap, visibleColumnGroups, frequencyHzTokHz } from '@/js/utils';
 import collapsibleGroup from '@/components/collapsibleGroup.vue';
-import { useAuthStore } from '@/stores/auth';
-import router from '@/router';
+import { getFilters, query } from '@/js/api';
 
 const props = defineProps({
     title: String,
@@ -12,14 +11,8 @@ const props = defineProps({
 
 const columns = ref(null);
 const rows = ref(null);
-const auth = useAuthStore();
 const store = props.useStore();
 const today = new Date();
-
-watch(store, (store) => {
-    localStorage.setItem(store.$id, JSON.stringify(store))
-}, {deep: true});
-
 const rowFilters = reactive({
     'bureau': [],
     'function_identifier': [],
@@ -31,74 +24,15 @@ const rowFilters = reactive({
     ],
     'due_for_review': [
         // Utilizes a special condition in query route
-        {id: 'overdue', name: 'Overdue', condition: {field: 'review_date', relation: 'between', lowerValue: `19000101`, value: `${today.getFullYear()}${today.getMonth()+1}${today.getDate()-1}`}},
+        {id: 'overdue', name: 'Overdue', condition: {field: 'review_date', relation: 'between', lowerValue: `19000101`, value: `${today.getFullYear()}${String(today.getMonth()+1).padStart(2, '0')}${String(today.getDate()-1).padStart(2, '0')}`}},
         {id: 'thisYear', name: 'Due this year', condition: {field: 'review_date', relation: 'between', lowerValue: `${today.getFullYear()}0101`, value: `${today.getFullYear()}1231`}},
         {id: 'nextYear', name: 'Due next year', condition: {field: 'review_date', relation: 'between', lowerValue: `${today.getFullYear()+1}0101`, value: `${today.getFullYear()+1}1231`}}
     ]
 });
 
-watchEffect(async () => {
-    let url = new URL(`${window.location.origin}/api/getFilters`);
-    const response = await fetch(url, {credentials: 'include'})
-    if ([401, 403].includes(response.status)) {
-        auth.returnURL = router.currentRoute.value.fullPath;
-        router.push('/login');
-    } else {
-        response.json()
-            .then((response) => {
-                for (const field in rowFilters) {
-                    for (const i in response[field]) {
-                        rowFilters[field].push({id: field+'Filter'+i, name: response[field][i], condition: {field: field, value: response[field][i]}});
-                    }
-                }
-            })
-    }
-});
-
-watchEffect(async () => {
-    document.body.style.cursor='wait';
-    let url = new URL(`${window.location.origin}/api/query`);
-    let orderedColumns = [];
-    if (store.displayColumns.length !== 0)
-        allColumns.forEach((column) => {if (store.displayColumns.includes(column)) {orderedColumns.push(column)}});
-    else
-        allColumns.forEach((column) => {orderedColumns.push(column)});
-    orderedColumns.forEach((column) => url.searchParams.append('column', column));
-    url.searchParams.append('sortColumn', store.sort.column);
-    url.searchParams.append('sortDirection', store.sort.direction);
-    let paramsList = [];
-    if (Object.hasOwn(store, 'params') && store.params.length !== 0)
-        for (const i in store.params)
-            paramsList.push(JSON.stringify(store.params[i]));
-    if (store.filters.length !== 0)
-        for (const i in store.filters)
-            paramsList.push(JSON.stringify(store.filters[i]))
-    if (paramsList.length !== 0)
-        url.searchParams.append('params', `[${paramsList.join(',')}]`);
-    const response = await fetch(url, {credentials: 'include'});
-    if ([401, 403].includes(response.status)) {
-        document.body.style.cursor='default';
-        auth.returnURL = router.currentRoute.value.fullPath;
-        router.push('/login');
-    } else {
-        response.json()
-            .then((response) => {
-                columns.value = response.columns;
-                rows.value = response.rows;
-            });
-        document.body.style.cursor='default';
-    }
-});
-
-function handleSort(column) {
-    if (column === store.sort.column) {
-        store.invertSort();
-    } else {
-        store.sort.column = column;
-        store.sort.direction = 'ascending';
-    }
-    console.log('Sort rows by', store.sort.column, 'in', store.sort.direction, 'order');
-};
+watch(store, (store) => {localStorage.setItem(store.$id, JSON.stringify(store))}, {deep: true});
+getFilters(rowFilters);
+watchEffect(() => {query(rows, columns, store);});
 
 function downloadCSVData() {
     let csv = `${columns.value.map((col) => headerMap(col)).join(',')}\n`;
@@ -128,6 +62,7 @@ function downloadCSVData() {
     <div class="tableWithSelects">
         <!-- Side Bar -->
         <div class="columnSelect">
+            <!-- Row Filters -->
             <span class="titleBar">
                 <h2 class="filterHeader">Filters</h2>
                 <button id="clearFiltersButton" @click="store.clearFilters()">Clear All</button>
@@ -142,6 +77,7 @@ function downloadCSVData() {
                     </template>
                 </collapsibleGroup>
             </template>
+            <!-- Column Selects -->
             <h2>Column Select</h2>
             <template v-for="key in Object.keys(visibleColumnGroups)">
                 <collapsibleGroup :group-name="key">
@@ -165,10 +101,10 @@ function downloadCSVData() {
                 <thead>
                 <tr>
                     <template v-for="value in columns">
-                        <th @click="handleSort(value)">
+                        <th @click="store.handleSort(value)">
                             <div class="headerBox">
                                 {{ headerMap(value) }}
-                                <button @click.stop="handleSort(value)" class="sortButton">
+                                <button @click.stop="store.handleSort(value)" class="sortButton">
                                     {{ store.sort.column != value ? '\u25B2/\u25BC' : (store.sort.direction === 'ascending' ? '\u25B2' : '\u25BC') }} <!--Will need to handle changing the displayed sort direction until after data has loaded in new order-->
                                 </button>
                             </div>

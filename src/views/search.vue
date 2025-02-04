@@ -2,31 +2,11 @@
 import { ref, reactive, computed, watch, watchEffect } from 'vue';
 import { frequencyStringToHz, headerMap, allColumns, format, formatDateYYYYMMDD, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
 import { useSearchResultsStore } from '@/stores/searchResults';
-import { useAuthStore } from '@/stores/auth';
+import { getOptions } from '@/js/api';
 import router from '@/router';
 
 const options = ref({});
 const store = useSearchResultsStore();
-const auth = useAuthStore();
-
-watch(store, (store) => {
-    localStorage.setItem(store.$id, JSON.stringify(store))
-}, {deep: true});
-
-watchEffect(async () => {
-    let url = new URL(`${window.location.origin}/api/getOptions`);
-    const response = await fetch(url, {credentials: 'include'});
-    if ([401, 403].includes(response.status)) {
-        auth.returnURL = router.currentRoute.value.fullPath;
-        router.push('/login');
-    } else {
-        response.json()
-            .then((response) => {
-                options.value = response;
-            });
-    }
-});
-
 const input = reactive({
     serial_num: {
         value: '',
@@ -63,6 +43,11 @@ const input = reactive({
     }
 });
 const numericRelations = ['=', '>=', '>', '<=', '<', '!=', 'between'];
+
+watch(store, (store) => {
+    localStorage.setItem(store.$id, JSON.stringify(store))
+}, {deep: true});
+getOptions(options);
 
 function formatParameter(field, param) {
     if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {

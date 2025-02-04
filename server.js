@@ -14,10 +14,23 @@ const IS_DEV = process.env.NODE_ENV.trim() === 'development';
 const IS_PROD = process.env.NODE_ENV.trim() === 'production';
 const PORT = process.env.PORT || 7007;
 const FILE_EXT = ['.css', '.html', '.js'];
-const DB_USER = process.env.DB_USER || 'postgres';
-const DB_HOST = process.env.DB_HOST || 'spud-test-1.cduw4y6qos2l.us-east-1.rds.amazonaws.com';
+// const DB_USER = process.env.DB_USER || 'postgres';
+const DB_USER = process.env.DB_USER || 'OCrandall';
+// const DB_HOST = process.env.DB_HOST || 'spud-test-1.cduw4y6qos2l.us-east-1.rds.amazonaws.com';
+const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_PORT = process.env.DB_PORT || '5432';
-const DB = process.env.DB || 'spud';
+const DB = process.env.DB || 'SpUD';
+const DB_PASS = process.env.DB_PASS;
+const SECRET_NAME = "rds!db-3440bb27-4aa0-4767-bf5c-63bf095df745";
+
+// console.log('IS_DEV:', IS_DEV);
+// console.log('IS_PROD:', IS_PROD);
+// console.log('PORT:', PORT);
+// console.log('DB_USER:', DB_USER);
+// console.log('DB_HOST:', DB_HOST);
+// console.log('DB_PORT:', DB_PORT);
+// console.log('DB:', DB);
+// console.log('DB_PASS:', DB_PASS);
 
 const OPTION_QUERIES = {
     'bureau': `SELECT DISTINCT bureau FROM RFAs ORDER BY bureau ASC`,
@@ -99,50 +112,66 @@ function isAuthenticated(request, response, next) {
 };
 
 async function connectToDB() {
-    const secret_name = "rds!db-b1c2087a-1f45-4ad0-a23f-264ad481c0b4";
-    let secrets_client;
+    let config = {
+        host: DB_HOST,
+        port: DB_PORT,
+        database: DB
+    };
     if (IS_DEV) {
-        secrets_client = new SecretsManagerClient({
-            credentials: fromSSO({
-                profile: 'default',
-            }),
-        });
-    } else {
-        secrets_client = new SecretsManagerClient({
+        // secrets_client = new SecretsManagerClient({
+        //     credentials: fromSSO({
+        //         profile: 'default',
+        //     }),
+        // });
+        config.user = DB_USER;
+        config.password = DB_PASS;
+    } else if (IS_PROD) {
+        // TODO: Will need testing in production
+        let secrets_client = new SecretsManagerClient({
             credentials: fromContainerMetadata({
                 timeout: 1000,
                 maxRetries: 0,
             }),
         });
-    }
-    let response;
 
-    try {
-        response = await secrets_client.send(
-            new GetSecretValueCommand({
-                SecretId: secret_name,
-                VersionStage: "AWSCURRENT", // VersionStage defaults to AWSCURRENT if unspecified
-            })
-        );
-    } catch (error) {
-        // For a list of exceptions thrown, see
-        // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-        throw error;
-    }
-
-    const secret = JSON.parse(response.SecretString);
-    const client = new Client({
-        user: secret.username, 
-        password: secret.password,
-        host: DB_HOST,
-        port: DB_PORT,
-        database: DB,
-        ssl: {
+        let secret;
+        try {
+            let response = await secrets_client.send(
+                new GetSecretValueCommand({
+                    SecretId: SECRET_NAME,
+                    VersionStage: "AWSCURRENT", // VersionStage defaults to AWSCURRENT if unspecified
+                })
+            );
+            secret = JSON.parse(response.SecretString);
+        } catch (error) {
+            // For a list of exceptions thrown, see
+            // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+            throw error;
+        }
+        config.user = secret.username;
+        config.password = secret.password;
+        config.ssl = {
             require: true,
             rejectUnauthorized: true,
             ca: fs.readFileSync(path.join(__dirname, 'rds-ca-cert.pem')).toString()
-        }
-    });
+        };
+    }
+
+    // const secret = JSON.parse(response.SecretString);
+    // const client = new Client({
+    //     user: secret.username, 
+    //     password: secret.password,
+    //     host: DB_HOST,
+    //     port: DB_PORT,
+    //     database: DB,
+    //     ssl: {
+    //         require: true,
+    //         rejectUnauthorized: true,
+    //         ca: fs.readFileSync(path.join(__dirname, 'rds-ca-cert.pem')).toString()
+    //     }
+    // });
+
+    const client = new Client(config);
 
     await client.connect()
         .then(() => console.log('Connected to', DB, 'as', DB_USER, 'at', DB_HOST+':'+DB_PORT))
