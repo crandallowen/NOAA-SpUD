@@ -1,6 +1,6 @@
 <script setup>
 import displayTable from '@/components/displayTable.vue';
-import { useSearchResultsStore } from '@/stores/searchResults';
+import { useSearchResultsStore } from '@/stores/table';
 </script>
 
 <template>

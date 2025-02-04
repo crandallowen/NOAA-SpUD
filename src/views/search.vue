@@ -1,7 +1,7 @@
 <script setup>
-import { ref, reactive, computed, watch, watchEffect } from 'vue';
+import { ref, reactive, computed, watch } from 'vue';
 import { frequencyStringToHz, headerMap, allColumns, format, formatDateYYYYMMDD, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
-import { useSearchResultsStore } from '@/stores/searchResults';
+import { useSearchResultsStore } from '@/stores/table';
 import { getOptions } from '@/js/api';
 import router from '@/router';
 

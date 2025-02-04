@@ -2,25 +2,13 @@ import { defineStore } from 'pinia';
 import { defaultColumns } from '@/js/utils';
 import { ref } from 'vue';
 
-export const useSearchResultsStore = defineStore('searchResults', () => {
+const useTableStore = () => {
     const sort = ref({
         column: 'center_frequency',
         direction: 'ascending'
     });
     const displayColumns = ref([...defaultColumns]);
-    const params = ref([]);
     const filters = ref([]);
-    const savedQueries = ref([]);
-
-    if (localStorage.getItem('searchResults')) {
-        let state = JSON.parse(localStorage.getItem('searchResults'));
-        // sort.value = structuredClone(state.sort); //May use in prod, but spread syntax is likey sufficient and faster
-        sort.value = {...state.sort};
-        displayColumns.value = [...state.displayColumns];
-        params.value = state.params.map((param) => {return {...param}});
-        filters.value = state.filters.map((filter) => {return {...filter}});
-        savedQueries.value = structuredClone(state.savedQueries); //Object structure is more complicated than above, but may use spread syntax as above if possible
-    }
 
     function invertSort() {
         sort.value.direction = (sort.value.direction === 'ascending') ? 'descending' : 'ascending';
@@ -38,6 +26,37 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
     function clearFilters() {
         filters.value.splice(0);
     };
+
+    return {sort, displayColumns, filters, invertSort, handleSort, clearFilters};
+};
+
+export const useHomeTableStore = defineStore('homeTable', () => {
+    const store = useTableStore();
+    
+    if (localStorage.getItem('homeTable')) {
+        let state = JSON.parse(localStorage.getItem('homeTable'));
+        store.sort.value = state.sort;
+        store.displayColumns.value = state.displayColumns;
+        store.filters.value = state.filters;
+    }
+
+    return {...store};
+});
+
+export const useSearchResultsStore = defineStore('searchResults', () => {
+    const store = useTableStore();
+    const params = ref([]);
+    const savedQueries = ref([]);
+
+    if (localStorage.getItem('searchResults')) {
+        let state = JSON.parse(localStorage.getItem('searchResults'));
+        // store.sort.value = structuredClone(state.sort); //May use in prod, but spread syntax is likey sufficient and faster
+        store.sort.value = {...state.sort};
+        store.displayColumns.value = [...state.displayColumns];
+        store.filters.value = state.filters.map((filter) => {return {...filter}});
+        params.value = state.params.map((param) => {return {...param}});
+        savedQueries.value = structuredClone(state.savedQueries); //Object structure is more complicated than above, but may use spread syntax as above if possible
+    }
 
     function removeParam(index) {
         params.value.splice(index, 1);
@@ -68,5 +87,5 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
         params.value = savedQueries.value.find((query) => query.name === name).map((param) => {return {...param}});
     };
 
-    return {sort, displayColumns, params, filters, savedQueries, invertSort, handleSort, clearFilters, removeParam, clearParams, saveQuery, deleteQuery, loadQuery};
+    return {...store, params, savedQueries, removeParam, clearParams, saveQuery, deleteQuery, loadQuery};
 });

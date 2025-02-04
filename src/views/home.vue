@@ -1,6 +1,6 @@
 <script setup>
 import displayTable from '@/components/displayTable.vue';
-import { useHomeTableStore } from '@/stores/homeTable';
+import { useHomeTableStore } from '@/stores/table';
 </script>
 
 <template>
