@@ -32,7 +32,11 @@ const rowFilters = reactive({
 
 watch(store, (store) => {localStorage.setItem(store.$id, JSON.stringify(store))}, {deep: true});
 getFilters(rowFilters);
-watchEffect(() => {query(rows, columns, store);});
+watchEffect(() => {
+    document.body.style.cursor = 'wait';
+    query(rows, columns, store)
+        .then(() => {document.body.style.cursor = 'default';});
+});
 
 function downloadCSVData() {
     let csv = `${columns.value.map((col) => headerMap(col)).join(',')}\n`;

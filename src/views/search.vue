@@ -3,20 +3,25 @@ import { ref, reactive, computed, watch } from 'vue';
 import { frequencyStringToHz, headerMap, allColumns, format, formatDateYYYYMMDD, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
 import { useSearchResultsStore } from '@/stores/table';
 import { getOptions } from '@/js/api';
+import searchInput from '@/components/searchInput.vue';
 import router from '@/router';
 
 const options = ref({});
 const store = useSearchResultsStore();
 const input = reactive({
     serial_num: {
+        name: 'serial_num',
         value: '',
         lowerValue: '',
         relation: '',
+        type: 'numeric',
     },
     center_frequency: {
+        name: 'center_frequency',
         value: '',
         lowerValue: '',
         relation: '',
+        type: 'numeric',
     },
     bureau: '',
     supplementary_details: '',
@@ -146,40 +151,17 @@ function validateDateInput() {
 <template>
     <h1>Search</h1>
     <div id="searchInputs">
+        <!-- Search Inputs -->
         <div id="conditionInputs">
-            <div class="inputLine">
-                <!-- Search Inputs -->
-                <h3 class="inputLabel">Serial Number</h3>
-                <select v-model="input.serial_num.relation">
-                    <option disabled value=""></option>
-                    <option v-for="relation in numericRelations" :value="relation">
-                        {{ relation }}
-                    </option>
-                </select>
-                <div v-show="input.serial_num.relation === 'between'" class="inputLine">
-                    <input v-model="input.serial_num.lowerValue" />
-                    <p class="inputSeperator">and</p>
-                </div>
-                <input v-model="input.serial_num.value" />
-                <button @click="add('serial_num')" :disabled="input.serial_num.relation === '' || input.serial_num.value === '' || (input.serial_num.relation === 'between' && input.serial_num.lowerValue === '')">Add</button>
-            </div>
+
+            <searchInput v-model="input.serial_num" @add="(field) => add(field)"/>
+
             <div class="divider" />
-            <div class="inputLine">
-                <h3 class="inputLabel">Frequency</h3>
-                <select v-model="input.center_frequency.relation">
-                    <option disabled value=""></option>
-                    <option v-for="relation in numericRelations" :value="relation">
-                        {{ relation }}
-                    </option>
-                </select>
-                <div v-show="input.center_frequency.relation === 'between'" class="inputLine">
-                    <input v-model="input.center_frequency.lowerValue" />
-                    <p class="inputSeperator">and</p>
-                </div>
-                <input v-model="input.center_frequency.value" />
-                <button @click="add('center_frequency')" :disabled="input.center_frequency.relation === '' || input.center_frequency.value === '' || (input.center_frequency.relation === 'between' && input.center_frequency.lowerValue === '')">Add</button>
-            </div>
+            
+            <searchInput v-model="input.center_frequency" @add="(field) => add(field)"/>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Bureau</h3>
                 <select v-model="input.bureau">
@@ -190,14 +172,18 @@ function validateDateInput() {
                 </select>
                 <button @click="add('bureau')" :disabled="input.bureau === ''">Add</button>
             </div>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Supplementary Details</h3>
                 <textarea v-model="input.supplementary_details">
                 </textarea>
                 <button @click="add('supplementary_details')" :disabled="input.supplementary_details === ''">Add</button>
             </div>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Transmitter State/Country Code</h3>
                 <select v-model="input.tx_state_country_code">
@@ -208,7 +194,9 @@ function validateDateInput() {
                 </select>
                 <button @click="add('tx_state_country_code')" :disabled="input.tx_state_country_code === ''">Add</button>
             </div>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Receiver State/Country Code</h3>
                 <select v-model="input.rx_state_country_code">
@@ -219,7 +207,9 @@ function validateDateInput() {
                 </select>
                 <button @click="add('rx_state_country_code')" :disabled="input.rx_state_country_code === ''">Add</button>
             </div>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Transmitter Antenna Location</h3>
                 <select v-model="input.tx_antenna_location">
@@ -230,7 +220,9 @@ function validateDateInput() {
                 </select>
                 <button @click="add('tx_antenna_location')" :disabled="input.tx_antenna_location === ''">Add</button>
             </div>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Receiver Antenna Location</h3>
                 <select v-model="input.rx_antenna_location">
@@ -241,7 +233,9 @@ function validateDateInput() {
                 </select>
                 <button @click="add('rx_antenna_location')" :disabled="input.rx_antenna_location === ''">Add</button>
             </div>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Station Class</h3>
                 <select v-model="input.station_class">
@@ -252,7 +246,9 @@ function validateDateInput() {
                 </select>
                 <button @click="add('station_class')" :disabled="input.station_class === ''">Add</button>
             </div>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Function Identifier</h3>
                 <select v-model="input.function_identifier">
@@ -263,7 +259,9 @@ function validateDateInput() {
                 </select>
                 <button @click="add('function_identifier')" :disabled="input.function_identifier === ''">Add</button>
             </div>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Review Date</h3>
                 <select v-model="input.review_date.relation">
@@ -279,7 +277,9 @@ function validateDateInput() {
                 <input v-model="input.review_date.value" />
                 <button @click="add('review_date')" :disabled="input.review_date.relation === '' || input.review_date.value === '' || (input.review_date.relation === 'between' && input.review_date.lowerValue === '')">Add</button>
             </div>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Expiration Date</h3>
                 <select v-model="input.expiration_date.relation">
@@ -295,7 +295,9 @@ function validateDateInput() {
                 <input v-model="input.expiration_date.value" />
                 <button @click="add('expiration_date')" :disabled="input.expiration_date.relation === '' || input.expiration_date.value === '' || (input.expiration_date.relation === 'between' && input.expiration_date.lowerValue === '')">Add</button>
             </div>
+
             <div class="divider" />
+
             <div class="inputLine">
                 <h3 class="inputLabel">Revision Date</h3>
                 <select v-model="input.revision_date.relation">
@@ -311,6 +313,7 @@ function validateDateInput() {
                 <input v-model="input.revision_date.value" />
                 <button @click="add('revision_date')" :disabled="input.revision_date.relation === '' || input.revision_date.value === '' || (input.revision_date.relation === 'between' && input.revision_date.lowerValue === '')">Add</button>
             </div>
+            
             <div class="divider" />
             <!-- Results Columns -->
             <h3>Result Columns</h3>
