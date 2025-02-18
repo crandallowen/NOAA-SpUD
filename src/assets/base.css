@@ -40,9 +40,6 @@
   --color-navigation: var(--vt-c-text-light-1);
 
   --color-toggle-active: var(--vt-c-ice-blue);
-
-  --section-gap: 160px;
-  --small-section-gap: 80px;
 }
 
 @media (prefers-color-scheme: dark) {

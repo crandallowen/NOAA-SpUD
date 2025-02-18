@@ -10,44 +10,68 @@ const options = ref({});
 const store = useSearchResultsStore();
 const input = reactive({
     serial_num: {
-        name: 'serial_num',
         value: '',
         lowerValue: '',
         relation: '',
         type: 'numeric',
     },
     center_frequency: {
-        name: 'center_frequency',
         value: '',
         lowerValue: '',
         relation: '',
         type: 'numeric',
     },
-    bureau: '',
-    supplementary_details: '',
-    tx_state_country_code: '',
-    rx_state_country_code: '',
-    tx_antenna_location: '',
-    rx_antenna_location: '',
-    station_class: '',
-    function_identifier: '',
+    bureau: {
+        value: '',
+        type: 'categoric',
+    },
+    supplementary_details: {
+        value: '',
+        type: 'text',
+    },
+    tx_state_country_code: {
+        value: '',
+        type: 'categoric',
+    },
+    rx_state_country_code: {
+        value: '',
+        type: 'categoric',
+    },
+    tx_antenna_location: {
+        value: '',
+        type: 'categoric',
+    },
+    rx_antenna_location: {
+        value: '',
+        type: 'categoric',
+    },
+    station_class: {
+        value: '',
+        type: 'categoric',
+    },
+    function_identifier: {
+        value: '',
+        type: 'categoric',
+    },
     review_date: {
         value: '',
         lowerValue: '',
         relation: '',
+        type: 'numeric',
     },
     expiration_date: {
         value: '',
         lowerValue: '',
         relation: '',
+        type: 'numeric',
     },
     revision_date: {
         value: '',
         lowerValue: '',
         relation: '',
+        type: 'numeric',
     }
 });
-const numericRelations = ['=', '>=', '>', '<=', '<', '!=', 'between'];
 
 watch(store, (store) => {
     localStorage.setItem(store.$id, JSON.stringify(store))
@@ -125,26 +149,18 @@ function add(field) {
         input[field].lowerValue = '';
         input[field].relation = '';
     } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)) {
-        parameters.value = input[field]
-        input[field] = '';
+        parameters.value = input[field].value;
+        input[field].value = '';
     } else if (['supplementary_details'].includes(field)) {
-        parameters.value = input[field]
+        parameters.value = input[field].value;
         parameters.relation = 'LIKE';
-        input[field] = '';
+        input[field].value = '';
     }
     store.params.push({...parameters});
 };
 
 function search() {
     router.push({name: 'searchResults'});
-};
-
-function validateFrequencyInput() {
-
-};
-
-function validateDateInput() {
-
 };
 </script>
 
@@ -153,170 +169,16 @@ function validateDateInput() {
     <div id="searchInputs">
         <!-- Search Inputs -->
         <div id="conditionInputs">
-
-            <searchInput v-model="input.serial_num" @add="(field) => add(field)"/>
-
-            <div class="divider" />
-            
-            <searchInput v-model="input.center_frequency" @add="(field) => add(field)"/>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Bureau</h3>
-                <select v-model="input.bureau">
-                    <option disabled value=""></option>
-                    <option v-for="bureau in options['bureau']" :value="bureau">
-                        {{ bureau }}
-                    </option>
-                </select>
-                <button @click="add('bureau')" :disabled="input.bureau === ''">Add</button>
-            </div>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Supplementary Details</h3>
-                <textarea v-model="input.supplementary_details">
-                </textarea>
-                <button @click="add('supplementary_details')" :disabled="input.supplementary_details === ''">Add</button>
-            </div>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Transmitter State/Country Code</h3>
-                <select v-model="input.tx_state_country_code">
-                    <option disabled value=""></option>
-                    <option v-for="txStateCountryCode in options['tx_state_country_code']" :value="txStateCountryCode">
-                        {{ txStateCountryCode }}
-                    </option>
-                </select>
-                <button @click="add('tx_state_country_code')" :disabled="input.tx_state_country_code === ''">Add</button>
-            </div>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Receiver State/Country Code</h3>
-                <select v-model="input.rx_state_country_code">
-                    <option disabled value=""></option>
-                    <option v-for="rxStateCountryCode in options['rx_state_country_code']" :value="rxStateCountryCode">
-                        {{ rxStateCountryCode }}
-                    </option>
-                </select>
-                <button @click="add('rx_state_country_code')" :disabled="input.rx_state_country_code === ''">Add</button>
-            </div>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Transmitter Antenna Location</h3>
-                <select v-model="input.tx_antenna_location">
-                    <option disabled value=""></option>
-                    <option v-for="txAntennaLocation in options['tx_antenna_location']" :value="txAntennaLocation">
-                        {{ txAntennaLocation }}
-                    </option>
-                </select>
-                <button @click="add('tx_antenna_location')" :disabled="input.tx_antenna_location === ''">Add</button>
-            </div>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Receiver Antenna Location</h3>
-                <select v-model="input.rx_antenna_location">
-                    <option disabled value=""></option>
-                    <option v-for="rxAntennaLocation in options['rx_antenna_location']" :value="rxAntennaLocation">
-                        {{ rxAntennaLocation }}
-                    </option>
-                </select>
-                <button @click="add('rx_antenna_location')" :disabled="input.rx_antenna_location === ''">Add</button>
-            </div>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Station Class</h3>
-                <select v-model="input.station_class">
-                    <option disabled value=""></option>
-                    <option v-for="stationClass in options['station_class']" :value="stationClass">
-                        {{ stationClass }}
-                    </option>
-                </select>
-                <button @click="add('station_class')" :disabled="input.station_class === ''">Add</button>
-            </div>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Function Identifier</h3>
-                <select v-model="input.function_identifier">
-                    <option disabled value=""></option>
-                    <option v-for="functionIdentifier in options['function_identifier']" :value="functionIdentifier">
-                        {{ functionIdentifier }}
-                    </option>
-                </select>
-                <button @click="add('function_identifier')" :disabled="input.function_identifier === ''">Add</button>
-            </div>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Review Date</h3>
-                <select v-model="input.review_date.relation">
-                    <option disabled value=""></option>
-                    <option v-for="relation in numericRelations" :value="relation">
-                        {{ relation }}
-                    </option>
-                </select>
-                <div v-show="input.review_date.relation === 'between'" class="inputLine">
-                    <input v-model="input.review_date.lowerValue" />
-                    <p class="inputSeperator">and</p>
-                </div>
-                <input v-model="input.review_date.value" />
-                <button @click="add('review_date')" :disabled="input.review_date.relation === '' || input.review_date.value === '' || (input.review_date.relation === 'between' && input.review_date.lowerValue === '')">Add</button>
-            </div>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Expiration Date</h3>
-                <select v-model="input.expiration_date.relation">
-                    <option disabled value=""></option>
-                    <option v-for="relation in numericRelations" :value="relation">
-                        {{ relation }}
-                    </option>
-                </select>
-                <div v-show="input.expiration_date.relation === 'between'" class="inputLine">
-                    <input v-model="input.expiration_date.lowerValue" />
-                    <p class="inputSeperator">and</p>
-                </div>
-                <input v-model="input.expiration_date.value" />
-                <button @click="add('expiration_date')" :disabled="input.expiration_date.relation === '' || input.expiration_date.value === '' || (input.expiration_date.relation === 'between' && input.expiration_date.lowerValue === '')">Add</button>
-            </div>
-
-            <div class="divider" />
-
-            <div class="inputLine">
-                <h3 class="inputLabel">Revision Date</h3>
-                <select v-model="input.revision_date.relation">
-                    <option disabled value=""></option>
-                    <option v-for="relation in numericRelations" :value="relation">
-                        {{ relation }}
-                    </option>
-                </select>
-                <div v-show="input.revision_date.relation === 'between'" class="inputLine">
-                    <input v-model="input.revision_date.lowerValue" />
-                    <p class="inputSeperator">and</p>
-                </div>
-                <input v-model="input.revision_date.value" />
-                <button @click="add('revision_date')" :disabled="input.revision_date.relation === '' || input.revision_date.value === '' || (input.revision_date.relation === 'between' && input.revision_date.lowerValue === '')">Add</button>
-            </div>
-            
-            <div class="divider" />
+            <template v-for="field in Object.keys(input)">
+                <template v-if="input[field].type === 'categoric'">
+                    <searchInput :field="field" :options="options[field]" v-model="input[field]" @add="add"/>
+                </template>
+                <template v-else>
+                    <searchInput :field="field" v-model="input[field]" @add="add"/>
+                </template>
+            </template>
             <!-- Results Columns -->
-            <h3>Result Columns</h3>
+            <!-- <h3>Result Columns</h3>
             <div class="columns">
                 <template v-for="column in allColumns">
                     <div class="inputLine">
@@ -324,24 +186,22 @@ function validateDateInput() {
                         <label :for="column">{{ headerMap(column) }}</label>
                     </div>
                 </template>
-            </div>
+            </div> -->
         </div>
-        <div class="divider" />
-        <div class="divider" />
         <div id="queryDisplay">
             <div v-show="Object.keys(queryObject).length !== 0">
                 <div v-for="field in Object.keys(queryObject)" class="queryDisplayField">
-                    <p v-show="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">{{ `${headerMap(field)} in [` }}</p>
-                    <p v-show="['supplementary_details'].includes(field)">{{ `${headerMap(field)} contains` }}&nbsp;</p>
-                    <template v-for="(param, index) in queryObject[field]" class="queryDisplayCondition">
+                    <p v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">{{ `${headerMap(field)} in [` }}</p>
+                    <p v-if="['supplementary_details'].includes(field)">{{ `${headerMap(field)} contains` }}&nbsp;</p>
+                    <template v-for="(param, index) in queryObject[field]">
                         {{ formatParameter(field, param) }}
-                        <button @click="store.removeParam(param.index)">x</button>
-                        <p v-show="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field) && index !== queryObject[field].length-1">,&nbsp;</p>
-                        <p v-show="['supplementary_details'].includes(field) && queryObject[field].length >= 3 && index <= queryObject[field].length-1">,&nbsp;</p>
-                        <p v-show="['supplementary_details'].includes(field) && queryObject[field].length >= 2 && index === queryObject[field].length-2">or&nbsp;</p>
-                        <p v-show="['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">&nbsp;OR&nbsp;</p>
+                        <button @click="store.removeParam(param.index)" class="xButton">&#10006;</button>
+                        <p v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field) && index !== queryObject[field].length-1">,&nbsp;</p>
+                        <p v-if="['supplementary_details'].includes(field) && queryObject[field].length >= 3 && index <= queryObject[field].length-1">,&nbsp;</p>
+                        <p v-if="['supplementary_details'].includes(field) && queryObject[field].length >= 2 && index === queryObject[field].length-2">OR&nbsp;</p>
+                        <p v-if="['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">&nbsp;OR&nbsp;</p>
                     </template>
-                    <p v-show="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">]</p>
+                    <p v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">]</p>
                 </div>
             </div>
             <div class="inputLine">
@@ -363,48 +223,29 @@ function validateDateInput() {
     flex-direction: row;
 }
 
-.columns, #conditionInputs, #setOperators {
+.columns, #conditionInputs {
     display: flex;
     flex-direction: column;
 }
 
-.divider {
-    width: var(--small-section-gap);
-    height: 20px;
-}
-
-.inputLabel {
-    padding-right: 5px;
-}
-
-.inputSeperator {
-    padding: 0 5px;
-}
-
-textarea {
-    font-size: 14px;
-}
-
-input, select, button, textarea {
+input, button {
     background-color: var(--color-background-soft);
     border: 1px solid var(--color-border);
     color: var(--color-text);
     border-radius: 4px;
-}
-
-select, button {
-    cursor: pointer;
-}
-
-button {
-    font-family: inherit;
-}
-
-label, input, select, button {
     padding: 2px 5px;
 }
 
-pre {
+.xButton {
+    color: red;
+    font-size: 10px;
+    padding: 0 3.5px;
+    height: 18px;
+    align-self: center;
+}
+
+button {
+    cursor: pointer;
     font-family: inherit;
 }
 
