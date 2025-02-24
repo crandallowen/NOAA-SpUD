@@ -10,5 +10,9 @@ driver.py
 dist/*
 db.config.js
 rds-ca-cert.pem
+cert.pem
+private-key.key
+metadata.txt
+saml-test.js
 .vscode/*
 !.vscode/extensions.json
