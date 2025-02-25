@@ -75,6 +75,11 @@ export function validateFrequencyString(frequencyString) {
     return /^\s*\d+\s*([hkmgt]|[kmgt]?hz)?\s*$/i.test(frequencyString);
 };
 
+// Only validates that a date is in YYYYMMDD format; will expand in the future
+export function validateDateString(dateString) {
+    return /^\d{8}$/.test(dateString);
+};
+
 export function frequencyStringToHz(frequencyString) {
     let frequencyFloat;
     frequencyString = frequencyString.trim();
@@ -99,6 +104,8 @@ export function frequencyHzTokHz(frequency_hz) {
 export function dateStringToSQL(date) {
 
 };
+
+export const groupedColumns = ['station_class', 'emission_designator', 'sxxi_power', 'power_w', 'rx_state_country_code', 'rx_antenna_location', 'rx_control_id_and_server_system_id', 'rx_antenna_latitude', 'rx_antenna_longitude', 'rx_station_call_sign', 'rx_authorized_radius', 'rx_repeater_indicator', 'rx_inclination_angle', 'rx_apogee', 'rx_perigee', 'rx_period_of_orbit', 'rx_number_of_satellites', 'rx_equipment_nomenclature', 'rx_antenna_name', 'rx_antenna_nomenclature', 'rx_antenna_gain', 'rx_antenna_elevation', 'rx_antenna_feed_point_height', 'rx_antenna_horizontal_beamwidth', 'rx_antenna_azimuth', 'rx_antenna_orientation', 'rx_antenna_polarization', 'rx_jsc_area_code'];
 
 export const defaultColumns = ['serial_num', 'bureau', 'main_function_id', 'center_frequency', 'power_w', 'tx_state_country_code', 'tx_antenna_location', 'revision_date'];
 

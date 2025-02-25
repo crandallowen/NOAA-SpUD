@@ -1,5 +1,5 @@
 <script setup>
-import { headerMap } from '@/js/utils';
+import { headerMap, validateDateString, validateFrequencyString } from '@/js/utils';
 
 const props = defineProps({
     field: {
@@ -15,16 +15,33 @@ defineEmits(['add'])
 const values = defineModel();
 const numericRelations = ['=', '>=', '>', '<=', '<', '!=', 'between'];
 
-function validateInput() {
-
+function validateInput(field, values) {
+    if (values.relation === '' || values.value === '' || (values.relation === 'between' && values.lowerValue === ''))
+        return false;
+    else if (field === 'center_frequency' && !validateFrequencyInput(values)) {
+        return false;
+    } else if (field.substr(field.length-4) === 'date' && !validateDateInput(values)) {
+        return false;
+    } else
+        return true;
 };
 
-function validateFrequencyInput() {
-
+function validateFrequencyInput(values) {
+    if (!validateFrequencyString(values.value))
+        return false;
+    else if (values.relation === 'between' && !validateFrequencyString(values.lowerValue))
+        return false;
+    else
+        return true;
 };
 
-function validateDateInput() {
-
+function validateDateInput(values) {
+    if (!validateDateString(values.value))
+        return false;
+    else if (values.relation === 'between' && !validateDateString(values.lowerValue))
+        return false;
+    else
+        return true;
 };
 </script>
 
@@ -53,7 +70,7 @@ function validateDateInput() {
         <template v-else-if="values.type === 'text'">
             <textarea v-model="values.value"></textarea>
         </template>
-        <button @click="$emit('add', props.field)" :disabled="values.relation === '' || values.value === '' || (values.relation === 'between' && values.lowerValue === '')">Add</button>
+        <button @click="$emit('add', props.field)" :disabled="!validateInput(props.field, values)">Add</button>
     </div>
 </template>
 

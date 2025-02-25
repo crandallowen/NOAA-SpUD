@@ -11,27 +11,21 @@ function handleError(error) {
 
 function handle401and403Error() {useAuthStore().logout();};
 
-export async function getFilters(rowFilters) {
+export async function getFilters() {
     let url = new URL(`${window.location.origin}/api/getFilters`);
     return useFetch(url)
-        .then((filters) => {
-            for (const field in filters) {
-                for (const i in filters[field]) {
-                    rowFilters[field].push({id: field+'Filter'+i, name: filters[field][i], condition: {field: field, value: filters[field][i]}});
-                }
-            }
-        })
-        .catch((error) => (handleError(error)))
-};
-
-export async function getOptions(options) {
-    let url = new URL(`${window.location.origin}/api/getOptions`);
-    return useFetch(url)
-        .then((data) => {options.value = data;})
+        .then((data) => {return data;})
         .catch((error) => (handleError(error)));
 };
 
-export async function query(rows, columns, store) {
+export async function getOptions() {
+    let url = new URL(`${window.location.origin}/api/getOptions`);
+    return useFetch(url)
+        .then((data) => {return data;})
+        .catch((error) => (handleError(error)));
+};
+
+export async function query(store) {
     let url = new URL(`${window.location.origin}/api/query`);
     let orderedColumns = [];
     if (store.displayColumns.length !== 0)
@@ -50,11 +44,7 @@ export async function query(rows, columns, store) {
             paramsList.push(JSON.stringify(store.filters[i]))
     if (paramsList.length !== 0)
         url.searchParams.append('params', `[${paramsList.join(',')}]`);
-    try {
-        const data = await useFetch(url);
-        columns.value = data.columns;
-        rows.value = data.rows;
-    } catch (error) {
-        return handleError(error);
-    }
+    return useFetch(url)
+        .then((data) => {return data;})
+        .catch((error) => handleError(error));
 };

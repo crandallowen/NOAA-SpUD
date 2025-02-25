@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, watch, watchEffect } from 'vue';
-import { format, headerMap, visibleColumnGroups, frequencyHzTokHz } from '@/js/utils';
+import { format, headerMap, visibleColumnGroups, frequencyHzTokHz, groupedColumns } from '@/js/utils';
 import collapsibleGroup from '@/components/collapsibleGroup.vue';
 import { getFilters, query } from '@/js/api';
 
@@ -8,10 +8,11 @@ const props = defineProps({
     title: String,
     useStore: Function,
 });
-
+const isReady = ref(false);
 const columns = ref(null);
 const rows = ref(null);
 const store = props.useStore();
+const sort = ref(store.sort);
 const today = new Date();
 const rowFilters = reactive({
     'bureau': [],
@@ -31,12 +32,27 @@ const rowFilters = reactive({
 });
 
 watch(store, (store) => {localStorage.setItem(store.$id, JSON.stringify(store))}, {deep: true});
-getFilters(rowFilters);
+getFilters()
+    .then((filters) => {
+        if(filters)
+            for (const field in filters)
+                for (const i in filters[field])
+                    rowFilters[field].push({id: field+'Filter'+i, name: filters[field][i], condition: {field: field, value: filters[field][i]}});
+    });
 watchEffect(() => {
+    isReady.value = false;
     document.body.style.cursor = 'wait';
-    query(rows, columns, store)
-        .then(() => {document.body.style.cursor = 'default';});
-});
+    query(store)
+        .then((data) => {
+            if (data) {
+                columns.value = data.columns;
+                rows.value = data.rows;
+                sort.value = store.sort;
+                isReady.value = true;
+            }
+        })
+        .finally(() => {document.body.style.cursor = 'default';});
+}, {flush: 'post'});
 
 function downloadCSVData() {
     let csv = `${columns.value.map((col) => headerMap(col)).join(',')}\n`;
@@ -105,27 +121,39 @@ function downloadCSVData() {
                 <thead>
                 <tr>
                     <template v-for="value in columns">
-                        <th @click="store.handleSort(value)">
+                        <th @click.stop="store.handleSort(value)">
                             <div class="headerBox">
-                                {{ headerMap(value) }}
+                                <p class="headerText">{{ headerMap(value) }}</p>
                                 <button @click.stop="store.handleSort(value)" class="sortButton">
-                                    {{ store.sort.column != value ? '\u25B2/\u25BC' : (store.sort.direction === 'ascending' ? '\u25B2' : '\u25BC') }} <!--Will need to handle changing the displayed sort direction until after data has loaded in new order-->
+                                    {{ sort.column != value ? '\u25B2/\u25BC' : (sort.direction === 'ascending' ? '\u25B2' : '\u25BC') }}
                                 </button>
                             </div>
                         </th>
                     </template>
                 </tr>
                 </thead>
-                <tbody>
-                <tr v-for="row in rows">
-                    <template v-for="(value, key) in row">
-                        <td>
-                            <!-- Will want to only include certain fields in the <pre/> tags in the future -->
-                            <pre>{{ format(value, key) }}</pre> 
-                        </td>
-                    </template>
-                </tr>
-                </tbody>
+                <template v-if="isReady">
+                    <tbody>
+                    <tr v-for="row in rows">
+                        <template v-for="(value, key) in row">
+                            <td>
+                                <pre v-if="groupedColumns.includes(key)">{{ format(value, key) }}</pre>
+                                <template v-else>{{ format(value, key) }}</template> 
+                            </td>
+                        </template>
+                    </tr>
+                    </tbody>
+                </template>
+                <template v-else-if="columns !== null">
+                    <tbody>
+                        <tr>
+                            <td :colspan="columns.length">
+                                <h2 id="loadingRow">{{ 'loading...' }}</h2>
+                            </td>
+                        </tr>
+                    </tbody>
+                </template>
+                <h2 v-else>{{ 'loading...' }}</h2>
             </table>
         </div>
     </div>
@@ -141,7 +169,6 @@ button {
     border-radius: 4px;
     padding: 2px 5px;
     font-family: inherit;
-    
 }
 
 #rowCount, #exportButton {
@@ -155,11 +182,19 @@ button {
     margin: 3px;
 }
 
+#loadingRow {
+    text-align: center;
+}
+
 .title {
-    flex-grow: 1
+    flex-grow: 1;
 }
 
 .filterHeader {
+    flex-grow: 1;
+}
+
+.headerText {
     flex-grow: 1;
 }
 
@@ -201,9 +236,9 @@ button {
     font-weight: bold;
 }
 
-/* .displayTable :deep(td) {
-    
-} */
+.displayTable :deep(td) {
+    text-wrap: balance;
+}
 
 .inputLine :deep(label) {
     color: var(--color-text);
@@ -225,6 +260,6 @@ button {
 
 pre {
     font-family: inherit;
-    text-wrap: balance; /* Will move text-wrap property to .displayTable :deep(td) in the future */
+    text-wrap: nowrap;
 }
 </style>

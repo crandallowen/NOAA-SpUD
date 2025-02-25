@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, computed, watch } from 'vue';
-import { frequencyStringToHz, headerMap, allColumns, format, formatDateYYYYMMDD, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
+import { frequencyStringToHz, headerMap, format, formatDateYYYYMMDD, appendCommerceSerialNumber, isShortSerialNumber } from '@/js/utils';
 import { useSearchResultsStore } from '@/stores/table';
 import { getOptions } from '@/js/api';
 import searchInput from '@/components/searchInput.vue';
@@ -76,7 +76,7 @@ const input = reactive({
 watch(store, (store) => {
     localStorage.setItem(store.$id, JSON.stringify(store))
 }, {deep: true});
-getOptions(options);
+getOptions().then((data) => {if(data) {options.value = data;}});
 
 function formatParameter(field, param) {
     if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {
