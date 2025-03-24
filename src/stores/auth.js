@@ -6,10 +6,10 @@ export const useAuthStore = defineStore('auth', () => {
     const user = ref('');
     const returnURL = ref(null);
 
-    // if (localStorage.getItem('user')) {
-    //     let state = JSON.parse(localStorage.getItem('user'));
-    //     user.value = state.user;
-    // }
+    if (localStorage.getItem('user')) {
+        let state = JSON.parse(localStorage.getItem('user'));
+        user.value = state.user;
+    }
     if (localStorage.getItem('auth')) {
         let state = JSON.parse(localStorage.getItem('auth'));
         returnURL.value = state.returnURL;

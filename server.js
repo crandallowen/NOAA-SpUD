@@ -59,9 +59,6 @@ const SAML_OPTIONS = {
 const SAML_STRATEGY = new SamlStrategy(
     SAML_OPTIONS,
     (request, profile, done) => {
-        console.log('Verify')
-        console.log(`Session ID: ${request.session.id}`)
-        console.log(`Request Cookie: ${JSON.stringify(request.session.cookie)}`);
         return done(null, {id: profile.uid, email: profile.email});
     }
 );
@@ -118,9 +115,9 @@ const pgPool = await new Promise((resolve) => {
         );
     }
 });
-
+const sessionStore = new pgSession({pool: pgPool});
 const sessionConfig = {
-    store: new pgSession({pool: pgPool}),
+    store: sessionStore,
     secret: ' secret spud ',
     resave: false,
     saveUninitialized: true,
@@ -218,6 +215,13 @@ async function connectToDB() {
     return client;
 };
 
+async function findUserById(id) {
+    return pgPool.query(`SELECT sess #> '{passport,user}' AS user FROM session WHERE sess #>> '{passport,user,id}' = $1::text`, [id])
+        .then((result) => {
+            return result.rows[0];
+        });
+};
+
 // Dev passport strategy
 if (IS_DEV) {
     passport.use(new localStrategy((username, password, done) => {
@@ -229,7 +233,7 @@ if (IS_DEV) {
     }));
 
     passport.serializeUser((user, done) => {
-        done(null, {id: user.id, username: user.username});
+        done(null, user);
     });
 
     passport.deserializeUser((user, done) => {
@@ -247,7 +251,7 @@ if (IS_PROD) {
     //     done(null, user.id);
     // });
     passport.serializeUser((user, done) => {
-        done(null, {id: user.id});
+        done(null, user);
     });
     // passport.deserializeUser((user, done) => {
     //     process.nextTick(() => {
@@ -256,7 +260,7 @@ if (IS_PROD) {
     //     });
     // });
     passport.deserializeUser((user, done) => {
-        return done(null, user.id);
+        return done(null, user);
     });
 }
 
