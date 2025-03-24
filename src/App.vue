@@ -8,7 +8,7 @@ const authStore = useAuthStore();
 <template>
   <header>
     <img alt="Generic logo" class="logo" src="./assets/genericLogo.svg" width="55" height="55" />
-    <navigation v-show="authStore.user" />
+    <navigation />
   </header>
 
   <main>

@@ -186,15 +186,7 @@ button {
     text-align: center;
 }
 
-.title {
-    flex-grow: 1;
-}
-
-.filterHeader {
-    flex-grow: 1;
-}
-
-.headerText {
+.title, .filterHeader, .headerText {
     flex-grow: 1;
 }
 

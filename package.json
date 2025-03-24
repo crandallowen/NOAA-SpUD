@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "description": "An application for interfacing with the NOAA Spectrum Usage database",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "dev": "set NODE_ENV=development && nodemon --exec \"npm run build && node server.js\" -w server.js -w src",

@@ -1,15 +1,22 @@
-const path = require('path');
-const express = require('express');
-const session = require('express-session');
-const fs = require('fs');
-const cors = require('cors');
-const { Client } = require('pg');
-const format = require('pg-format');
-const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
-const { fromContainerMetadata, fromSSO } = require('@aws-sdk/credential-providers');
-const passport = require('passport');
-const SamlStrategy = require('@node-saml/passport-saml').Strategy;
+import { join, basename, extname, dirname } from 'path';
+import express, { json, urlencoded } from 'express';
+import session from 'express-session';
+import { readFileSync } from 'fs';
+// const cors = require('cors');
+import pg from 'pg';
+import format, { withArray } from 'pg-format';
+import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+import { fromContainerMetadata, fromSSO } from '@aws-sdk/credential-providers';
+import passport from 'passport';
+import { Strategy as SamlStrategy } from '@node-saml/passport-saml';
+import passportLocal from 'passport-local';
+const localStrategy = passportLocal.Strategy;
+import { fileURLToPath } from 'url';
+import connectPgSimple from 'connect-pg-simple';
+const pgSession = connectPgSimple(session);
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const IS_DEV = process.env.NODE_ENV.trim() === 'development';
 const IS_PROD = process.env.NODE_ENV.trim() === 'production';
 const PORT = process.env.PORT || 7007;
@@ -22,16 +29,6 @@ const DB_PORT = process.env.DB_PORT || '5432';
 const DB = process.env.DB || 'SpUD';
 const DB_PASS = process.env.DB_PASS;
 const SECRET_NAME = "rds!db-3440bb27-4aa0-4767-bf5c-63bf095df745";
-
-// console.log('IS_DEV:', IS_DEV);
-// console.log('IS_PROD:', IS_PROD);
-// console.log('PORT:', PORT);
-// console.log('DB_USER:', DB_USER);
-// console.log('DB_HOST:', DB_HOST);
-// console.log('DB_PORT:', DB_PORT);
-// console.log('DB:', DB);
-// console.log('DB_PASS:', DB_PASS);
-
 const OPTION_QUERIES = {
     'bureau': `SELECT DISTINCT bureau FROM RFAs ORDER BY bureau ASC`,
     'tx_state_country_code': `SELECT DISTINCT tx_state_country_code FROM RFAs ORDER BY tx_state_country_code ASC`,
@@ -43,72 +40,111 @@ const OPTION_QUERIES = {
     'point_of_contact': `SELECT DISTINCT point_of_contact FROM RFAs`,
 };
 const ROW_FILTERS = ['bureau', 'function_identifier', 'tx_state_country_code'];
+const SAML_OPTIONS = {
+    issuer: 'rfmd-spud.woc.noaa.gov',
+    callbackUrl: 'rfmd-spud.woc.noaa.gov/login/callback',
+    logoutCallbackURL: 'rfmd-spud.woc.noaa.gov/logout',
+    entryPoint: 'https://sso-dev.noaa.gov:443/openam/SSORedirect/metaAlias/cac/cac-idp',
+    idpCert: [readFileSync(join(__dirname, 'idp_cert1.pem'), 'latin1'), readFileSync(join(__dirname, 'idp_cert2.pem'), 'latin1')],
+    privateKey: readFileSync(join(__dirname, 'private-key.key'), 'latin1'),
+    publicCert: readFileSync(join(__dirname, 'sp_cert.pem'), 'latin1'),
+    signatureAlgorithm: 'sha256',
+    passReqToCallback: true,
+    signMetadata: true,
+    wantAssertionsSigned: true,
+    wantAuthnResponseSigned: false,
+    identifierFormat: 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+    disableRequestedAuthnContext: true,
+};
+const SAML_STRATEGY = new SamlStrategy(
+    SAML_OPTIONS,
+    (request, profile, done) => {
+        console.log('Verify')
+        console.log(`Session ID: ${request.session.id}`)
+        console.log(`Request Cookie: ${JSON.stringify(request.session.cookie)}`);
+        return done(null, {id: profile.uid, email: profile.email});
+    }
+);
+// const CORS_OPTIONS = {
+//     origin: 'https://sso-dev.noaa.gov',
+//     optionsSuccessStatus: 200
+// };
 
 const app = express();
-// const saml_options = {
-//     callbackUrl: 'login/callback',
-//     entryPoint: '',
-//     issuer: 'spud-saml',
-//     idpCert: '',
-//     privateKey: fs.readFileSync('./privateKey.pem', 'latin1'),
-//     publicCert: '',
-//     decryptionPvk: '',
-//     signatureAlgorithm: 'sha256',
-//     digestAlgorithm: '',
-//     additionalParams: {},
-//     passReqToCallback: false,
-//     allowCreate: false,
-//     signMetadata: true,
-//     name: 'saml',
-// };
-// const saml = new SAML(saml_options);
 
-// Dev passport strategy
-if (IS_DEV) {
-    const localStrategy = require('passport-local').Strategy;
-    passport.use(new localStrategy(function verify(username, password, done) {
-        if (username === password) {
-            return done(null, {id: 1, username: username});
-        } else {
-            return done(null, false, {message: 'Invalid credentials'});
-        }
-    }));
-
-    passport.serializeUser((user, done) => {
-        process.nextTick(() => {
-            done(null, {id: user.id, username: user.username});
+const pgPool = await new Promise((resolve) => {
+    if (IS_DEV) {
+        resolve(new pg.Pool({
+            user: DB_USER,
+            password: DB_PASS,
+            host: DB_HOST,
+            database: DB,
+            port: DB_PORT,
+            connectionTimeoutMillis: 30000,
+            idleTimeoutMillis: 10000,
+        }));
+    } else {
+        // TODO: Will need testing in production
+        let secrets_client = new SecretsManagerClient({
+            credentials: fromContainerMetadata({
+                timeout: 1000,
+                maxRetries: 0,
+            }),
         });
-    });
+        let config = {
+            host: DB_HOST,
+            port: DB_PORT,
+            database: DB,
+            ssl: {
+                require: true,
+                rejectUnauthorized: true,
+                ca: readFileSync(join(__dirname, 'rds-ca-cert.pem')).toString()
+            },
+        };
+        resolve(secrets_client.send(new GetSecretValueCommand({
+            SecretId: SECRET_NAME,
+            VersionStage: "AWSCURRENT", // VersionStage defaults to AWSCURRENT if unspecified
+        }))
+            .then((response) => {
+                let secret = JSON.parse(response.SecretString);
+                config.user = secret.username;
+                config.password = secret.password;
+                return new pg.Pool(config);
+            })
+            .catch((error) => {
+                console.error(error);
+                throw error;
+            })
+        );
+    }
+});
 
-    passport.deserializeUser((user, done) => {
-        process.nextTick(() => {
-            return done(null, user);
-        });
-    });
-
-    // Will enable cors only for specific routes in production
-    app.use(cors());
-}
-
-const sessionOptions = {
+const sessionConfig = {
+    store: new pgSession({pool: pgPool}),
     secret: ' secret spud ',
     resave: false,
     saveUninitialized: true,
-    cookie: {}
-};
-
-if (IS_PROD) {
-    sessionOptions.cookie.secure = true;
+    cookie: {
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        secure: IS_PROD ? true : false,
+    }
 };
 
 function isAuthenticated(request, response, next) {
-    if (request.user) {
-        next();
-    } else {
-        response.status(401);
+    // if (request.user) {
+    //     next();
+    // } else {
+    //     response.status(401);
+    //     response.append('WWW-Authenticate', 'HOBA');
+    //     response.send();
+    // }
+    if (!request.session || !request.user) {
+        response.status(403);
         response.append('WWW-Authenticate', 'HOBA');
         response.send();
+        return;
     }
+    next();
 };
 
 async function connectToDB() {
@@ -153,7 +189,7 @@ async function connectToDB() {
         config.ssl = {
             require: true,
             rejectUnauthorized: true,
-            ca: fs.readFileSync(path.join(__dirname, 'rds-ca-cert.pem')).toString()
+            ca: readFileSync(join(__dirname, 'rds-ca-cert.pem')).toString()
         };
     }
 
@@ -171,7 +207,7 @@ async function connectToDB() {
     //     }
     // });
 
-    const client = new Client(config);
+    const client = new pg.Client(config);
 
     await client.connect()
         .then(() => console.log('Connected to', DB, 'as', DB_USER, 'at', DB_HOST+':'+DB_PORT))
@@ -182,38 +218,107 @@ async function connectToDB() {
     return client;
 };
 
-app.use(express.json());
-app.use(express.urlencoded({extended: true}));
-app.use(session(sessionOptions));
-// app.use(passport.initialize());
+// Dev passport strategy
+if (IS_DEV) {
+    passport.use(new localStrategy((username, password, done) => {
+        if (username === password) {
+            return done(null, {id: 1, username: username});
+        } else {
+            return done(null, false, {message: 'Invalid credentials'});
+        }
+    }));
+
+    passport.serializeUser((user, done) => {
+        done(null, {id: user.id, username: user.username});
+    });
+
+    passport.deserializeUser((user, done) => {
+        done(null, user);
+    });
+}
+if (IS_PROD) {
+    passport.use(SAML_STRATEGY);
+    // passport.serializeUser((user, done) => {
+    //     process.nextTick(() => {
+    //         console.log(`Serialize User: ${user.id}`);
+    //         done(null, user.id);
+    //     });
+    //     console.log(`Serialize User: ${user.id}`);
+    //     done(null, user.id);
+    // });
+    passport.serializeUser((user, done) => {
+        done(null, {id: user.id});
+    });
+    // passport.deserializeUser((user, done) => {
+    //     process.nextTick(() => {
+    //         console.log(`Deserialize User: ${user.id}`);
+    //         return done(null, user.id);
+    //     });
+    // });
+    passport.deserializeUser((user, done) => {
+        return done(null, user.id);
+    });
+}
+
+// console.log('IS_DEV:', IS_DEV);
+// console.log('IS_PROD:', IS_PROD);
+// console.log('PORT:', PORT);
+// console.log('DB_USER:', DB_USER);
+// console.log('DB_HOST:', DB_HOST);
+// console.log('DB_PORT:', DB_PORT);
+// console.log('DB:', DB);
+// console.log('DB_PASS:', DB_PASS);
+
+app.use(json());
+app.use(urlencoded({extended: true}));
+app.use(session(sessionConfig));
+app.use(passport.initialize());
 app.use(passport.session());
 
 app.use((request, response, next) => {
-    let filename = path.basename(request.url);
-    let extension = path.extname(filename);
+    let filename = basename(request.url);
+    let extension = extname(filename);
     if (FILE_EXT.includes(extension)) {
         console.log(`Serving file ${filename} for session ${request.sessionID}`);
     }
     next();
 });
 
-app.use('/', express.static(path.join(__dirname, 'dist')));
+app.use('/', express.static(join(__dirname, 'dist')));
 
-// app.use((request, response, next) => {
-//     response.append('Access-Control-Allow-Origin', ['*']);
-//     response.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-//     response.append('Access-Control-Allow-Headers', 'Content-Type');
-//     next();
-// });
-
-if(IS_DEV) {
+if (IS_DEV) {
+    app.use((request, response, next) => {
+        response.append('Access-Control-Allow-Origin', ['*']);
+        response.append('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+        response.append('Access-Control-Allow-Headers', 'Content-Type');
+        next();
+    });
     app.post('/login', passport.authenticate('local', {failureMessage: true}), (request, response) => {
-        response.json(request.user.username);
+        response.status(200).json({
+            status: 'Login Successful!',
+            user: request.user
+        });
+    });
+}
+if (IS_PROD) {
+    app.post('/login/callback', isAuthenticated, (request, response) => {
+        response.sendFile(join(__dirname, 'dist', 'src', 'html', 'index.html'));
+    });
+    
+    app.get('/login', urlencoded({extended: false}), passport.authenticate('saml', {failureFlash: true}), (request, response) => {
+        response.json({isAuthenticated: true});
     });
 }
 
+app.get('/checkAuth', isAuthenticated, (request, response) => {
+    response.status(200).json({
+        status: 'Login Successful!',
+        user: request.user
+    });
+});
+    
 app.get('(?!/api)/*', (request, response) => {
-    response.sendFile(path.join(__dirname, 'dist', 'src', 'html', 'index.html'));
+    response.sendFile(join(__dirname, 'dist', 'src', 'html', 'index.html'));
 });
 
 app.get('/api/getFilters', isAuthenticated, async (request, response, next) => {
@@ -237,7 +342,7 @@ app.get('/api/getFilters', isAuthenticated, async (request, response, next) => {
             })
     }
     await client.end()
-        .then(() => console.log(DB_USER, 'has successfully disconnected.'))
+        // .then(() => console.log(DB_USER, 'has successfully disconnected.'))
         .catch((error) => {
             console.error('End error:', error.stack);
             next(error);
@@ -265,7 +370,7 @@ app.get('/api/getOptions', isAuthenticated, async (request, response, next) => {
             })
     }
     await client.end()
-        .then(() => console.log(DB_USER, 'has successfully disconnected.'))
+        // .then(() => console.log(DB_USER, 'has successfully disconnected.'))
         .catch((error) => {
             console.error('End error:', error.stack);
             next(error);
@@ -316,7 +421,7 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
                     conditions.push(format(`(main_function_id IN (%L) OR intermediate_function_id IN (%L) OR detailed_function_id IN (%L))`, queryObject[key], queryObject[key], queryObject[key]));
                 //Array column values need to be handled differently by using an array-overlap operator
                 } else if (['rx_state_country_code', 'rx_antenna_location'].includes(key)) {
-                    conditions.push(format.withArray(`${key} && '{${'"%s", '.repeat(queryObject[key].length).slice(0, -2)}}'`, queryObject[key]));
+                    conditions.push(withArray(`${key} && '{${'"%s", '.repeat(queryObject[key].length).slice(0, -2)}}'`, queryObject[key]));
                 } else {
                     conditions.push(format(`${key} IN (%L)`, queryObject[key]));
                 }
@@ -324,10 +429,10 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
         }
     }
     const client = await connectToDB();
-    let selectSQL = format.withArray(`SELECT ${'%I, '.repeat(columns.length).slice(0, -2)}`, columns);
+    let selectSQL = withArray(`SELECT ${'%I, '.repeat(columns.length).slice(0, -2)}`, columns);
     //Modify this when more tables/views are in use
     let fromSQL = format(`FROM RFAs`);
-    let whereSQL = format.withArray(`WHERE ${'%s AND '.repeat(conditions.length).slice(0, -5)}`, conditions);
+    let whereSQL = withArray(`WHERE ${'%s AND '.repeat(conditions.length).slice(0, -5)}`, conditions);
     let orderBySQL = format(`ORDER BY %I %s`, sort.column, sort.direction);
     let sql = (params && params.length != 0) ? `${selectSQL} ${fromSQL} ${whereSQL} ${orderBySQL}` : `${selectSQL} ${fromSQL} ${orderBySQL}`;
     await client.query(sql)
@@ -344,7 +449,7 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
         })
         .finally(async () => {
             await client.end()
-                .then(() => console.log(DB_USER, 'has successfully disconnected.'))
+                // .then(() => console.log(DB_USER, 'has successfully disconnected.'))
                 .catch((error) => {
                     console.error('End error:', error.stack);
                     next(error);

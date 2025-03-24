@@ -7,6 +7,7 @@ const routes = [
     {path: '/search', name: 'search', component: ()=>import('@/views/search.vue')},
     {path: '/search-results', name: 'searchResults', component: ()=>import('@/views/searchResults.vue')},
     {path: '/login', name: 'login', component: ()=>import('@/views/login.vue')},
+    // {path: '/callback', name: 'callback', component: ()=>import('@/views/callback.vue')},
     {path: '/:pathMatch(.*)*', name: 'notFound', component: ()=>import('@/views/notFound.vue')}
 ];
 
@@ -21,6 +22,13 @@ router.beforeEach(async (to) => {
     const auth = useAuthStore();
 
     if (authRequired && !auth.user) {
+        // if (true) {
+        //     console.log(document.cookie)
+        //     return true;
+        // } else {
+        //     auth.returnURL = to.fullPath;
+        //     return {name: 'login'};
+        // }
         auth.returnURL = to.fullPath;
         return {name: 'login'};
     } else return true;

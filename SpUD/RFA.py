@@ -151,7 +151,7 @@ class RFA:
         row = []
         for value in self.__dict__.values():
             if isinstance(value, list):
-                value = '|'.join(value)
+                value = '|'.join(map(str, value))
             elif isinstance(value, date):
                 value = value.strftime('%m/%d/%Y')
             elif value is None:
@@ -703,18 +703,17 @@ def addCustomColumns(rfa):
         lower_limit = float(formatFrequency(rfa.frequency))
         upper_limit = float(formatFrequency(rfa.frequency_upper_limit))
         rfa.band = str(lower_limit) + ' - ' + str(upper_limit)
-        bandwidth = upper_limit - lower_limit
-        rfa.bandwidth = str(bandwidth)
         rfa.center_frequency_Hz = str(lower_limit + (bandwidth / 2))
     else:
         rfa.center_frequency_Hz = formatFrequency(rfa.frequency)
-        bandwidth = 0
-        for emission_designator in rfa.emission_designator:
-            band = decodeEmissionDesignator(emission_designator)
-            if band is not None and band > bandwidth:
-                bandwidth = band
-        rfa.bandwidth = str(bandwidth)
         rfa.band = str(float(rfa.center_frequency_Hz) - (bandwidth / 2)) + ' - ' + str(float(rfa.center_frequency_Hz) + (bandwidth / 2))
+
+    bandwidth = 0
+    for emission_designator in rfa.emission_designator:
+        band = decodeEmissionDesignator(emission_designator)
+        if band is not None and band > bandwidth:
+            bandwidth = band
+    rfa.bandwidth = str(bandwidth)
     
     if rfa.tx_antenna_latitude is not None and rfa.tx_antenna_longitude is not None:
         rfa.tx_lat_long = formatLatLong(rfa.tx_antenna_latitude, rfa.tx_antenna_longitude)

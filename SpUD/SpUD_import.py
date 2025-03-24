@@ -2,8 +2,8 @@ import psycopg2
 from configparser import ConfigParser
 import RFA
 
-RFA_source_file = '../inputs/sfaf 1 col all doc_a_2024.08.19.txt'
-RFP_source_file = '../inputs/sfaf 1 col all doc_p_2024.08.19.txt'
+RFA_source_file = '../inputs/sfaf 1 col all doc_a_2025.02.03.txt'
+RFP_source_file = '../inputs/sfaf 1 col all doc_p_2025.02.03.txt'
 
 
 class RFAToSpUDMap():
@@ -53,7 +53,7 @@ def queryFormatList(List): return None if List == [] else List
 def queryFormatDate(date): return None if date == '' else date
 
 
-def config(filename='database1.ini', section='postgresql'):
+def config(filename='database.ini', section='postgresql'):
     parser = ConfigParser()
     parser.read(filename)
     db = {}

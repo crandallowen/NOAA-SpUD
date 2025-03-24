@@ -2,21 +2,26 @@
 import { useAuthStore } from '@/stores/auth';
 import { reactive } from 'vue';
 
+const auth = useAuthStore();
 const input = reactive({
     username: "",
     password: ""
 });
 
-function onSubmit() {
-    const auth = useAuthStore();
+async function onSubmit() {
     const { username, password } = input;
-    return auth.login(username, password)
-        .catch((error) => console.error(error));
+    try {
+        // return await auth.login(username, password);
+        return auth.login();
+    } catch (error) {
+        return console.error(error);
+    }
 };
+auth.login()
 </script>
 
 <template>
-    <div>
+    <!-- <div>
         <h2>Login</h2>
         <form name="login-form">
             <div>
@@ -29,5 +34,5 @@ function onSubmit() {
             </div>
             <button type="submit" @click.prevent="onSubmit()" :disabled="input.password === '' || input.username === ''">Login</button>
         </form>
-    </div>
+    </div> -->
 </template>
