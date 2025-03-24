@@ -9,10 +9,9 @@ driver.py
 **/Project Documents
 dist/*
 db.config.js
-rds-ca-cert.pem
-cert.pem
+*.pem
 private-key.key
-metadata.txt
+metadata*.txt
 saml-test.js
 .vscode/*
 !.vscode/extensions.json
