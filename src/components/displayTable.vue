@@ -81,38 +81,42 @@ function downloadCSVData() {
 <template>
     <div class="tableWithSelects">
         <!-- Side Bar -->
-        <div class="columnSelect">
+        <div id="sideBar">
             <!-- Row Filters -->
-            <span class="titleBar">
-                <h2 class="filterHeader">Filters</h2>
-                <button id="clearFiltersButton" @click="store.clearFilters()">Clear All</button>
-            </span>
-            <template v-for="key in Object.keys(rowFilters)">
-                <collapsibleGroup :group-name="headerMap(key)" collapsed>
-                    <template v-for="filter in rowFilters[key]">
-                        <div class="inputLine">
-                            <input type="checkbox" :id="filter.id" :value="filter.condition" v-model="store.filters">
-                            <label :for="filter.id">{{ filter.name }}</label>
-                        </div>
-                    </template>
-                </collapsibleGroup>
-            </template>
+             <div id="filters">
+                <span class="titleBar">
+                    <h2 class="filterHeader">Filters</h2>
+                    <button id="clearFiltersButton" @click="store.clearFilters()">Clear All</button>
+                </span>
+                <template v-for="key in Object.keys(rowFilters)">
+                    <collapsibleGroup :group-name="headerMap(key)" collapsed>
+                        <template v-for="filter in rowFilters[key]">
+                            <div class="inputLine">
+                                <input type="checkbox" :id="filter.id" :value="filter.condition" v-model="store.filters">
+                                <label :for="filter.id">{{ filter.name }}</label>
+                            </div>
+                        </template>
+                    </collapsibleGroup>
+                </template>
+            </div>
             <!-- Column Selects -->
-            <h2>Column Select</h2>
-            <template v-for="key in Object.keys(visibleColumnGroups)">
-                <collapsibleGroup :group-name="key">
-                    <template v-for="column in visibleColumnGroups[key]">
-                        <div class="inputLine">
-                            <input type="checkbox" :id="column" :value="column" v-model="store.displayColumns">
-                            <label :for="column">{{ headerMap(column) }}</label>
-                        </div>
-                    </template>
-                </collapsibleGroup>
-            </template>
+             <div id="columnSelects">
+                <h2>Column Select</h2>
+                <template v-for="key in Object.keys(visibleColumnGroups)">
+                    <collapsibleGroup :group-name="key" collapsed>
+                        <template v-for="column in visibleColumnGroups[key]">
+                            <div class="inputLine">
+                                <input type="checkbox" :id="column" :value="column" v-model="store.displayColumns">
+                                <label :for="column">{{ headerMap(column) }}</label>
+                            </div>
+                        </template>
+                    </collapsibleGroup>
+                </template>
+            </div>
         </div>
         <!-- Table -->
         <div class="tableContainer">
-            <div class="titleBar">
+            <div id="tableTitleBar">
                 <h2 class="title">{{ props.title }}</h2>
                 <button type="button" id="exportButton" @click="downloadCSVData">Export to .csv</button>
                 <p id="rowCount">{{ rows !== null ? `${Object.keys(rows).length} result${Object.keys(rows).length == 1 ? '' : 's'}` : ''}}</p>
@@ -190,12 +194,17 @@ button {
     flex-grow: 1;
 }
 
-.tableWithSelects, .inputLine, .headerBox, .titleBar {
+#tableTitleBar, #loadingRow {
+    /* This value was calculated and would need to be updated if changes were made to the side bar sizes */
+    max-width: calc(100vw - 334.35px);
+}
+
+.tableWithSelects, .inputLine, .headerBox, .titleBar, #tableTitleBar {
     display: flex;
     flex-direction: row;
 }
 
-.tableContainer, .columnSelect{
+.tableContainer, #sideBar{
     display: flex;
     flex-direction: column;
     width: max-content;
@@ -205,7 +214,7 @@ button {
     height: 100%;
 }
 
-.columnSelect {
+#sideBar {
     min-width: 27ch;
     margin-right: 20px;
 }
