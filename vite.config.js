@@ -19,8 +19,11 @@ export default defineConfig({
     }
   },
   server: {
-    // port: '7008',
-    // strictPort: true,
+    port: '7008',
+    strictPort: true,
     open: './src/html/index.html',
+    proxy: {
+      '/api': 'http://localhost:8008',
+    },
   },
 })

@@ -699,21 +699,23 @@ def addCustomColumns(rfa):
             max_power = power
     rfa.max_power = str(max_power)
 
-    if rfa.frequency_upper_limit is not None:
-        lower_limit = float(formatFrequency(rfa.frequency))
-        upper_limit = float(formatFrequency(rfa.frequency_upper_limit))
-        rfa.band = str(lower_limit) + ' - ' + str(upper_limit)
-        rfa.center_frequency_Hz = str(lower_limit + (bandwidth / 2))
-    else:
-        rfa.center_frequency_Hz = formatFrequency(rfa.frequency)
-        rfa.band = str(float(rfa.center_frequency_Hz) - (bandwidth / 2)) + ' - ' + str(float(rfa.center_frequency_Hz) + (bandwidth / 2))
-
     bandwidth = 0
     for emission_designator in rfa.emission_designator:
         band = decodeEmissionDesignator(emission_designator)
         if band is not None and band > bandwidth:
             bandwidth = band
     rfa.bandwidth = str(bandwidth)
+
+    if rfa.frequency_upper_limit is not None:
+        lower_limit = float(formatFrequency(rfa.frequency))
+        upper_limit = float(formatFrequency(rfa.frequency_upper_limit))
+        rfa.band = str(lower_limit) + ' - ' + str(upper_limit)
+        rfa.center_frequency_Hz = str(lower_limit + ((upper_limit - lower_limit) / 2))
+    else:
+        rfa.center_frequency_Hz = formatFrequency(rfa.frequency)
+        rfa.band = str(float(rfa.center_frequency_Hz) - (bandwidth / 2)) + ' - ' + str(float(rfa.center_frequency_Hz) + (bandwidth / 2))
+
+    
     
     if rfa.tx_antenna_latitude is not None and rfa.tx_antenna_longitude is not None:
         rfa.tx_lat_long = formatLatLong(rfa.tx_antenna_latitude, rfa.tx_antenna_longitude)

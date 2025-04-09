@@ -1,1 +1,2 @@
 DELETE FROM RFAs;
+DELETE FROM session;

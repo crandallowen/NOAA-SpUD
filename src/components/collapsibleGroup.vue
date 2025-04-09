@@ -29,7 +29,7 @@ const visible = ref(!props.collapsed);
 }
 
 .collapseButton {
-    background-color: var(--color-background);
+    background-color: var(--color-background-mute);
     border: none;
     color: var(--color-text);
     cursor: pointer;
@@ -37,5 +37,6 @@ const visible = ref(!props.collapsed);
 
 h3 {
     cursor: pointer;
+    white-space: nowrap;
 }
 </style>

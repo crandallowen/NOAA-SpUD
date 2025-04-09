@@ -31,7 +31,7 @@ const rowFilters = reactive({
     ]
 });
 
-watch(store, (store) => {localStorage.setItem(store.$id, JSON.stringify(store))}, {deep: true});
+watch(store, (store) => {localStorage.setItem(store.$id, JSON.stringify({sort: {...store.sort}, displayColumns: [...store.displayColumns], filters: [...store.filters]}))}, {deep: true});
 getFilters()
     .then((filters) => {
         if(filters)
@@ -83,9 +83,9 @@ function downloadCSVData() {
         <!-- Side Bar -->
         <div id="sideBar">
             <!-- Row Filters -->
-             <div id="filters">
+             <div id="filtersBox">
                 <span class="titleBar">
-                    <h2 class="filterHeader">Filters</h2>
+                    <h2 id="filterHeader">Filters</h2>
                     <button id="clearFiltersButton" @click="store.clearFilters()">Clear All</button>
                 </span>
                 <template v-for="key in Object.keys(rowFilters)">
@@ -100,8 +100,8 @@ function downloadCSVData() {
                 </template>
             </div>
             <!-- Column Selects -->
-             <div id="columnSelects">
-                <h2>Column Select</h2>
+             <div id="columnSelectsBox">
+                <h2 id="columnSelectsHeader">Column Select</h2>
                 <template v-for="key in Object.keys(visibleColumnGroups)">
                     <collapsibleGroup :group-name="key" collapsed>
                         <template v-for="column in visibleColumnGroups[key]">
@@ -152,18 +152,36 @@ function downloadCSVData() {
                     <tbody>
                         <tr>
                             <td :colspan="columns.length">
-                                <h2 id="loadingRow">{{ 'loading...' }}</h2>
+                                <h2 class="loadingRow">{{ 'loading...' }}</h2>
                             </td>
                         </tr>
                     </tbody>
                 </template>
-                <h2 v-else>{{ 'loading...' }}</h2>
+                <h2 class="loadingRow" v-else>{{ 'loading...' }}</h2>
             </table>
         </div>
     </div>
 </template>
 
 <style scoped>
+
+#filterHeader, #columnSelectsHeader {
+    color: var(--color-heading);
+}
+
+#filtersBox, #columnSelectsBox {
+    background-color: var(--color-background-mute);
+    padding: 8px;
+    border-radius: 4px;
+}
+
+#filtersBox {
+    margin-bottom: 20px;
+}
+
+#clearFiltersButton {
+    font-size: 18px;
+}
 
 button {
     background-color: var(--color-background-soft);
@@ -173,6 +191,21 @@ button {
     border-radius: 4px;
     padding: 2px 5px;
     font-family: inherit;
+}
+
+@media (hover: hover) {
+  button:hover {
+    border-color: var(--color-border-hover);
+  }
+}
+
+#rowCount {
+    padding: 3px 0;
+    font-size: 18px;
+}
+
+#exportButton {
+    font-size: 18px;
 }
 
 #rowCount, #exportButton {
@@ -186,18 +219,23 @@ button {
     margin: 3px;
 }
 
-#loadingRow {
+.loadingRow {
     text-align: center;
+    color: var(--color-text);
 }
 
-.title, .filterHeader, .headerText {
+.title {
+    color: var(--color-heading);
+}
+
+.title, #filterHeader, .headerText {
     flex-grow: 1;
 }
 
-#tableTitleBar, #loadingRow {
-    /* This value was calculated and would need to be updated if changes were made to the side bar sizes */
-    max-width: calc(100vw - 334.35px);
-}
+/* This value was calculated and would need to be updated if changes were made to the side bar sizes */
+/* #tableTitleBar, .loadingRow {
+    max-width: calc(100vw - 400px);
+} */
 
 .tableWithSelects, .inputLine, .headerBox, .titleBar, #tableTitleBar {
     display: flex;
@@ -215,7 +253,6 @@ button {
 }
 
 #sideBar {
-    min-width: 27ch;
     margin-right: 20px;
 }
 
@@ -233,12 +270,13 @@ button {
 
 .displayTable :deep(th) {
     white-space: nowrap;
-    background-color: var(--color-background-soft);
+    background-color: var(--color-main);
     font-weight: bold;
 }
 
 .displayTable :deep(td) {
     text-wrap: balance;
+    background-color: var(--color-table-background);
 }
 
 .inputLine :deep(label) {
@@ -254,7 +292,7 @@ button {
 
 .sortButton {
     align-self: center;
-    background-color: var(--color-background-soft);
+    background-color: var(--color-main);
     border: none;
     color: var(--color-text);
 }

@@ -1,83 +1,113 @@
-/* color palette from <https://github.com/vuejs/theme> */
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
+    --vt-c-white: #ffffff;
+    --vt-c-white-soft: #f8f8f8;
+    --vt-c-white-mute: #f2f2f2;
 
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
+    --vt-c-black: #181818;
+    --vt-c-black-soft: #222222;
+    --vt-c-black-mute: #282828;
 
-  --vt-c-indigo: #2c3e50;
-  --vt-c-ice-blue: hsla(183, 100%, 42%, 1);
-  --vt-c-dark-blue: hsla(183, 100%, 42%, 0.2);
+    --vt-c-indigo: #2c3e50;
+    --vt-c-ice-blue: hsla(183, 100%, 42%, 1);
+    --vt-c-dark-blue: hsla(183, 100%, 42%, 0.2);
 
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+    --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
+    --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
+    --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
+    --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
 
-  --vt-c-text-light-1: var(--vt-c-black);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-light-inactive: rgba(60, 60, 60, 0.33);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
-  --vt-c-text-dark-inactive: rgba(235, 235, 235, 0.35);
+    --vt-c-text-light-1: var(--vt-c-black);
+    --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
+    --vt-c-text-light-inactive: rgba(60, 60, 60, 0.33);
+    --vt-c-text-dark-1: var(--vt-c-white);
+    --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+    --vt-c-text-dark-inactive: rgba(235, 235, 235, 0.35);
+
+    --vt-c-light-blue: #5a81fa;
+    --vt-c-black-2: #1f1f1f;
+    --vt-c-dark-blue-2: #2b308b;
+    --vt-c-grey: #696e82;
+    --vt-c-light-blue-2: #cedeff;
+    --vt-c-light-grey: #a8b1ce;
+    --vt-c-light-blue-3: #f2f4ff;
+    --vt-c-light-grey-2: #f7f8fc;
+
+    --vt-c-light-purple: #6d4b8d;
+    --vt-c-sky-blue: #5ea0c9;
+    --vt-c-blue: #0000EE;
+    --vt-c-purple: #551A8B;
+
 }
 
 /* semantic color variables for this project */
 :root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
+    --color-site-title: var(--vt-c-black-mute);
+    --color-main: var(--vt-c-light-blue);
+    --color-background: var(--vt-c-light-blue-2);
+    --color-background-soft: var(--vt-c-light-blue-3);
+    --color-background-mute: var(--vt-c-light-grey-2);
+    --color-table-background: var(--vt-c-light-blue-3);
 
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
+    --color-border: var(--vt-c-divider-light-2);
+    --color-border-hover: var(--vt-c-divider-light-1);
 
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
-  --color-text-inactive: var(--vt-c-text-light-inactive);
-  --color-navigation: var(--vt-c-text-light-1);
+    /* --color-heading: var(--vt-c-text-light-1);
+    --color-text: var(--vt-c-text-light-1);
+    --color-text-inactive: var(--vt-c-text-light-inactive);
+    --color-navigation: var(--vt-c-text-light-1); */
+    --color-heading: var(--vt-c-dark-blue-2);
+    --color-text: var(--vt-c-text-light-1);
+    --color-text-inactive: var(--vt-c-text-light-inactive);
+    --color-navigation: var(--vt-c-text-light-1);
+    --color-navigation-hover: var(--vt-c-text-light-2);
 
-  --color-toggle-active: var(--vt-c-ice-blue);
+    --color-toggle-active: var(--vt-c-ice-blue);
+    --color-link: var(--vt-c-blue);
+    --color-link-visited: var(--vt-c-purple);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
+    :root {
+        --color-site-title: var(--vt-c-white);
+        --color-main: var(--vt-c-dark-blue-2);
+        --color-background: var(--vt-c-black);
+        --color-background-soft: var(--vt-c-black-soft);
+        --color-background-mute: var(--vt-c-black-mute);
+        --color-table-background: var(--vt-c-black);
 
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
+        --color-border: var(--vt-c-divider-dark-2);
+        --color-border-hover: var(--vt-c-divider-dark-1);
 
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
-    --color-text-inactive: var(--vt-c-text-dark-inactive);
-    --color-navigation: var(--vt-c-text-dark-1);
+        --color-heading: var(--vt-c-light-blue);
+        --color-text: var(--vt-c-text-dark-2);
+        --color-text-inactive: var(--vt-c-text-dark-inactive);
+        --color-navigation: var(--vt-c-text-dark-1);
+        --color-navigation-hover: var(--vt-c-text-dark-2);
 
-    --color-toggle-active: var(--vt-c-dark-blue);
-  }
+        --color-toggle-active: var(--vt-c-dark-blue);
+        --color-link: var(--vt-c-sky-blue);
+        --color-link-visited: var(--vt-c-light-purple);
+    }
 }
 
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
-  margin: 0;
-  position: relative;
-  font-weight: normal;
+    box-sizing: border-box;
+    margin: 0;
+    position: relative;
+    font-weight: normal;
 }
 
 body {
-  min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
-  transition: color 0.5s, background-color 0.5s;
-  line-height: 1.6;
-  font-family: 'Atkinson Hyperlegible', Roboto, Oxygen, Ubuntu, sans-serif;
-  font-size: 15px;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+    color: var(--color-text);
+    background: var(--color-background);
+    transition: color 0.5s, background-color 0.5s;
+    line-height: 1.6;
+    font-family: 'Atkinson Hyperlegible', Roboto, Oxygen, Ubuntu, sans-serif;
+    font-size: 18px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }

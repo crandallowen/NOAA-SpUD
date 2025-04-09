@@ -55,7 +55,7 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
         store.displayColumns.value = [...state.displayColumns];
         store.filters.value = state.filters.map((filter) => {return {...filter}});
         params.value = state.params.map((param) => {return {...param}});
-        savedQueries.value = structuredClone(state.savedQueries); //Object structure is more complicated than above, but may use spread syntax as above if possible
+        // savedQueries.value = structuredClone(state.savedQueries); //Object structure is more complicated than above, but may use spread syntax as above if possible
     }
 
     function removeParam(index) {
@@ -66,26 +66,27 @@ export const useSearchResultsStore = defineStore('searchResults', () => {
         params.value.splice(0);
     };
 
-    function saveQuery(name) {
-        if (savedQueries.value.some((query) => query.name === name)) {
-            throw Error('Name already used');
-        }
-        savedQueries.value.push({name: name, params: params.value.map((param) => {return {...param}})});
-    };
+    // function saveQuery(name) {
+    //     if (savedQueries.value.some((query) => query.name === name)) {
+    //         throw Error('Name already used');
+    //     }
+    //     savedQueries.value.push({name: name, params: params.value.map((param) => {return {...param}})});
+    // };
     
-    function deleteQuery(name) {
-        if (!savedQueries.value.some((query) => query.name === name)) {
-            throw Error(`No query with name ${name}`);
-        }
-        savedQueries.value.splice(savedQueries.value.findIndex((query) => query.name === name), 1);
-    };
+    // function deleteQuery(name) {
+    //     if (!savedQueries.value.some((query) => query.name === name)) {
+    //         throw Error(`No query with name ${name}`);
+    //     }
+    //     savedQueries.value.splice(savedQueries.value.findIndex((query) => query.name === name), 1);
+    // };
 
-    function loadQuery(name) {
-        if (!savedQueries.value.some((query) => query.name === name)) {
-            throw Error(`No query with name ${name}`);
-        }
-        params.value = savedQueries.value.find((query) => query.name === name).map((param) => {return {...param}});
-    };
+    // function loadQuery(name) {
+    //     if (!savedQueries.value.some((query) => query.name === name)) {
+    //         throw Error(`No query with name ${name}`);
+    //     }
+    //     params.value = savedQueries.value.find((query) => query.name === name).map((param) => {return {...param}});
+    // };
 
-    return {...store, params, savedQueries, removeParam, clearParams, saveQuery, deleteQuery, loadQuery};
+    // return {...store, params, savedQueries, removeParam, clearParams, saveQuery, deleteQuery, loadQuery};
+    return {...store, params, savedQueries, removeParam, clearParams};
 });

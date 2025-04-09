@@ -73,9 +73,13 @@ const input = reactive({
     }
 });
 
-watch(store, (store) => {
-    localStorage.setItem(store.$id, JSON.stringify(store))
-}, {deep: true});
+watch(store, (store) => {localStorage.setItem(store.$id, JSON.stringify({
+    sort: {...store.sort},
+    displayColumns: [...store.displayColumns],
+    filters: [...store.filters],
+    params: store.params.map((param) => {return {...param}}),
+    // savedQueries: structuredClone(store.savedQueries),
+}))}, {deep: true});
 getOptions().then((data) => {if(data) {options.value = data;}});
 
 function formatParameter(field, param) {
@@ -127,7 +131,7 @@ function add(field) {
     parameters.field = field;
     if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {
         parameters.relation = input[field].relation;
-        switch(field) {
+        switch (field) {
             case 'serial_num':
                 parameters.value = isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value;
                 if (input[field].relation === 'between') {parameters.lowerValue = isShortSerialNumber(input.serial_num.lowerValue) ? appendCommerceSerialNumber(input.serial_num.lowerValue) : input.serial_num.lowerValue;}
@@ -165,65 +169,104 @@ function search() {
 </script>
 
 <template>
-    <h1>Search</h1>
-    <div id="searchInputs">
-        <!-- Search Inputs -->
-        <div id="conditionInputs">
-            <template v-for="field in Object.keys(input)">
-                <template v-if="input[field].type === 'categoric'">
-                    <searchInput :field="field" :options="options[field]" v-model="input[field]" @add="add"/>
-                </template>
-                <template v-else>
-                    <searchInput :field="field" v-model="input[field]" @add="add"/>
-                </template>
-            </template>
-            <!-- Results Columns -->
-            <!-- <h3>Result Columns</h3>
-            <div class="columns">
-                <template v-for="column in allColumns">
-                    <div class="inputLine">
-                        <input type="checkbox" :id="column" :value="column" v-model="store.displayColumns">
-                        <label :for="column">{{ headerMap(column) }}</label>
-                    </div>
-                </template>
-            </div> -->
-        </div>
-        <div id="queryDisplay">
-            <div v-show="Object.keys(queryObject).length !== 0">
-                <div v-for="field in Object.keys(queryObject)" class="queryDisplayField">
-                    <p v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">{{ `${headerMap(field)} in [` }}</p>
-                    <p v-if="['supplementary_details'].includes(field)">{{ `${headerMap(field)} contains` }}&nbsp;</p>
-                    <template v-for="(param, index) in queryObject[field]">
-                        {{ formatParameter(field, param) }}
-                        <button @click="store.removeParam(param.index)" class="xButton">&#10006;</button>
-                        <p v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field) && index !== queryObject[field].length-1">,&nbsp;</p>
-                        <p v-if="['supplementary_details'].includes(field) && queryObject[field].length >= 3 && index <= queryObject[field].length-1">,&nbsp;</p>
-                        <p v-if="['supplementary_details'].includes(field) && queryObject[field].length >= 2 && index === queryObject[field].length-2">OR&nbsp;</p>
-                        <p v-if="['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">&nbsp;OR&nbsp;</p>
+    <div id="container">
+        <div id="leftColumn">
+            <h1 id="title">Search</h1>
+            <!-- Search Inputs -->
+            <div id="conditionInputs">
+                <template v-for="field in Object.keys(input)">
+                    <template v-if="input[field].type === 'categoric'">
+                        <searchInput :field="field" :options="options[field]" v-model="input[field]" @add="add"/>
                     </template>
-                    <p v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">]</p>
+                    <template v-else>
+                        <searchInput :field="field" v-model="input[field]" @add="add"/>
+                    </template>
+                </template>
+            </div>
+        </div>
+        <div id="rightColumn">
+            <div id="infoBox">
+                <p>To create a search query, first add parameters by filling an input on the left and clicking the associated 'Add' button.</p>
+                <p>User input is validated before being added, so the 'Add' button will be greyed out until the input is valid.</p>
+                <p>Multiple parameters can be added for each field and will be combined with a logical 'or'.</p>
+                <p>As parameters are added, the query will be built below in the 'Query Parameters' box.</p>
+                <p>Once all conditions have been added, click the 'Search' button to see the results.</p>
+                <!-- <p>Serial numbers that are 6 or fewer characters long will have 'C   ' appended to the front and a number of 0's will be added to the end to create a valid, 10-digit serial number.</p>
+                <p>Frequencies must include a number and can also include a unit represented fully (e.g. kHz) or with a single character (e.g. k).</p> -->
+            </div>
+            <div id="queryDisplay">
+                <div class="inputLine">
+                    <h3>Query Parameters:</h3>
+                    <button @click="store.clearParams()">Clear</button>
+                </div>
+                <div v-for="field in Object.keys(queryObject)" class="queryDisplayField">
+                    <p>
+                        <span v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">{{ `${headerMap(field)} in [` }}</span>
+                        <span v-if="['supplementary_details'].includes(field)">{{ `${headerMap(field)} contains` }}&nbsp;</span>
+                        <template v-for="(param, index) in queryObject[field]">
+                            <span>{{ formatParameter(field, param) }}</span>
+                            <button @click="store.removeParam(param.index)" class="xButton">&#10006;</button>
+                            <span v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field) && index !== queryObject[field].length-1">,&nbsp;</span>
+                            <span v-if="['supplementary_details'].includes(field) && queryObject[field].length >= 3 && index <= queryObject[field].length-1">,&nbsp;</span>
+                            <span v-if="['supplementary_details'].includes(field) && queryObject[field].length >= 2 && index === queryObject[field].length-2">OR&nbsp;</span>
+                            <span v-if="['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">&nbsp;OR&nbsp;</span>
+                        </template>
+                        <span v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">]</span>
+                    </p>
                 </div>
             </div>
-            <div class="inputLine">
-                <button @click="search" :disabled="Object.keys(store.params).length === 0">Search</button>
-                <button @click="store.clearParams()">Clear</button>
-            </div>
+            <button @click="search" :disabled="Object.keys(store.params).length === 0">Search</button>
         </div>
     </div>
 </template>
 
 <style scoped>
-#queryDisplay {
+
+#container {
     display: flex;
-    flex-direction: column;
+    justify-content: center;
+    width: 66vw;
+    margin: 0 auto;
 }
 
-.inputLine, .queryDisplayField, #searchInputs {
+#title, h3 {
+    color: var(--color-heading);
+}
+
+h3 {
+    flex-grow: 1;
+}
+
+#infoBox, #queryDisplay {
+    padding: 8px 16px;
+    background: var(--color-background-mute);
+    border-radius: 4px;
+}
+
+#infoBox {
+    margin-bottom: 20px;
+}
+
+#queryDisplay {
+    min-height: 180px;
+    margin-bottom: 8px;
+}
+
+#leftColumn {
+    flex-grow: 1;
+    margin-right: 4px;
+}
+
+#rightColumn {
+    max-width: 30vw;
+}
+
+.inputLine, .queryDisplayField {
     display: flex;
     flex-direction: row;
 }
 
-.columns, #conditionInputs {
+.columns, #conditionInputs, #leftColumn, #rightColumn, #infoBox, #queryDisplay {
     display: flex;
     flex-direction: column;
 }
@@ -241,16 +284,41 @@ input, button {
     font-size: 10px;
     padding: 0 3.5px;
     height: 18px;
-    align-self: center;
+    bottom: 2px;
 }
 
 button {
     cursor: pointer;
     font-family: inherit;
+    font-size: 18px;
+    width: fit-content;
+}
+
+@media (hover: hover) {
+  button:hover {
+    border-color: var(--color-border-hover);
+  }
 }
 
 button:disabled, button[disabled] {
     color: var(--color-text-inactive);
     cursor: default;
 }
+
+#infoBox > p:last-child {
+    margin-bottom: 0;
+}
+
+#infoBox > p {
+    margin-bottom: 8px;
+}
+
+.queryDisplayField > p {
+    padding-left: 20px;
+}
+
+.queryDisplayField > p::first-letter {
+    margin-left: -20px;
+}
+
 </style>

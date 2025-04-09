@@ -1,6 +1,6 @@
 {
   "name": "NOAA-SpUD",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "description": "An application for interfacing with the NOAA Spectrum Usage database",
   "type": "module",

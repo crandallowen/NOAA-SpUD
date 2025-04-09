@@ -10,9 +10,22 @@
 .navigationBar {
     display: flex;
     flex-direction: row;
+    width: fit-content;
 }
+
 .navigationBar > * {
-    margin: 2rem auto 0;
     padding: 0 4px;
+}
+
+a {
+  text-decoration: none;
+  color: var(--color-navigation);
+  transition: 0.4s;
+}
+
+@media (hover: hover) {
+  a:hover {
+    color: var(--color-navigation-hover);
+  }
 }
 </style>
