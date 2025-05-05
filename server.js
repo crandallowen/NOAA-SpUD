@@ -60,7 +60,7 @@ const SAML_STRATEGY = new SamlStrategy(
         return done(null, {id: profile.uid, email: profile.email});
     }
 );
-const AUTHORIZED_USERS = [
+const UPLOAD_AUTHORIZED_USERS = [
     'tomasz.wojtaszek',
     'ivan.navarro',
     'edna.prado',
@@ -80,7 +80,7 @@ function isAuthenticated(request, response, next) {
     next();
 };
 
-function isAuthorized(request) {return AUTHORIZED_USERS.includes(request.user.id);};
+function isUploadAuthorized(request) {return UPLOAD_AUTHORIZED_USERS.includes(request.user.id);};
 
 async function getSecret() {
     const secrets_client = new SecretsManagerClient({
@@ -167,6 +167,8 @@ const pgPool = await new Promise((resolve) => {
                 rejectUnauthorized: true,
                 ca: readFileSync(join(__dirname, 'rds-ca-cert.pem')).toString()
             },
+            connectionTimeoutMillis: 30000,
+            idleTimeoutMillis: 10000,
         };
         resolve(getSecret()
             .then((secret) => {
@@ -274,17 +276,11 @@ if (IS_PROD) {
 }
 
 app.get('/checkAuth', isAuthenticated, (request, response) => {
-    if (IS_DEV || isAuthorized(request)) {
-        response.status(200).json({
-            status: 200,
-            user: request.user
-        });
-    } else {
-        response.status(403).json({
-            status: 403,
-            user: request.user
-        });
-    }
+    response.status(200).json({
+        status: 200,
+        user: request.user,
+        uploadAuthorized: IS_DEV || isUploadAuthorized(request)
+    });
 });
     
 app.get(/^\/(?!api\/).*$/, (request, response) => {
