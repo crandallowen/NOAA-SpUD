@@ -17,4 +17,4 @@ saml-test.js
 .vscode/*
 !.vscode/extensions.json
 **/venv
-.env*
+.env.keys

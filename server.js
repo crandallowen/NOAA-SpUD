@@ -21,11 +21,15 @@ const IS_DEV = process.env.NODE_ENV === 'development';
 const IS_PROD = process.env.NODE_ENV === 'production';
 const PORT = process.env.PORT;
 const FILE_EXT = ['.css', '.html', '.js'];
-const DB_USER = process.env.DB_USER;
+const DB = process.env.DB;
 const DB_HOST = process.env.DB_HOST;
 const DB_PORT = process.env.DB_PORT;
-const DB = process.env.DB;
-const DB_PASS = process.env.DB_PASS;
+const DB_USER = process.env.DB_USER;
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const DB_READ_USER = process.env.DB_READ_USER;
+const DB_READ_USER_PASSWORD = process.env.DB_READ_USER_PASSWORD;
+const DB_SESSION_USER = process.env.DB_SESSION_USER;
+const DB_SESSION_USER_PASSWORD = process.env.DB_SESSION_USER_PASSWORD;
 const SECRET_NAME = process.env.SECRET_NAME;
 const OPTION_QUERIES = {
     'bureau': `SELECT DISTINCT bureau FROM RFAs ORDER BY bureau ASC`,
@@ -60,6 +64,26 @@ const SAML_STRATEGY = new SamlStrategy(
         return done(null, {id: profile.uid, email: profile.email});
     }
 );
+const SESSION_CONFIG = {
+    store: new pgSession({
+        pool: new pg.Pool({
+            user: DB_SESSION_USER,
+            password: DB_SESSION_USER_PASSWORD,
+            host: DB_HOST,
+            database: DB,
+            port: DB_PORT,
+            connectionTimeoutMillis: 30000,
+            idleTimeoutMillis: 10000,
+        })
+    }),
+    secret: ' secret spud ',
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        maxAge: 12 * 60 * 60 * 1000, // 12 hours
+        secure: IS_PROD,
+    }
+};
 const UPLOAD_AUTHORIZED_USERS = [
     'tomasz.wojtaszek',
     'ivan.navarro',
@@ -104,33 +128,38 @@ async function getSecret() {
         })
 };
 
-async function connectToDB() {
+async function connectToDB(mode) {
     let config = {
         host: DB_HOST,
         port: DB_PORT,
         database: DB
     };
-    if (IS_DEV) {
-        config.user = DB_USER;
-        config.password = DB_PASS;
-    } else if (IS_PROD) {
-        const secret = await getSecret();
-        config.user = secret.username;
-        config.password = secret.password;
-        config.ssl = {
-            require: true,
-            rejectUnauthorized: true,
-            ca: readFileSync(join(__dirname, 'rds-ca-cert.pem')).toString()
-        };
+    switch (mode) {
+        case 'query':
+            config.user = DB_READ_USER;
+            config.password = DB_READ_USER_PASSWORD;
+            break;
+        case 'upload':
+            if (IS_DEV) {
+                config.user = DB_USER;
+                config.password = DB_PASSWORD;
+            } else if (IS_PROD) {
+                const secret = await getSecret();
+                config.user = secret.username;
+                config.password = secret.password;
+                config.ssl = {
+                    require: true,
+                    rejectUnauthorized: true,
+                    ca: readFileSync(join(__dirname, 'rds-ca-cert.pem')).toString()
+                };
+            }
+            break;
     }
-
     const client = new pg.Client(config);
-
     await client.connect()
-        .then(() => console.log('Connected to', DB, 'as', DB_USER, 'at', DB_HOST+':'+DB_PORT))
+        .then(() => console.log(`Connected to ${config.database} as ${config.user} at ${config.host}:${config.port}`))
         .catch((error) => {
             console.error('Connection error:', error.stack)
-            next(error);
         });
     return client;
 };
@@ -145,55 +174,6 @@ async function disconnectFromDB(client, next) {
 };
 
 const app = express();
-
-const pgPool = await new Promise((resolve) => {
-    if (IS_DEV) {
-        resolve(new pg.Pool({
-            user: DB_USER,
-            password: DB_PASS,
-            host: DB_HOST,
-            database: DB,
-            port: DB_PORT,
-            connectionTimeoutMillis: 30000,
-            idleTimeoutMillis: 10000,
-        }));
-    } else {
-        const config = {
-            host: DB_HOST,
-            port: DB_PORT,
-            database: DB,
-            ssl: {
-                require: true,
-                rejectUnauthorized: true,
-                ca: readFileSync(join(__dirname, 'rds-ca-cert.pem')).toString()
-            },
-            connectionTimeoutMillis: 30000,
-            idleTimeoutMillis: 10000,
-        };
-        resolve(getSecret()
-            .then((secret) => {
-                config.user = secret.username;
-                config.password = secret.password;
-                return new pg.Pool(config);
-            })
-            .catch((error) => {
-                console.error(error);
-                throw error;
-            })
-        );
-    }
-});
-const sessionStore = new pgSession({pool: pgPool});
-const sessionConfig = {
-    store: sessionStore,
-    secret: ' secret spud ',
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-        maxAge: 12 * 60 * 60 * 1000, // 12 hours
-        secure: IS_PROD,
-    }
-};
 
 // Dev passport strategy
 if (IS_DEV) {
@@ -230,11 +210,11 @@ passport.deserializeUser((user, done) => {
 // console.log('DB_HOST:', DB_HOST);
 // console.log('DB_PORT:', DB_PORT);
 // console.log('DB:', DB);
-// console.log('DB_PASS:', DB_PASS);
+// console.log('DB_PASSWORD:', DB_PASSWORD);
 
 app.use(json());
 app.use(urlencoded({extended: true}));
-app.use(session(sessionConfig));
+app.use(session(SESSION_CONFIG));
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -289,7 +269,7 @@ app.get(/^\/(?!api\/).*$/, (request, response) => {
 
 app.get('/api/getFilters', isAuthenticated, async (request, response, next) => {
     let filtersJSON = {};
-    const client = await connectToDB();
+    const client = await connectToDB('query');
     for (const i in ROW_FILTERS) {
         let field = ROW_FILTERS[i];
         await client.query({
@@ -313,7 +293,7 @@ app.get('/api/getFilters', isAuthenticated, async (request, response, next) => {
 
 app.get('/api/getOptions', isAuthenticated, async (request, response, next) => {
     let optionsJSON = {};
-    const client = await connectToDB();
+    const client = await connectToDB('query');
     for (const field in OPTION_QUERIES) {
         await client.query({
             rowMode: 'array',
@@ -384,7 +364,7 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
             }
         }
     }
-    const client = await connectToDB();
+    const client = await connectToDB('query');
     let selectSQL = withArray(`SELECT ${'%I, '.repeat(columns.length).slice(0, -2)}`, columns);
     //Modify this when more tables/views are in use
     let fromSQL = format(`FROM RFAs`);
