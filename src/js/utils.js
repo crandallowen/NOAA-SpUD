@@ -54,6 +54,8 @@ export function format(value, field) {
         return formatPower(value);
     else if (field.slice(-12) === 'phone_number')
         return formatPhoneNumber(value);
+    else if (field.slice(-4) === 'gain')
+        return (value !== null) ? `${value} dB` : '';
     else return value;
 };
 

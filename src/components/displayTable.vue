@@ -264,7 +264,6 @@ button {
 .displayTable :deep(td), .displayTable :deep(th) {
     text-align: left;
     vertical-align: middle;
-    width: fit-content;
     padding: 3px 5px;
 }
 
@@ -272,18 +271,20 @@ button {
     white-space: nowrap;
     background-color: var(--color-main);
     font-weight: bold;
+    width: fit-content;
 }
 
 .displayTable :deep(td) {
     text-wrap: balance;
     background-color: var(--color-table-background);
+    max-width: 25vw;
 }
 
 .inputLine :deep(label) {
     color: var(--color-text);
     white-space: nowrap;
     padding: 0 5px;
-    cursor:pointer
+    cursor: pointer;
 }
 
 .sortButton, .headerBox, input {

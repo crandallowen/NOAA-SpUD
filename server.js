@@ -11,21 +11,22 @@ import { Strategy as SamlStrategy } from '@node-saml/passport-saml';
 import passportLocal from 'passport-local';
 import { fileURLToPath } from 'url';
 import connectPgSimple from 'connect-pg-simple';
+import '@dotenvx/dotenvx/config';
 const localStrategy = passportLocal.Strategy;
 const pgSession = connectPgSimple(session);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const IS_DEV = process.env.NODE_ENV.trim() === 'development';
-const IS_PROD = process.env.NODE_ENV.trim() === 'production';
-const PORT = process.env.PORT || 7007;
+const IS_DEV = process.env.NODE_ENV === 'development';
+const IS_PROD = process.env.NODE_ENV === 'production';
+const PORT = process.env.PORT;
 const FILE_EXT = ['.css', '.html', '.js'];
-const DB_USER = process.env.DB_USER || 'OCrandall';
-const DB_HOST = process.env.DB_HOST || 'localhost';
-const DB_PORT = process.env.DB_PORT || '5432';
-const DB = process.env.DB || 'SpUD';
+const DB_USER = process.env.DB_USER;
+const DB_HOST = process.env.DB_HOST;
+const DB_PORT = process.env.DB_PORT;
+const DB = process.env.DB;
 const DB_PASS = process.env.DB_PASS;
-const SECRET_NAME = "rds!db-3440bb27-4aa0-4767-bf5c-63bf095df745";
+const SECRET_NAME = process.env.SECRET_NAME;
 const OPTION_QUERIES = {
     'bureau': `SELECT DISTINCT bureau FROM RFAs ORDER BY bureau ASC`,
     'tx_state_country_code': `SELECT DISTINCT tx_state_country_code FROM RFAs ORDER BY tx_state_country_code ASC`,

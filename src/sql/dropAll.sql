@@ -1,2 +1,0 @@
-DROP TABLE RFAs;
-DROP TABLE session;

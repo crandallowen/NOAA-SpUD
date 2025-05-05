@@ -1,5 +1,6 @@
 .gitattributes
 **/RFA Module
+SpUD/
 **/inputs
 **/outputs
 **/__pycache__/*
@@ -15,3 +16,5 @@ metadata*.txt
 saml-test.js
 .vscode/*
 !.vscode/extensions.json
+**/venv
+.env*
