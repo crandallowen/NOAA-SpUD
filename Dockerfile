@@ -1,8 +1,22 @@
-FROM node:current-alpine
+FROM node:slim
 
 # MAINTAINER Owen Crandall <ocrandall@ftidc.com>
 
+RUN apt-get update -y && apt-get upgrade -y && \
+    apt-get install -y wget build-essential checkinstall libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev && \
+    apt-get clean
+RUN cd /usr/src && \
+    wget https://www.python.org/ftp/python/3.10.9/Python-3.10.9.tgz && \
+    tar xzf Python-3.10.9.tgz && \
+    cd Python-3.10.9 && \
+    ./configure --enable-optimizations && \
+    make install
+
 WORKDIR /app
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
+
+RUN pip install ./SpUD/dist/spud-0.0.1-py3-none-any.whl
 
 COPY package*.json ./
 
@@ -20,11 +34,6 @@ COPY sp_cert.pem .
 COPY private-key.key .
 
 RUN npm run build
-
-ENV NODE_ENV=production
-ENV DB_USER=postgres
-ENV DB_HOST=spud-1.cduw4y6qos2l.us-east-1.rds.amazonaws.com
-ENV PORT=80
 
 EXPOSE 80
 CMD ["node", "server.js"]
