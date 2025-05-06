@@ -16,7 +16,8 @@ WORKDIR /app
 RUN python3 -m venv /app/venv
 ENV PATH="/app/venv/bin:$PATH"
 
-RUN pip install ./SpUD/dist/spud-0.0.1-py3-none-any.whl
+COPY ./SpUD/dist/spud-0.0.1-py3-none-any.whl .
+RUN pip install spud-0.0.1-py3-none-any.whl
 
 COPY package*.json ./
 

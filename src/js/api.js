@@ -15,14 +15,14 @@ export async function getFilters() {
     let url = new URL(`${window.location.origin}/api/getFilters`);
     return useFetch(url)
         .then((data) => {return data;})
-        .catch((error) => (handleError(error)));
+        .catch((error) => handleError(error));
 };
 
 export async function getOptions() {
     let url = new URL(`${window.location.origin}/api/getOptions`);
     return useFetch(url)
         .then((data) => {return data;})
-        .catch((error) => (handleError(error)));
+        .catch((error) => handleError(error));
 };
 
 export async function query(store) {

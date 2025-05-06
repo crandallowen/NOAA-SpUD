@@ -164,12 +164,11 @@ async function connectToDB(mode) {
     return client;
 };
 
-async function disconnectFromDB(client, next) {
+async function disconnectFromDB(client) {
     await client.end()
         // .then(() => console.log(DB_USER, 'has successfully disconnected.'))
         .catch((error) => {
             console.error('End error:', error.stack);
-            next(error);
         });
 };
 
@@ -287,7 +286,7 @@ app.get('/api/getFilters', isAuthenticated, async (request, response, next) => {
                 next(error);
             })
     }
-    await disconnectFromDB(client, next);
+    await disconnectFromDB(client);
     response.json(filtersJSON);
 });
 
@@ -310,7 +309,7 @@ app.get('/api/getOptions', isAuthenticated, async (request, response, next) => {
                 next(error);
             })
     }
-    await disconnectFromDB(client, next);
+    await disconnectFromDB(client);
     response.json(optionsJSON);
 });
 
@@ -384,7 +383,7 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
             next(error);
         })
         .finally(async () => {
-            await disconnectFromDB(client, next);
+            await disconnectFromDB(client);
         });
 });
 
