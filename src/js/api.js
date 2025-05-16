@@ -1,6 +1,7 @@
 import { useFetch } from './fetch';
 import { useAuthStore } from '@/stores/auth';
 import { allColumns } from './utils';
+import router from '@/router';
 
 function handleError(error) {
     if (['Unauthorized', 'Forbidden'].includes(error.message))
@@ -46,5 +47,23 @@ export async function query(store) {
         url.searchParams.append('params', `[${paramsList.join(',')}]`);
     return useFetch(url)
         .then((data) => {return data;})
+        .catch((error) => handleError(error));
+};
+
+export async function upload(assignmentFile, proposalFile) {
+    const separator = '\n----------\n';
+    const assignments = await assignmentFile.text();
+    const proposals = await proposalFile.text();
+    let url = new URL(`${window.location.origin}/api/upload`);
+    return fetch(url, {
+        method: 'POST',
+        body: `${assignments}${separator}${proposals}`,
+        credentials: 'include',
+    }).then((response) => response.json())
+        .then((data) => {
+            alert(data.message);
+            if (data.status === 0)
+                router.push('/')
+        })
         .catch((error) => handleError(error));
 };

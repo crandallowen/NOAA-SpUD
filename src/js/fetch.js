@@ -1,7 +1,7 @@
 import { toValue } from 'vue';
 
-export async function useFetch(url) {
-    return fetch(toValue(url), {credentials: 'include'})
+export async function useFetch(url, method='GET') {
+    return fetch(toValue(url), {method: method, credentials: 'include'})
         .then((response) => {
             // if ([401, 403].includes(response.status)) {
             if (!response.ok) {

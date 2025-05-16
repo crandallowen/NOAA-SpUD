@@ -1,5 +1,5 @@
 import { join, basename, extname, dirname } from 'path';
-import express, { json, urlencoded } from 'express';
+import express, { json, urlencoded, text } from 'express';
 import session from 'express-session';
 import { readFileSync } from 'fs';
 import pg from 'pg';
@@ -12,6 +12,7 @@ import passportLocal from 'passport-local';
 import { fileURLToPath } from 'url';
 import connectPgSimple from 'connect-pg-simple';
 import '@dotenvx/dotenvx/config';
+import { spawn } from 'node:child_process';
 const localStrategy = passportLocal.Strategy;
 const pgSession = connectPgSimple(session);
 
@@ -20,7 +21,7 @@ const __dirname = dirname(__filename);
 const IS_DEV = process.env.NODE_ENV === 'development';
 const IS_PROD = process.env.NODE_ENV === 'production';
 const PORT = process.env.PORT;
-const FILE_EXT = ['.css', '.html', '.js'];
+const FILE_EXT = ['.css', '.html', '.js', '.QRY'];
 const DB = process.env.DB;
 const DB_HOST = process.env.DB_HOST;
 const DB_PORT = process.env.DB_PORT;
@@ -104,7 +105,15 @@ function isAuthenticated(request, response, next) {
     next();
 };
 
-function isUploadAuthorized(request) {return UPLOAD_AUTHORIZED_USERS.includes(request.user.id);};
+function isUploadAuthorized(request, response, next) {
+    if (!canUpload(request.user)) {
+        response.status(403);
+        response.send();
+        return;
+    }
+    next();
+};
+function canUpload(user) {return IS_DEV || UPLOAD_AUTHORIZED_USERS.includes(user.id);};
 
 async function getSecret() {
     const secrets_client = new SecretsManagerClient({
@@ -258,7 +267,7 @@ app.get('/checkAuth', isAuthenticated, (request, response) => {
     response.status(200).json({
         status: 200,
         user: request.user,
-        uploadAuthorized: IS_DEV || isUploadAuthorized(request)
+        uploadAuthorized: canUpload(request.user)
     });
 });
     
@@ -330,13 +339,13 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
             }
             //Will want to make a list/object that groups fields into numerical, categorical, or lexicographical
             //Handle numerical
-            if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(params[i].field)) {
+            if (['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(params[i].field)) {
                 if (params[i].relation === 'between') {
-                    let lowerValue = (params[i].field === 'serial_num') ? params[i].lowerValue : parseFloat(params[i].lowerValue);
-                    let higherValue = (params[i].field === 'serial_num') ? params[i].value : parseFloat(params[i].value);
+                    let lowerValue = (params[i].field === 'serial_number') ? params[i].lowerValue : parseFloat(params[i].lowerValue);
+                    let higherValue = (params[i].field === 'serial_number') ? params[i].value : parseFloat(params[i].value);
                     queryObject[params[i].field].push(format(`(%I >= %L AND %I <= %L)`, params[i].field, lowerValue, params[i].field, higherValue));
                 } else {
-                    let value = (params[i].field === 'serial_num') ? params[i].value : parseFloat(params[i].value);
+                    let value = (params[i].field === 'serial_number') ? params[i].value : parseFloat(params[i].value);
                     queryObject[params[i].field].push(format(`%I ${params[i].relation} %L`, params[i].field, value));
                 }
             //Handle categorical
@@ -348,7 +357,7 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
             }
         }
         for (const key in queryObject) {
-            if (['serial_num', 'center_frequency', 'supplementary_details', 'review_date', 'expiration_date', 'revision_date'].includes(key)) {
+            if (['serial_number', 'center_frequency', 'supplementary_details', 'review_date', 'expiration_date', 'revision_date'].includes(key)) {
                 conditions.push(queryObject[key].join(' OR '));
             } else if (['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(key)) {
                 if (key === 'function_identifier') {
@@ -385,6 +394,47 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
         .finally(async () => {
             await disconnectFromDB(client);
         });
+});
+
+app.post('/api/upload', isAuthenticated, isUploadAuthorized, text({limit: '1gb'}), async (request, response, next) => {
+    let params = {
+        host: DB_HOST,
+        port: DB_PORT,
+        dbname: DB,
+        user: DB_USER,
+        password: (IS_DEV) ? DB_PASSWORD : await getSecret.password
+    };
+    let errorBuffer = '';
+    const python = spawn('./upload', [JSON.stringify(params)]);
+    python.stdin.write(request.body);
+    python.stdin.end();
+    python.stdout.on('data', (data) => {
+        console.log(`Upload process initiated:\n${data}`);
+    });
+    python.stderr.on('data', (data) => {
+        errorBuffer += data.toString();
+        console.log(`stderr:\n${data}`);
+    });
+    python.on('exit', (code) => {
+        if (code === 0) {
+            response.json({
+                status: code,
+                message: 'Upload successful!',
+            })
+        } else {
+            let errorText = '';
+            let temp = errorBuffer.split('\n')
+            for (const line in temp) {
+                if (temp[line].slice(0, 11) === 'Exception: ') {
+                    errorText += temp[line].slice(11)+'\n';
+                }
+            }
+            response.json({
+                status: code,
+                message: errorText,
+            });
+        }
+    });
 });
 
 app.listen(PORT, () => {

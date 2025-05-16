@@ -9,7 +9,7 @@ import router from '@/router';
 const options = ref({});
 const store = useSearchResultsStore();
 const input = reactive({
-    serial_num: {
+    serial_number: {
         value: '',
         lowerValue: '',
         relation: '',
@@ -83,7 +83,7 @@ watch(store, (store) => {localStorage.setItem(store.$id, JSON.stringify({
 getOptions().then((data) => {if(data) {options.value = data;}});
 
 function formatParameter(field, param) {
-    if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {
+    if (['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {
         // Will remove this if-clause when format() detects date format input
         if (['review_date', 'expiration_date', 'revision_date'].includes(field)) {
             if (param.relation !== 'between')
@@ -109,7 +109,7 @@ const queryObject = computed(() => {
             temp.index = index;
             if (!Object.hasOwn(queryObject, param.field))
                 queryObject[param.field] = [];
-            if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(param.field)) {
+            if (['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(param.field)) {
                 temp.relation = param.relation;
                 if (param.relation === 'between') {
                     temp.lowerValue = param.lowerValue;
@@ -129,12 +129,12 @@ const queryObject = computed(() => {
 function add(field) {
     let parameters = {};
     parameters.field = field;
-    if (['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {
+    if (['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field)) {
         parameters.relation = input[field].relation;
         switch (field) {
-            case 'serial_num':
-                parameters.value = isShortSerialNumber(input.serial_num.value) ? appendCommerceSerialNumber(input.serial_num.value) : input.serial_num.value;
-                if (input[field].relation === 'between') {parameters.lowerValue = isShortSerialNumber(input.serial_num.lowerValue) ? appendCommerceSerialNumber(input.serial_num.lowerValue) : input.serial_num.lowerValue;}
+            case 'serial_number':
+                parameters.value = isShortSerialNumber(input.serial_number.value) ? appendCommerceSerialNumber(input.serial_number.value) : input.serial_number.value;
+                if (input[field].relation === 'between') {parameters.lowerValue = isShortSerialNumber(input.serial_number.lowerValue) ? appendCommerceSerialNumber(input.serial_number.lowerValue) : input.serial_number.lowerValue;}
                 break;
             case 'center_frequency':
                 parameters.value = frequencyStringToHz(input.center_frequency.value);
@@ -209,7 +209,7 @@ function search() {
                             <span v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field) && index !== queryObject[field].length-1">,&nbsp;</span>
                             <span v-if="['supplementary_details'].includes(field) && queryObject[field].length >= 3 && index <= queryObject[field].length-1">,&nbsp;</span>
                             <span v-if="['supplementary_details'].includes(field) && queryObject[field].length >= 2 && index === queryObject[field].length-2">OR&nbsp;</span>
-                            <span v-if="['serial_num', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">&nbsp;OR&nbsp;</span>
+                            <span v-if="['serial_number', 'center_frequency', 'review_date', 'expiration_date', 'revision_date'].includes(field) && index !== queryObject[field].length-1">&nbsp;OR&nbsp;</span>
                         </template>
                         <span v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">]</span>
                     </p>

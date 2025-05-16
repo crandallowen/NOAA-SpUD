@@ -59,12 +59,12 @@ export function format(value, field) {
     else return value;
 };
 
-export function isShortSerialNumber(serial_num) {
-    return (serial_num.length <= 6) ? true : false;
+export function isShortSerialNumber(serial_number) {
+    return (serial_number.length <= 6) ? true : false;
 };
 
-export function appendCommerceSerialNumber(serial_num) {
-    return `C   ${serial_num.padEnd(6, '0')}`;
+export function appendCommerceSerialNumber(serial_number) {
+    return `C   ${serial_number.padEnd(6, '0')}`;
 };
 
 export function validateSerialNumberString(serialNumString) {
@@ -109,20 +109,20 @@ export function dateStringToSQL(date) {
 
 export const groupedColumns = ['station_class', 'emission_designator', 'sxxi_power', 'power_w', 'rx_state_country_code', 'rx_antenna_location', 'rx_control_id_and_server_system_id', 'rx_antenna_latitude', 'rx_antenna_longitude', 'rx_station_call_sign', 'rx_authorized_radius', 'rx_repeater_indicator', 'rx_inclination_angle', 'rx_apogee', 'rx_perigee', 'rx_period_of_orbit', 'rx_number_of_satellites', 'rx_equipment_nomenclature', 'rx_antenna_name', 'rx_antenna_nomenclature', 'rx_antenna_gain', 'rx_antenna_elevation', 'rx_antenna_feed_point_height', 'rx_antenna_horizontal_beamwidth', 'rx_antenna_azimuth', 'rx_antenna_orientation', 'rx_antenna_polarization', 'rx_jsc_area_code'];
 
-export const defaultColumns = ['serial_num', 'bureau', 'main_function_id', 'center_frequency', 'power_w', 'tx_state_country_code', 'tx_antenna_location', 'revision_date'];
+export const defaultColumns = ['serial_number', 'bureau', 'main_function_id', 'center_frequency', 'power_w', 'tx_state_country_code', 'tx_antenna_location', 'revision_date'];
 
 // export const hiddenColumns = []
 
 export const recordColumns = [
-    'serial_num',
-    'agency_action_num',
+    'serial_number',
+    'agency_action_number',
     'bureau',
     'agency',
     'main_function_id',
     'intermediate_function_id',
     'detailed_function_id',
-    'irac_docket_num',
-    // 'docket_num_old',
+    'irac_docket_number',
+    // 'docket_number_old',
     'center_frequency',
     // 'frequency_band',
     // 'frequency_upper_limit',
@@ -137,7 +137,7 @@ export const recordColumns = [
     // 'point_of_contact',
     'poc_name',
     'poc_phone_number',
-    // 'poc_date_of_verification',
+    // 'poc_verification_date',
     'joint_agency_names',
     'international_coordination_id',
     'canadian_coordination_comments',
@@ -228,16 +228,16 @@ export const visibleColumnGroups = {
 export const allColumns = [...recordColumns, ...emissionGroup, ...txGroup, ...rxGroup, ...recordDates];
 
 export const RFAHeaderMap = {
-    serial_num: 'Serial Number',
-    agency_action_num: 'Agency Action Number',
+    serial_number: 'Serial Number',
+    agency_action_number: 'Agency Action Number',
     bureau: 'Bureau',
     agency: 'Agency',
     main_function_id: 'Main Function Identifier',
     intermediate_function_id: 'Intermediate Function Indentifier',
     detailed_function_id: 'Detailed Function Identifier',
     function_identifier: 'Function Identifier',
-    irac_docket_num: 'IRAC Docket Number',
-    docket_num_old: 'Docket Number of Older Authority',
+    irac_docket_number: 'IRAC Docket Number',
+    docket_number_old: 'Docket Number of Older Authority',
     center_frequency: 'Frequency',
     frequency_band: 'Frequency Band',
     frequency_upper_limit: 'Upper Frequency Limit',
@@ -253,7 +253,7 @@ export const RFAHeaderMap = {
     // point_of_contact: '',
     poc_name: 'Point of Contact',
     poc_phone_number: 'PoC Phone Number',
-    // poc_date_of_verification: 'PoC Verification Date',
+    // poc_verification_date: 'PoC Verification Date',
     joint_agency_names: 'Joint Agency Names',
     international_coordination_id: 'International Coordination ID',
     canadian_coordination_comments: 'Canadian Coordination Comments',

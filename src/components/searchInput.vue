@@ -17,7 +17,7 @@ const numericRelations = ['=', '>=', '>', '<=', '<', '!=', 'between'];
 
 function getPlaceholder(field) {
     switch (field) {
-        case 'serial_num':
+        case 'serial_number':
             return 'e.g. C   123456, 1234';
         case 'center_frequency':
             return 'e.g. 20 MHz, 7g, 200';

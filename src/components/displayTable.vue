@@ -19,9 +19,9 @@ const rowFilters = reactive({
     'function_identifier': [],
     'tx_state_country_code': [], 
     'isAssignment': [
-        // Utilizes standard condition of query route built for serial_num search
-        {id: 'isAssignment', name: 'Assignments', condition: {field: 'serial_num', relation: '!~', value: 'p$'}},
-        {id: 'isProposal', name: 'Proposals', condition: {field: 'serial_num', relation: '~', value: 'p$'}}
+        // Utilizes standard condition of query route built for serial_number search
+        {id: 'isAssignment', name: 'Assignments', condition: {field: 'serial_number', relation: '!~', value: 'p$'}},
+        {id: 'isProposal', name: 'Proposals', condition: {field: 'serial_number', relation: '~', value: 'p$'}}
     ],
     'due_for_review': [
         // Utilizes a special condition in query route

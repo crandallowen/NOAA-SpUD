@@ -1,40 +1,38 @@
-FROM node:slim
+FROM python:3.10-slim AS python-build
 
 # MAINTAINER Owen Crandall <ocrandall@ftidc.com>
 
-RUN apt-get update -y && apt-get upgrade -y && \
-    apt-get install -y wget build-essential checkinstall libncursesw5-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev && \
-    apt-get clean
-RUN cd /usr/src && \
-    wget https://www.python.org/ftp/python/3.10.9/Python-3.10.9.tgz && \
-    tar xzf Python-3.10.9.tgz && \
-    cd Python-3.10.9 && \
-    ./configure --enable-optimizations && \
-    make install
+RUN apt-get update -y \
+    && apt-get upgrade -y \
+    && apt-get install -y libpq-dev build-essential\
+    && apt-get clean
 
 WORKDIR /app
-RUN python3 -m venv /app/venv
-ENV PATH="/app/venv/bin:$PATH"
-
 COPY ./SpUD/dist/spud-0.0.1-py3-none-any.whl .
+RUN pip install --upgrade pip
 RUN pip install spud-0.0.1-py3-none-any.whl
+RUN pip install pyinstaller
 
-COPY package*.json ./
+COPY upload.py .
+RUN pyinstaller --onefile upload.py
 
-RUN npm install
+FROM node:slim
+
+WORKDIR /app
 
 COPY src ./src
-COPY jsconfig.json .
-COPY LICENSE .
-COPY nodemon.json .
-COPY vite.config.js .
-COPY server.js .
-COPY rds-ca-cert.pem .
+COPY .env* .
 COPY idp_cert.pem .
-COPY sp_cert.pem .
 COPY private-key.key .
-
+COPY rds-ca-cert.pem .
+COPY sp_cert.pem .
+COPY package*.json .
+COPY server.js .
+COPY vite.config.js .
+COPY --from=python-build /app/dist/upload .
+RUN npm install
 RUN npm run build
 
 EXPOSE 80
-CMD ["node", "server.js"]
+ENTRYPOINT ["./node_modules/.bin/dotenvx", "run"]
+CMD ["--env-file", ".env.production", "--", "node", "server.js"]
