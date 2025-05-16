@@ -113,6 +113,15 @@ function isUploadAuthorized(request, response, next) {
     }
     next();
 };
+
+function devAuthMiddleware(request, response, next) {
+    request.body = {
+        username: 'dev',
+        password: 'dev'
+    };
+    next();
+};
+
 function canUpload(user) {return IS_DEV || UPLOAD_AUTHORIZED_USERS.includes(user.id);};
 
 async function getSecret() {
@@ -219,13 +228,18 @@ passport.deserializeUser((user, done) => {
 // console.log('DB_PORT:', DB_PORT);
 // console.log('DB:', DB);
 // console.log('DB_PASSWORD:', DB_PASSWORD);
+// console.log('DB_READ_USER:', DB_READ_USER);
+// console.log('DB_READ_USER_PASSWORD:', DB_READ_USER_PASSWORD);
+// console.log('DB_SESSION_USER:', DB_SESSION_USER);
+// console.log('DB_SESSION_USER_PASSWORD:', DB_SESSION_USER_PASSWORD)
+// console.log('SECRET_NAME:', SECRET_NAME);
 
 app.use(json());
 app.use(urlencoded({extended: true}));
 app.use(session(SESSION_CONFIG));
 app.use(passport.initialize());
 app.use(passport.session());
-
+app.use('/', express.static(join(__dirname, 'dist')));
 app.use((request, response, next) => {
     let filename = basename(request.url);
     let extension = extname(filename);
@@ -239,8 +253,6 @@ app.use((request, response, next) => {
     next();
 });
 
-app.use('/', express.static(join(__dirname, 'dist')));
-
 if (IS_DEV) {
     app.use((request, response, next) => {
         response.append('Access-Control-Allow-Origin', ['*']);
@@ -248,12 +260,8 @@ if (IS_DEV) {
         response.append('Access-Control-Allow-Headers', 'Content-Type');
         next();
     });
-    app.post('/login', passport.authenticate('local', {failureMessage: true}), (request, response) => {
-        response.status(200).json({
-            status: 200,
-            user: request.user
-        });
-    });
+
+    app.get('/login', devAuthMiddleware, passport.authenticate('local', {failureFlash: true, successRedirect:'/login/callback'}));
 }
 if (IS_PROD) {
     app.post('/login/callback', urlencoded({extended: false}), passport.authenticate('saml', {failureFlash: true}), (request, response) => {
@@ -263,16 +271,16 @@ if (IS_PROD) {
     app.get('/login', urlencoded({extended: false}), passport.authenticate('saml', {failureFlash: true}));
 }
 
-app.get('/checkAuth', isAuthenticated, (request, response) => {
+app.get(/^\/(?!api\/).*$/, (request, response) => {
+    response.sendFile(join(__dirname, 'dist', 'src', 'html', 'index.html'));
+});
+
+app.get('/api/checkAuth', isAuthenticated, (request, response) => {
     response.status(200).json({
         status: 200,
         user: request.user,
         uploadAuthorized: canUpload(request.user)
     });
-});
-    
-app.get(/^\/(?!api\/).*$/, (request, response) => {
-    response.sendFile(join(__dirname, 'dist', 'src', 'html', 'index.html'));
 });
 
 app.get('/api/getFilters', isAuthenticated, async (request, response, next) => {

@@ -6,7 +6,7 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "dev": "dotenvx run -f .env.development -- npm run build && dotenvx run -f .env.development -- node --watch-path=./src --watch --watch-preserve-output server.js",
+    "dev": "npm run build && dotenvx run -f .env.development -- node --watch-path=./src --watch --watch-preserve-output server.js",
     "build": "vite build",
     "preview": "vite",
     "start": "dotenvx run -f .env.production -- node server.js"
