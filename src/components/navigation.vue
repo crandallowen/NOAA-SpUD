@@ -28,14 +28,14 @@ const auth = useAuthStore();
 }
 
 a {
-  text-decoration: none;
-  color: var(--color-navigation);
-  transition: 0.4s;
+    text-decoration: none;
+    color: var(--color-navigation);
+    transition: 0.4s;
 }
 
 @media (hover: hover) {
-  a:hover {
-    color: var(--color-navigation-hover);
-  }
+    a:hover {
+        color: var(--color-navigation-hover);
+    }
 }
 </style>
