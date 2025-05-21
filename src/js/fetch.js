@@ -10,6 +10,8 @@ export async function useFetch(url, method='GET') {
                         throw new Error('Unauthorized');
                     case 403:
                         throw new Error('Forbidden');
+                    case 500:
+                        throw new Error('Internal Server Error');
                     default:
                         throw new Error('Unhandled response status');
                 }

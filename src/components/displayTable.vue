@@ -79,19 +79,19 @@ function downloadCSVData() {
 </script>
 
 <template>
-    <div class="tableWithSelects">
+    <div id="tableWithSelects" class="flexRow">
         <!-- Side Bar -->
-        <div id="sideBar">
+        <div id="sideBar" class="flexColumn">
             <!-- Row Filters -->
              <div id="filtersBox">
-                <span class="titleBar">
+                <span id="filterHeaderBar" class="flexRow">
                     <h2 id="filterHeader">Filters</h2>
                     <button id="clearFiltersButton" @click="store.clearFilters()">Clear All</button>
                 </span>
                 <template v-for="key in Object.keys(rowFilters)">
                     <collapsibleGroup :group-name="headerMap(key)" collapsed>
                         <template v-for="filter in rowFilters[key]">
-                            <div class="inputLine">
+                            <div class="inputLine flexRow">
                                 <input type="checkbox" :id="filter.id" :value="filter.condition" v-model="store.filters">
                                 <label :for="filter.id">{{ filter.name }}</label>
                             </div>
@@ -105,7 +105,7 @@ function downloadCSVData() {
                 <template v-for="key in Object.keys(visibleColumnGroups)">
                     <collapsibleGroup :group-name="key" collapsed>
                         <template v-for="column in visibleColumnGroups[key]">
-                            <div class="inputLine">
+                            <div class="inputLine flexRow">
                                 <input type="checkbox" :id="column" :value="column" v-model="store.displayColumns">
                                 <label :for="column">{{ headerMap(column) }}</label>
                             </div>
@@ -115,18 +115,18 @@ function downloadCSVData() {
             </div>
         </div>
         <!-- Table -->
-        <div class="tableContainer">
-            <div id="tableTitleBar">
-                <h2 class="title">{{ props.title }}</h2>
+        <div id="tableContainer" class="flexColumn">
+            <div id="tableTitleBar" class="flexRow">
+                <h2 id="title">{{ props.title }}</h2>
                 <button type="button" id="exportButton" @click="downloadCSVData">Export to .csv</button>
                 <p id="rowCount">{{ rows !== null ? `${Object.keys(rows).length} result${Object.keys(rows).length == 1 ? '' : 's'}` : ''}}</p>
             </div>
-            <table class="displayTable">
+            <table id="displayTable">
                 <thead>
                 <tr>
                     <template v-for="value in columns">
                         <th @click.stop="store.handleSort(value)">
-                            <div class="headerBox">
+                            <div class="headerBox flexRow">
                                 <p class="headerText">{{ headerMap(value) }}</p>
                                 <button @click.stop="store.handleSort(value)" class="sortButton">
                                     {{ sort.column != value ? '\u25B2/\u25BC' : (sort.direction === 'ascending' ? '\u25B2' : '\u25BC') }}
@@ -164,7 +164,6 @@ function downloadCSVData() {
 </template>
 
 <style scoped>
-
 #filterHeader, #columnSelectsHeader {
     color: var(--color-heading);
 }
@@ -179,32 +178,8 @@ function downloadCSVData() {
     margin-bottom: 20px;
 }
 
-#clearFiltersButton {
-    font-size: 18px;
-}
-
-button {
-    background-color: var(--color-background-soft);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    cursor: pointer;
-    border-radius: 4px;
-    padding: 2px 5px;
-    font-family: inherit;
-}
-
-@media (hover: hover) {
-  button:hover {
-    border-color: var(--color-border-hover);
-  }
-}
-
 #rowCount {
     padding: 3px 0;
-    font-size: 18px;
-}
-
-#exportButton {
     font-size: 18px;
 }
 
@@ -224,31 +199,19 @@ button {
     color: var(--color-text);
 }
 
-.title {
+#title {
     color: var(--color-heading);
 }
 
-.title, #filterHeader, .headerText {
+#title, #filterHeader, .headerText {
     flex-grow: 1;
 }
 
-/* This value was calculated and would need to be updated if changes were made to the side bar sizes */
-/* #tableTitleBar, .loadingRow {
-    max-width: calc(100vw - 400px);
-} */
-
-.tableWithSelects, .inputLine, .headerBox, .titleBar, #tableTitleBar {
-    display: flex;
-    flex-direction: row;
-}
-
-.tableContainer, #sideBar{
-    display: flex;
-    flex-direction: column;
+#tableContainer, #sideBar{
     width: max-content;
 }
 
-.tableContainer {
+#tableContainer {
     height: 100%;
 }
 
@@ -256,25 +219,25 @@ button {
     margin-right: 20px;
 }
 
-.displayTable, .displayTable :deep(td), .displayTable :deep(th) {
+#displayTable, #displayTable :deep(td), #displayTable :deep(th) {
     border: 1px solid var(--color-border);
     border-collapse: collapse;
 }
 
-.displayTable :deep(td), .displayTable :deep(th) {
+#displayTable :deep(td), #displayTable :deep(th) {
     text-align: left;
     vertical-align: middle;
     padding: 3px 5px;
 }
 
-.displayTable :deep(th) {
+#displayTable :deep(th) {
     white-space: nowrap;
     background-color: var(--color-main);
     font-weight: bold;
     width: fit-content;
 }
 
-.displayTable :deep(td) {
+#displayTable :deep(td) {
     text-wrap: balance;
     background-color: var(--color-table-background);
     max-width: 25vw;
@@ -287,15 +250,16 @@ button {
     cursor: pointer;
 }
 
-.sortButton, .headerBox, input {
-    cursor: pointer;
+.headerBox {
+    cursor: pointer
 }
 
 .sortButton {
     align-self: center;
-    background-color: var(--color-main);
+    background-color: inherit;
     border: none;
-    color: var(--color-text);
+    font-size: revert;
+    padding: revert;
 }
 
 pre {

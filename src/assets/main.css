@@ -1,9 +1,81 @@
 @import './base.css';
 
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    position: relative;
+    font-weight: normal;
+}
+
+body {
+    min-height: 100vh;
+    color: var(--color-text);
+    background: var(--color-background);
+    transition: color 0.5s, background-color 0.5s;
+    line-height: 1.6;
+    font-family: 'Atkinson Hyperlegible', Roboto, Oxygen, Ubuntu, sans-serif;
+    font-size: 18px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
 #app {
     display: flex;
     flex-direction: column;
     margin: 0 auto;
     width: fit-content;
     min-width: 100vw;
+}
+
+.flexColumn {
+    display: flex;
+    flex-direction: column;
+}
+
+.flexRow {
+    display: flex;
+    flex-direction: row;
+}
+
+input {
+    background-color: var(--color-background-soft);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 18px;
+    width: fit-content;
+    cursor: pointer;
+}
+
+input::file-selector-button, button {
+    background-color: var(--color-background-soft);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 5px;
+	font-family: inherit;
+    font-size: 18px;
+    width: fit-content;
+}
+
+@media (hover: hover) {
+  button:hover {
+    border-color: var(--color-border-hover);
+  }
+}
+
+button:disabled, button[disabled] {
+    color: var(--color-text-inactive);
+    cursor: default;
+}
+
+a:link {
+    color: var(--color-link);
+}
+
+a:visited {
+    color: var(--color-link-visited);
 }

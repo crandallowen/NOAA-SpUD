@@ -3,7 +3,6 @@ import { useAuthStore } from '@/stores/auth';
 
 const auth = useAuthStore();
 </script>
-
 <template>
     <nav class="navigationBar">
         <router-link :to="{name: 'home'}">Home</router-link> 
@@ -15,7 +14,6 @@ const auth = useAuthStore();
         </template>
     </nav>
 </template>
-
 <style scoped>
 .navigationBar {
     display: flex;
@@ -27,7 +25,7 @@ const auth = useAuthStore();
     padding: 0 4px;
 }
 
-a {
+a, a:link, a:visited {
     text-decoration: none;
     color: var(--color-navigation);
     transition: 0.4s;

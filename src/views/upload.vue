@@ -32,7 +32,7 @@ function validateFileUpload(event) {
 </script>
 <template>
     <div id="container">
-        <div id="leftColumn" class="column">
+        <div id="leftColumn" class="flexColumn">
             <h1 id="title">Upload</h1>           
             <h3>Assignment File:</h3>
 			<input ref="afile" type="file" accept=".txt" @change="handleAssignmentFileUpload"/>
@@ -40,7 +40,7 @@ function validateFileUpload(event) {
 			<input ref="pfile" type="file" accept=".txt" @change="handleProposalFileUpload"/>
             <button id="uploadButton" @click.stop="upload(assignment_file, proposal_file)">Upload</button>
 		</div>
-		<div id="rightColumn" class="column">
+		<div id="rightColumn" class="flexColumn">
             <div id="infoBox">
                 <p>Uploaded files will refresh the database with new up-to-date data.</p>
                 <p>Uploads through this page are not additive (i.e., all old data will be discarded and new data will be populated from provided files)</p>
@@ -60,69 +60,45 @@ function validateFileUpload(event) {
     width: 66vw;
     margin: 0 auto;
 }
+
 #title {
     color: var(--color-heading);
 }
+
 #infoBox {
     padding: 8px 16px;
     background: var(--color-background-mute);
     border-radius: 4px;
 	margin-bottom: 20px;
 }
+
 #infoBox > p:last-child {
     margin-bottom: 0;
 }
+
 #infoBox > p {
     margin-bottom: 8px;
 }
+
 #leftColumn {
     flex-grow: 1;
     margin-right: 4px;
 }
+
 #rightColumn {
     max-width: 33vw;
 }
-.column {
-    display: flex;
-    flex-direction: column;
-}
-input::file-selector-button, button {
-    background-color: var(--color-background-soft);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    border-radius: 4px;
-    padding: 2px 5px;
-	font-family: inherit;
-    font-size: 18px;
-}
+
 input {
-    color: var(--color-text);
-    font-family: inherit;
-    font-size: 18px;
     margin-bottom: 8px;
-    width: fit-content;
+    background-color: revert;
 }
+
 button {
-    cursor: pointer;
-    width: fit-content;
     margin-top: 8px;
 }
-@media (hover: hover) {
-  button:hover {
-    border-color: var(--color-border-hover);
-  }
-}
-button:disabled, button[disabled] {
-    color: var(--color-text-inactive);
-    cursor: default;
-}
+
 h3 {
     padding-right: 5px;
-}
-a:link {
-    color: var(--color-link);
-}
-a:visited {
-    color: var(--color-link-visited);
 }
 </style>

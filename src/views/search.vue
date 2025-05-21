@@ -167,13 +167,12 @@ function search() {
     router.push({name: 'searchResults'});
 };
 </script>
-
 <template>
     <div id="container">
-        <div id="leftColumn">
+        <div id="leftColumn" class="flexColumn">
             <h1 id="title">Search</h1>
             <!-- Search Inputs -->
-            <div id="conditionInputs">
+            <div id="conditionInputs" class="flexColumn">
                 <template v-for="field in Object.keys(input)">
                     <template v-if="input[field].type === 'categoric'">
                         <searchInput :field="field" :options="options[field]" v-model="input[field]" @add="add"/>
@@ -184,8 +183,8 @@ function search() {
                 </template>
             </div>
         </div>
-        <div id="rightColumn">
-            <div id="infoBox">
+        <div id="rightColumn" class="flexColumn">
+            <div id="infoBox" class="flexColumn">
                 <p>To create a search query, first add parameters by filling an input on the left and clicking the associated 'Add' button.</p>
                 <p>User input is validated before being added, so the 'Add' button will be greyed out until the input is valid.</p>
                 <p>Multiple parameters can be added for each field and will be combined with a logical 'or'.</p>
@@ -194,12 +193,12 @@ function search() {
                 <!-- <p>Serial numbers that are 6 or fewer characters long will have 'C   ' appended to the front and a number of 0's will be added to the end to create a valid, 10-digit serial number.</p>
                 <p>Frequencies must include a number and can also include a unit represented fully (e.g. kHz) or with a single character (e.g. k).</p> -->
             </div>
-            <div id="queryDisplay">
-                <div class="inputLine">
+            <div id="queryDisplay" class="flexColumn">
+                <div class="flexRow">
                     <h3>Query Parameters:</h3>
                     <button @click="store.clearParams()">Clear</button>
                 </div>
-                <div v-for="field in Object.keys(queryObject)" class="queryDisplayField">
+                <div v-for="field in Object.keys(queryObject)" class="queryDisplayField flexRow">
                     <p>
                         <span v-if="['bureau', 'tx_state_country_code', 'rx_state_country_code', 'tx_antenna_location', 'rx_antenna_location', 'station_class', 'function_identifier'].includes(field)">{{ `${headerMap(field)} in [` }}</span>
                         <span v-if="['supplementary_details'].includes(field)">{{ `${headerMap(field)} contains` }}&nbsp;</span>
@@ -219,9 +218,7 @@ function search() {
         </div>
     </div>
 </template>
-
 <style scoped>
-
 #container {
     display: flex;
     justify-content: center;
@@ -261,48 +258,12 @@ h3 {
     max-width: 30vw;
 }
 
-.inputLine, .queryDisplayField {
-    display: flex;
-    flex-direction: row;
-}
-
-.columns, #conditionInputs, #leftColumn, #rightColumn, #infoBox, #queryDisplay {
-    display: flex;
-    flex-direction: column;
-}
-
-input, button {
-    background-color: var(--color-background-soft);
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-    border-radius: 4px;
-    padding: 2px 5px;
-}
-
 .xButton {
     color: red;
     font-size: 10px;
     padding: 0 3.5px;
     height: 18px;
     bottom: 2px;
-}
-
-button {
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 18px;
-    width: fit-content;
-}
-
-@media (hover: hover) {
-  button:hover {
-    border-color: var(--color-border-hover);
-  }
-}
-
-button:disabled, button[disabled] {
-    color: var(--color-text-inactive);
-    cursor: default;
 }
 
 #infoBox > p:last-child {
@@ -320,5 +281,4 @@ button:disabled, button[disabled] {
 .queryDisplayField > p::first-letter {
     margin-left: -20px;
 }
-
 </style>

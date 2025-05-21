@@ -61,9 +61,8 @@ function validateDateInput(values) {
         return true;
 };
 </script>
-
 <template>
-    <div id="root">
+    <div id="root" class="flexRow">
         <h3>{{ headerMap(props.field) }}</h3>
         <template v-if="values.type === 'numeric'">
             <select v-model="values.relation">
@@ -73,7 +72,7 @@ function validateDateInput(values) {
                 </option>
             </select>
             <input v-model="values.lowerValue" v-show="values.relation === 'between'" :placeholder="getPlaceholder(props.field)"/>
-            <p class="inputSeparator" v-show="values.relation === 'between'">and</p>
+            <p id="inputSeparator" v-show="values.relation === 'between'">and</p>
             <input v-model="values.value" :placeholder="getPlaceholder(props.field)"/>
         </template>
         <template v-else-if="values.type === 'categoric'">
@@ -93,16 +92,12 @@ function validateDateInput(values) {
         <span v-if="props.field === 'station_class'"><a href="https://www.ntia.gov/sites/default/files/2023-11/6_2021_edition_rev_2023.pdf#page=15" target="_blank">Chapter 6 Section 6.1.2</a></span>
     </div>
 </template>
-
 <style scoped>
-
-.inputSeparator {
+#inputSeparator {
     margin: 0 8px;
 }
 
 #root {
-    display: flex;
-    flex-direction: row;
     margin-bottom: 20px;
 }
 
@@ -110,38 +105,31 @@ h3 {
     padding-right: 5px;
 }
 
-select, button {
+select {
     cursor: pointer;
     font-family: inherit;
 }
 
-input, select, button, textarea {
+select, textarea {
     background-color: var(--color-background-soft);
     border: 1px solid var(--color-border);
     color: var(--color-text);
     border-radius: 4px;
 }
 
-label, input, select, button {
+label, select {
     padding: 2px 5px;
     font-size: 18px;
 }
 
-button:disabled, button[disabled] {
-    color: var(--color-text-inactive);
-    cursor: default;
+input {
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 2px 5px;
 }
 
 span {
     margin-left: 8px;
     align-self: center;
-}
-
-a:link {
-    color: var(--color-link);
-}
-
-a:visited {
-    color: var(--color-link-visited);
 }
 </style>

@@ -89,25 +89,3 @@
         --color-link-visited: var(--vt-c-light-purple);
     }
 }
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    position: relative;
-    font-weight: normal;
-}
-
-body {
-    min-height: 100vh;
-    color: var(--color-text);
-    background: var(--color-background);
-    transition: color 0.5s, background-color 0.5s;
-    line-height: 1.6;
-    font-family: 'Atkinson Hyperlegible', Roboto, Oxygen, Ubuntu, sans-serif;
-    font-size: 18px;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}

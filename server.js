@@ -73,6 +73,11 @@ const SESSION_CONFIG = {
             host: DB_HOST,
             database: DB,
             port: DB_PORT,
+            ssl: (IS_DEV) ? false : {
+                    require: true,
+                    rejectUnauthorized: true,
+                    ca: readFileSync(join(__dirname, 'rds-ca-cert.pem')).toString()
+                },
             connectionTimeoutMillis: 30000,
             idleTimeoutMillis: 10000,
         })
@@ -165,13 +170,15 @@ async function connectToDB(mode) {
                 const secret = await getSecret();
                 config.user = secret.username;
                 config.password = secret.password;
-                config.ssl = {
+            }
+            break;
+    }
+    if (IS_PROD) {
+        config.ssl = {
                     require: true,
                     rejectUnauthorized: true,
                     ca: readFileSync(join(__dirname, 'rds-ca-cert.pem')).toString()
                 };
-            }
-            break;
     }
     const client = new pg.Client(config);
     await client.connect()
@@ -261,14 +268,14 @@ if (IS_DEV) {
         next();
     });
 
-    app.get('/login', devAuthMiddleware, passport.authenticate('local', {failureFlash: true, successRedirect:'/login/callback'}));
+    app.get('/api/login', devAuthMiddleware, passport.authenticate('local', {failureFlash: true, successRedirect:'/login/callback'}));
 }
 if (IS_PROD) {
     app.post('/login/callback', urlencoded({extended: false}), passport.authenticate('saml', {failureFlash: true}), (request, response) => {
         response.sendFile(join(__dirname, 'dist', 'src', 'html', 'index.html'));
     });
     
-    app.get('/login', urlencoded({extended: false}), passport.authenticate('saml', {failureFlash: true}));
+    app.get('/api/login', urlencoded({extended: false}), passport.authenticate('saml', {failureFlash: true}));
 }
 
 app.get(/^\/(?!api\/).*$/, (request, response) => {
@@ -410,8 +417,13 @@ app.post('/api/upload', isAuthenticated, isUploadAuthorized, text({limit: '1gb'}
         port: DB_PORT,
         dbname: DB,
         user: DB_USER,
-        password: (IS_DEV) ? DB_PASSWORD : await getSecret.password
     };
+    if (IS_PROD) {
+        let secret = await getSecret();
+        params.password = secret.password;
+        params.sslmode = 'verify-full';
+        params.sslrootcert = join(__dirname, 'rds-ca-cert.pem');
+    } else {params.password = DB_PASSWORD;}
     let errorBuffer = '';
     const python = spawn('./upload', [JSON.stringify(params)]);
     python.stdin.write(request.body);

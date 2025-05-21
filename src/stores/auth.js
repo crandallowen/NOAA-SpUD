@@ -13,13 +13,13 @@ export const useAuthStore = defineStore('auth', () => {
 
     function login() {
         const url = new URL(`${window.location.origin}/api/checkAuth`);
-        const request = new Request(url, {credentials: 'include', method: 'GET'});
+        const request = new Request(url, {credentials: 'include', method: 'GET', cache: 'no-store'});
         fetch(request)
             .then((response) => {
                 if ([200, 403].includes(response.status)) {
                     return response.json();
                 } else {
-                    location = '/login';
+                    location = '/api/login';
                 }
             })
             .then((data) => {
