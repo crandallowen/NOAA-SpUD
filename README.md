@@ -1,31 +1,71 @@
 # NOAA SpUD #
 A database used to track the spectrum usage of NOAA for the purpose of spectrum management.
 
-# RFA Scripts
-A collection of scripts that utilize the module described in RFA.py along with sample input data.
+# dist
+A folder that contains static assets which are ready to be served by the backend server.
 
-## SXXI1ColToCSV.py
-A script that uses the class specified in RFA.py along with examples of function calls. The script requests the name of an input file from the user, and requests the name of the desired output file. The script will verify that the correct file extension is used, but no further input validation is in place. The script then uses calls to functions in the module to import the data from the input file into a list of RFA objects, and then exports the RFA objects into a file with the requested name in standard output format.
+## assets
+A folder containing all assets served by the backend server, including .css files, .js files compiled from .vue files, the favicon, NOAA logo in .svg format, and .QRY files.
 
-# SpUD
-A folder that will be eventually form a python package that includes different database format modules, import/export modules, and all associated files. Currently, this folder includes many files that are empty, but will be necessary when it is time to package.
+## src\html
+A folder that contains the index.html file that serves as the entrypoint of the web application. Folder format is an artifact of source folder organization.
 
-## RFA.py
-A python module that allows a user to more easily manipulate output data from SXXI. This module contains a class declaration for an RFA object, useful methods for manipulating RFA objects, a function to import records in either GMF or SFAF format, functions for exporting the data in particular formats, and functions for converting SXXI values into more readable formats.
-### PLEASE NOTE ###
-The SpUD package is not yet a valid python package, and as such, the Python import module will be unable to locate the RFA.py module unless your scripts are stored in the SpUD folder. Alternatively, an environment variable can be set to inform the import module of the correct directory. On Windows, this can be done with following in CMD or PowerShell: >SET PYTHONPATH=C:\your\path\here\NOAA-SpUD\SpUD\
+# src
+A folder containing all source files used to build the application.
 
-# SQL
-A folder that contains all of the SQL files used for the SpUD database administration.
+## assets
+A folder containing static assets to be bundled into the dist folder after build, including site-level .css files, the favicon, .QRY files that can be downloaded by users, and the NOAA logo in .svg format
 
-## createTables.sql
-This file creates the tables for the SpUD
+## components
+A folder containing reusable components made using the Vue framework in .vue format.
 
-## createTypes.sql
-This file creates all user defined datatypes that will be used in the SpUD
+## html
+A folder containing the index.html file which acts as the entrypoint of the application.
 
-## deleteAll.sql
-This file deletes all data in all tables
+## js
+A folder containing JavaScript files that have utility functions, including api.js which defines functions used to make API requests to the backend server, fetch.js which wraps the fetch API, and utils.js which defines useful functions and constants that are used by multiple views and components.
 
-## dropAll.sql
-This file drops all tables
+## router
+A folder containing files used by the Vue Router to handle client-side routing and implement navigation guards for protected routes.
+
+## sql
+A folder containing SQL files that are used to create the necessary tables and delete data from those tables.
+
+## stores
+A folder that contains .js files that define the Pinia stores used in this application
+
+## views
+A folder containing .vue files that define the different pages of the site.
+
+## App.vue
+The .vue file that wraps the SPA and defines the structure of the application.
+
+## main.js
+The script referenced in index.html that creates the application using the definition found in App.vue.
+
+# .env
+An encrypted environment variable file with environment variables used in both development and production.
+
+# .env.development
+An encrypted environment variable file with environment variables used in development.
+
+# .env.production
+An encrypted environment variable file with environment variables used in production.
+
+# Dockerfile
+A file that defines the build process for the container image of the application.
+
+# jsconfig.js
+A file that is used by VSCode to properly read include statements.
+
+# package.json
+A file containing information on the application, including name, version, maintainer, npm scripts, and dependencies.
+
+# server.js
+The backend server script that defines the routes, PassportJS strategy, and session configuration.
+
+# upload.py
+A python script that takes user upload files from the backend server and updates the database from the data therein.
+
+# vite.config.js
+A file used by the Vite builder to properly compile that application and build for production.
