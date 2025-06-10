@@ -2,32 +2,34 @@
 import assignmentQueryUrl from '@/assets/getDOCAssignments.QRY';
 import proposalQueryUrl from '@/assets/getDOCProposals.QRY';
 import { upload } from '@/js/api';
-import { ref } from 'vue';
+import { ref, useTemplateRef } from 'vue';
+import router from '@/router';
 
-const assignment_file = ref();
-const proposal_file = ref();
+const assignmentFileInput = useTemplateRef('aInput');
+const proposalFileInput = useTemplateRef('pInput');
+const bothFilesSelected = ref(false);
 
-function handleAssignmentFileUpload(event) {
-	if (validateFileUpload(event))
-    	assignment_file.value = event.target.files[0];
-	else
-		alert('Incorrect file type');
+function handleFileSelect(event) {
+	if (!validateFileSelection(event)) {
+        alert('Incorrect file type. Please select a different file with extension ".txt".');
+        event.target.value = "";
+    } else
+        bothFilesSelected.value = (assignmentFileInput.value.files.length !== 0 && proposalFileInput.value.files.length !== 0) ? true : false;
 };
 
-function handleProposalFileUpload(event) {
-	if (validateFileUpload(event))
-		proposal_file.value = event.target.files[0];
-	else
-		alert('Incorrect file type');
+function validateFileSelection(event) {
+    return !event.target.files[0].type !== 'text/plain' && /\.txt$/.test(event.target.files[0].name);
 };
 
-function validateFileUpload(event) {
-	if (event.target.files[0].type !== 'text/plain')
-		return false;
-	else if (!/\.txt$/.test(event.target.files[0].name))
-		return false;
-	else
-		return true;
+function handleUpload() {
+    document.body.style.cursor = 'wait';
+    upload(assignmentFileInput.value.files[0], proposalFileInput.value.files[0])
+        .then((data) => {
+            document.body.style.cursor = 'default';
+            alert(data.message);
+            if (data.status === 0)
+                router.push('/');
+        });
 };
 </script>
 <template>
@@ -35,10 +37,10 @@ function validateFileUpload(event) {
         <div id="leftColumn" class="flexColumn">
             <h1 id="title">Upload</h1>           
             <h3>Assignment File:</h3>
-			<input ref="afile" type="file" accept=".txt" @change="handleAssignmentFileUpload"/>
+			<input ref="aInput" type="file" accept=".txt" @change="handleFileSelect"/>
             <h3>Proposal File:</h3>
-			<input ref="pfile" type="file" accept=".txt" @change="handleProposalFileUpload"/>
-            <button id="uploadButton" @click.stop="upload(assignment_file, proposal_file)">Upload</button>
+			<input ref="pInput" type="file" accept=".txt" @change="handleFileSelect"/>
+            <button id="uploadButton" @click.stop="handleUpload" :disabled="!bothFilesSelected">Upload</button>
 		</div>
 		<div id="rightColumn" class="flexColumn">
             <div id="infoBox">

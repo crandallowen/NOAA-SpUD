@@ -1,30 +1,9 @@
 import { useFetch } from './fetch';
-import { useAuthStore } from '@/stores/auth';
 import { allColumns } from './utils';
-import router from '@/router';
 
-function handleError(error) {
-    if (['Unauthorized', 'Forbidden'].includes(error.message))
-        handle401and403Error();
-    else
-        console.error(`${error.name}: ${error.message}`);
-};
+export async function getFilters() {return useFetch(`${window.location.origin}/api/getFilters`)};
 
-function handle401and403Error() {useAuthStore().logout();};
-
-export async function getFilters() {
-    let url = new URL(`${window.location.origin}/api/getFilters`);
-    return useFetch(url)
-        .then((data) => {return data;})
-        .catch((error) => handleError(error));
-};
-
-export async function getOptions() {
-    let url = new URL(`${window.location.origin}/api/getOptions`);
-    return useFetch(url)
-        .then((data) => {return data;})
-        .catch((error) => handleError(error));
-};
+export async function getOptions() {return useFetch(`${window.location.origin}/api/getOptions`)};
 
 export async function query(store) {
     let url = new URL(`${window.location.origin}/api/query`);
@@ -45,25 +24,17 @@ export async function query(store) {
             paramsList.push(JSON.stringify(store.filters[i]))
     if (paramsList.length !== 0)
         url.searchParams.append('params', `[${paramsList.join(',')}]`);
-    return useFetch(url)
-        .then((data) => {return data;})
-        .catch((error) => handleError(error));
+    return useFetch(url);
 };
 
 export async function upload(assignmentFile, proposalFile) {
     const separator = '\n----------\n';
     const assignments = await assignmentFile.text();
     const proposals = await proposalFile.text();
-    let url = new URL(`${window.location.origin}/api/upload`);
-    return fetch(url, {
+    const options = {
         method: 'POST',
         body: `${assignments}${separator}${proposals}`,
         credentials: 'include',
-    }).then((response) => response.json())
-        .then((data) => {
-            alert(data.message);
-            if (data.status === 0)
-                router.push('/')
-        })
-        .catch((error) => handleError(error));
+    };
+    return useFetch(`${window.location.origin}/api/upload`, options);
 };

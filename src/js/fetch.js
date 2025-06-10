@@ -1,9 +1,25 @@
 import { toValue } from 'vue';
+import router from '@/router';
+import { useAuthStore } from '@/stores/auth';
 
-export async function useFetch(url, method='GET') {
-    return fetch(toValue(url), {method: method, credentials: 'include'})
+function handleError(error) {
+    switch(error.message) {
+        case 'Forbidden':
+            router.push('/notAuthorized');
+            break;
+        case 'Unauthorized':
+            useAuthStore().logout();
+            break;
+        default:
+            console.error(`${error.name}: ${error.message}`);
+    }
+};
+
+export async function useFetch(url, options={method: 'GET', credentials: 'include'}) {
+    if (!options.hasOwnProperty('credentials'))
+        options.credentials = 'include';
+    return fetch(toValue(url), options)
         .then((response) => {
-            // if ([401, 403].includes(response.status)) {
             if (!response.ok) {
                 switch (response.status) {
                     case 401:
@@ -17,5 +33,6 @@ export async function useFetch(url, method='GET') {
                 }
             }
             return response.json();
-        });
+        })
+        .catch((error) => handleError(error));
 };
