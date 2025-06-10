@@ -11,7 +11,7 @@ const props = defineProps({
         required: false,
     },
 });
-defineEmits(['add'])
+defineEmits(['add']);
 const values = defineModel();
 const numericRelations = ['=', '>=', '>', '<=', '<', '!=', 'between'];
 

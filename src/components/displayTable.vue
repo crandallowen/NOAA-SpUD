@@ -77,7 +77,6 @@ function downloadCSVData() {
     anchor.click();
 };
 </script>
-
 <template>
     <div id="tableWithSelects" class="flexRow">
         <!-- Side Bar -->
@@ -162,7 +161,6 @@ function downloadCSVData() {
         </div>
     </div>
 </template>
-
 <style scoped>
 #filterHeader, #columnSelectsHeader {
     color: var(--color-heading);
