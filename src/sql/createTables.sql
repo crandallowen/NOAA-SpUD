@@ -1,5 +1,5 @@
 --Initially, only some columns will be extracted
-CREATE TABLE RFAs (
+CREATE TABLE IF NTO EXISTS RFAs (
     serial_number text primary key,
     agency_action_number text,
     classification text,
@@ -124,12 +124,18 @@ CREATE TABLE RFAs (
 );
 
 CREATE TABLE "session" (
-  "sid" varchar NOT NULL COLLATE "default",
-  "sess" json NOT NULL,
-  "expire" timestamp(6) NOT NULL
+    "sid" varchar NOT NULL COLLATE "default",
+    "sess" json NOT NULL,
+    "expire" timestamp(6) NOT NULL
 )
 WITH (OIDS=FALSE);
 
 ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
 
 CREATE INDEX "IDX_session_expire" ON "session" ("expire");
+
+CREATE TABLE IF NOT EXISTS "uploads" (
+    "uid" SERIAL PRIMARY KEY,
+    "user" TEXT NOT NULL,
+    "date" DATE NOT NULL
+);
