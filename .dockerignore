@@ -4,8 +4,7 @@ dist
 inputs
 node_modules
 outputs
-SpUD
-!SpUD/dist/spud-0.0.1-py3-none-any.whl
+SpUD_io
 src/sql
 venv
 .dockerignore

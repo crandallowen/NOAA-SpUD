@@ -8,9 +8,8 @@ RUN apt-get update -y \
     && apt-get clean
 
 WORKDIR /app
-COPY ./SpUD/dist/spud-0.0.1-py3-none-any.whl .
 RUN pip install --upgrade pip
-RUN pip install spud-0.0.1-py3-none-any.whl
+RUN pip install spud_io
 RUN pip install pyinstaller
 
 COPY upload.py .

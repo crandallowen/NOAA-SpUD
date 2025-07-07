@@ -1,7 +1,7 @@
 import sys
 import json
-from SpUD import RFA as rfa
-from SpUD import SpUD_upload as su
+from SpUD_io import RFA as rfa
+from SpUD_io import SpUD_upload as su
 
 if __name__== '__main__':
     params = json.loads(sys.argv[1])
