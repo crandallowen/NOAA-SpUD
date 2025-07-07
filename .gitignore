@@ -12,6 +12,8 @@ dist/*
 db.config.js
 jsconfig.json
 *.pem
+!idp_cert.pem
+!rds-ca-cert.pem
 private-key.key
 metadata*.txt
 saml-test.js
