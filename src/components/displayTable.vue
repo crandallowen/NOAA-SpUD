@@ -2,7 +2,7 @@
 import { ref, reactive, watch, watchEffect } from 'vue';
 import { format, headerMap, visibleColumnGroups, frequencyHzTokHz, groupedColumns } from '@/js/utils';
 import collapsibleGroup from '@/components/collapsibleGroup.vue';
-import { getFilters, query } from '@/js/api';
+import { getFilters, getUploadDate, query, upload } from '@/js/api';
 
 const props = defineProps({
     title: String,
@@ -11,6 +11,7 @@ const props = defineProps({
 const isReady = ref(false);
 const columns = ref(null);
 const rows = ref(null);
+const uploadDate = ref(null);
 const store = props.useStore();
 const sort = ref(store.sort);
 const today = new Date();
@@ -42,14 +43,17 @@ getFilters()
 watchEffect(() => {
     isReady.value = false;
     document.body.style.cursor = 'wait';
-    query(store)
-        .then((data) => {
-            if (data) {
-                columns.value = data.columns;
-                rows.value = data.rows;
+    Promise.allSettled([query(store), getUploadDate()])
+        .then((results) => {
+            if (results[0].status === 'fulfilled') {
+                columns.value = results[0].value.columns;
+                rows.value = results[0].value.rows;
                 sort.value = store.sort;
-                isReady.value = true;
             }
+            if (results[1].status === 'fulfilled') {
+                uploadDate.value = results[1].value.uploadDate;
+            }
+            isReady.value = true;
         })
         .finally(() => {document.body.style.cursor = 'default';});
 }, {flush: 'post'});
@@ -117,6 +121,7 @@ function downloadCSVData() {
         <div id="tableContainer" class="flexColumn">
             <div id="tableTitleBar" class="flexRow">
                 <h2 id="title">{{ props.title }}</h2>
+                <p id="uploadDate">{{ isReady && uploadDate !== null ? `Last updated: ${format(uploadDate, 'date')}` : ''}}</p>
                 <button type="button" id="exportButton" @click="downloadCSVData">Export to .csv</button>
                 <p id="rowCount">{{ rows !== null ? `${Object.keys(rows).length} result${Object.keys(rows).length == 1 ? '' : 's'}` : ''}}</p>
             </div>
@@ -176,12 +181,12 @@ function downloadCSVData() {
     margin-bottom: 20px;
 }
 
-#rowCount {
+#rowCount, #uploadDate {
     padding: 3px 0;
     font-size: 18px;
 }
 
-#rowCount, #exportButton {
+#rowCount, #exportButton, #uploadDate {
     align-self: flex-end;
     line-height: 1.6;
     margin: 3px;
@@ -199,6 +204,7 @@ function downloadCSVData() {
 
 #title {
     color: var(--color-heading);
+    margin-right: 16px;
 }
 
 #title, #filterHeader, .headerText {

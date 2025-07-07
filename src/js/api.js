@@ -5,6 +5,8 @@ export async function getFilters() {return useFetch(`${window.location.origin}/a
 
 export async function getOptions() {return useFetch(`${window.location.origin}/api/getOptions`)};
 
+export async function getUploadDate() {return useFetch(`${window.location.origin}/api/getUploadDate`)};
+
 export async function query(store) {
     let url = new URL(`${window.location.origin}/api/query`);
     let orderedColumns = [];

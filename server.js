@@ -42,6 +42,7 @@ const OPTION_QUERIES = {
     'function_identifier': `SELECT DISTINCT function_identifier FROM (SELECT main_function_id AS function_identifier FROM RFAs UNION SELECT intermediate_function_id AS function_identifier FROM RFAs UNION SELECT detailed_function_id AS function_identifier FROM RFAs) AS function_identifiers ORDER BY function_identifier ASC`, 
     'point_of_contact': `SELECT DISTINCT point_of_contact FROM RFAs`,
 };
+const UPLOAD_DATE_QUERY = `SELECT MAX(date) FROM uploads`;
 const ROW_FILTERS = ['bureau', 'function_identifier', 'tx_state_country_code'];
 const SAML_OPTIONS = {
     issuer: 'https://rfmd-spud.woc.noaa.gov',
@@ -90,6 +91,8 @@ const SESSION_CONFIG = {
         secure: IS_PROD,
     }
 };
+// This constant defines which users are able to access the upload page and submit data
+// to update the application's database
 const UPLOAD_AUTHORIZED_USERS = [
     'tomasz.wojtaszek',
     'ivan.navarro',
@@ -100,6 +103,8 @@ const UPLOAD_AUTHORIZED_USERS = [
     'owen.crandall',
 ];
 
+// A middleware function that is used to verify that the current session's user has
+// been authenticated with NOAA ICAM
 function isAuthenticated(request, response, next) {
     if (!request.session || !request.user) {
         response.status(401);
@@ -110,6 +115,8 @@ function isAuthenticated(request, response, next) {
     next();
 };
 
+// A middleware function that is used to verify that the current session's user is
+// authorized to upload data
 function isUploadAuthorized(request, response, next) {
     if (!canUpload(request.user)) {
         response.status(403);
@@ -119,6 +126,9 @@ function isUploadAuthorized(request, response, next) {
     next();
 };
 
+// This is helper middleware function that is only used when running the application
+// in a development environment that allows the local and SAML authentication
+// strategies to use the same api calls from the client
 function devAuthMiddleware(request, response, next) {
     request.body = {
         username: 'dev',
@@ -127,8 +137,12 @@ function devAuthMiddleware(request, response, next) {
     next();
 };
 
+// A helper function that takes a session's user object and determines if they are 
+// authorized to upload
 function canUpload(user) {return IS_DEV || UPLOAD_AUTHORIZED_USERS.includes(user.id);};
 
+// A function that retrieves the credentials for the Postgres database from AWS
+// Secrets Manager
 async function getSecret() {
     const secrets_client = new SecretsManagerClient({
         credentials: fromContainerMetadata({
@@ -151,6 +165,11 @@ async function getSecret() {
         })
 };
 
+// A function that is used to connect to the Postgres database that takes a mode
+// parameter to use the appropriate credentials that are scoped to the task
+// 'query' uses credentials for the 'reader' postgres user that is only able to
+// select on the RFAs table
+// 'upload' uses the master credentials with full permissions
 async function connectToDB(mode) {
     let config = {
         host: DB_HOST,
@@ -182,7 +201,7 @@ async function connectToDB(mode) {
     }
     const client = new pg.Client(config);
     await client.connect()
-        .then(() => console.log(`Connected to ${config.database} as ${config.user} at ${config.host}:${config.port}`))
+        // .then(() => console.log(`Connected to ${config.database} as ${config.user} at ${config.host}:${config.port}`))
         .catch((error) => {
             console.error('Connection error:', error.stack)
         });
@@ -227,6 +246,7 @@ passport.deserializeUser((user, done) => {
     });
 });
 
+// Logs that were used in development for various debugging purposes
 // console.log('IS_DEV:', IS_DEV);
 // console.log('IS_PROD:', IS_PROD);
 // console.log('PORT:', PORT);
@@ -272,6 +292,7 @@ if (IS_DEV) {
 }
 if (IS_PROD) {
     app.post('/login/callback', urlencoded({extended: false}), passport.authenticate('saml', {failureFlash: true}), (request, response) => {
+        console.log(`User ${request.user.id} has logged in`);
         response.sendFile(join(__dirname, 'dist', 'src', 'html', 'index.html'));
     });
     
@@ -337,6 +358,21 @@ app.get('/api/getOptions', isAuthenticated, async (request, response, next) => {
     response.json(optionsJSON);
 });
 
+app.get('/api/getUploadDate', isAuthenticated, async (request, response, next) => {
+    const client = await connectToDB('query');
+    await client.query(UPLOAD_DATE_QUERY)
+        .then((result) => {
+            response.json({uploadDate: result.rows[0]['max']});
+        })
+        .catch((error) => {
+            console.error('Query error:', error.stack);
+            next(error);
+        })
+        .finally(() => {
+            disconnectFromDB(client);
+        });
+});
+
 app.get('/api/query', isAuthenticated, async (request, response, next) => {
     let columns = Array.isArray(request.query.column) ? request.query.column : [request.query.column];
     let sort = {
@@ -396,7 +432,7 @@ app.get('/api/query', isAuthenticated, async (request, response, next) => {
     let sql = (params && params.length != 0) ? `${selectSQL} ${fromSQL} ${whereSQL} ${orderBySQL}` : `${selectSQL} ${fromSQL} ${orderBySQL}`;
     await client.query(sql)
         .then((result) => {
-            console.log('Returned', result.rowCount, 'rows.');
+            // console.log('Returned', result.rowCount, 'rows.');
             response.json({
                 columns: columns,
                 rows: result.rows,
@@ -425,7 +461,11 @@ app.post('/api/upload', isAuthenticated, isUploadAuthorized, text({limit: '1gb'}
         params.sslrootcert = join(__dirname, 'rds-ca-cert.pem');
     } else {params.password = DB_PASSWORD;}
     let errorBuffer = '';
-    const python = spawn('./upload', [JSON.stringify(params)]);
+    let args = {
+        params: params,
+        user: request.user.id
+    }
+    const python = spawn('./upload', [JSON.stringify(args)]);
     python.stdin.write(request.body);
     python.stdin.end();
     python.stdout.on('data', (data) => {
