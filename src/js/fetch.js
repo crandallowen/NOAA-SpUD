@@ -15,9 +15,9 @@ function handleError(error) {
     }
 };
 
-export async function useFetch(url, options={method: 'GET', credentials: 'include'}) {
-    if (!options.hasOwnProperty('credentials'))
-        options.credentials = 'include';
+export async function useFetch(url, options) {
+    let defaults = {method: 'GET', credentials: 'include'};
+    options = {...defaults, ...(options || {})};
     return fetch(toValue(url), options)
         .then((response) => {
             if (!response.ok) {

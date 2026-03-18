@@ -1,6 +1,4 @@
 .gitattributes
-**/RFA Module
-SpUD_io/
 **/inputs
 **/outputs
 **/__pycache__/*
@@ -23,3 +21,4 @@ saml-test.js
 .env.keys
 makeCSV.py
 **/keys/
+/SpUD_io

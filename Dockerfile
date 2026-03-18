@@ -1,4 +1,4 @@
-FROM python:3.10-slim AS python-build
+FROM python:3.10-bookworm AS python-build
 
 # MAINTAINER Owen Crandall <ocrandall@ftidc.com>
 

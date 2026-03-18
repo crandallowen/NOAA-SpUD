@@ -1,11 +1,12 @@
 --Initially, only some columns will be extracted
-CREATE TABLE IF NTO EXISTS RFAs (
+CREATE TABLE IF NOT EXISTS rfas (
     serial_number text primary key,
     agency_action_number text,
     classification text,
     bureau text,
     agency text,
     record_type text,
+    service text,
     main_function_id text,
     intermediate_function_id text,
     detailed_function_id text,
@@ -19,6 +20,7 @@ CREATE TABLE IF NTO EXISTS RFAs (
     frequency_upper_limit numeric,
     sxxi_excluded_frequency_bands text[],
     excluded_frequency_bands nummultirange,
+    paired_serial_number text[],
     sxxi_paired_frequency text[],
     paired_frequency nummultirange,
     gmf_time text,
@@ -70,9 +72,9 @@ CREATE TABLE IF NTO EXISTS RFAs (
     tx_antenna_name text,
     tx_antenna_nomenclature text,
     tx_antenna_gain numeric[],
-    tx_antenna_elevation numeric,
-    tx_antenna_feed_point_height numeric,
-    tx_antenna_horizontal_beamwidth numeric,
+    tx_antenna_elevation numeric[],
+    tx_antenna_feed_point_height numeric[],
+    tx_antenna_horizontal_beamwidth numeric[],
     tx_antenna_azimuth text,
     tx_antenna_orientation text,
     tx_antenna_polarization text,
@@ -123,7 +125,19 @@ CREATE TABLE IF NTO EXISTS RFAs (
     receipt_date date
 );
 
-CREATE TABLE "session" (
+CREATE TABLE IF NOT EXISTS systems (
+    sid SERIAL PRIMARY KEY,
+    name text,
+    notes text[]
+);
+
+CREATE TABLE IF NOT EXISTS systems_rfas (
+    sid serial NOT NULL REFERENCES systems ON DELETE CASCADE,
+    serial_number text NOT NULL REFERENCES rfas ON DELETE RESTRICT,
+    PRIMARY KEY (sid, serial_number)
+);
+
+CREATE TABLE IF NOT EXISTS "session" (
     "sid" varchar NOT NULL COLLATE "default",
     "sess" json NOT NULL,
     "expire" timestamp(6) NOT NULL
@@ -134,8 +148,8 @@ ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFE
 
 CREATE INDEX "IDX_session_expire" ON "session" ("expire");
 
-CREATE TABLE IF NOT EXISTS "uploads" (
-    "uid" SERIAL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS uploads (
+    uid SERIAL PRIMARY KEY,
     "user" TEXT NOT NULL,
-    "date" DATE NOT NULL
+    date DATE NOT NULL
 );
